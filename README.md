@@ -13,8 +13,8 @@ le frontend Next.js et le backend FastAPI sont emballés dans une coquille
 - [x] Coquille Electron qui lance backend + frontend en sidecars et affiche l'UI.
 - [x] Arrêt propre des sidecars à la fermeture (taskkill /T).
 - [x] Packaging **`backend.exe`** (PyInstaller) — `npm run build:backend` (vérifié : démarre sans Python).
-- [ ] Build Next.js `standalone` + installeur NSIS (`electron-builder`).
-- [ ] Chromium (Playwright) embarqué (nécessaire au scraping dans l'.exe).
+- [x] **Chromium** embarqué — `npm run build:chromium` (~270 Mo, headless shell ; vérifié : scraping réel OK dans l'exe, sans Playwright global).
+- [ ] Build Next.js `standalone` + installeur NSIS (`electron-builder`) → `setup.exe`.
 
 ## Prérequis (dev)
 

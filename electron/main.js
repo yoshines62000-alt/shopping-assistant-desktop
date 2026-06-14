@@ -42,6 +42,15 @@ function databaseUrl() {
   return `sqlite:///${dbPath}`;
 }
 
+// Navigateur Chromium embarque (Playwright) pour le scraping. En packte il est
+// dans resources/chromium ; en dev on prend le bundle s'il existe, sinon on
+// laisse Playwright utiliser son cache global (ms-playwright).
+function chromiumDir() {
+  return isDev
+    ? path.join(ROOT, 'resources', 'chromium')
+    : path.join(process.resourcesPath, 'chromium');
+}
+
 function log(...args) {
   console.log('[main]', ...args);
 }
@@ -72,6 +81,10 @@ function startBackend() {
     DATABASE_URL: databaseUrl(),
     CORS_ALLOW_ORIGINS: `http://127.0.0.1:${FRONTEND_PORT},http://localhost:${FRONTEND_PORT}`,
   };
+  const chromium = chromiumDir();
+  if (fs.existsSync(chromium)) {
+    env.PLAYWRIGHT_BROWSERS_PATH = chromium;
+  }
   if (isDev) {
     backendProc = spawn(
       'python',

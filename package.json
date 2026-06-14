@@ -9,7 +9,8 @@
     "dev": "electron .",
     "install:web": "npm --prefix web install",
     "setup": "npm install && npm run install:web",
-    "build:backend": "powershell -ExecutionPolicy Bypass -File scripts/build-backend.ps1"
+    "build:backend": "powershell -ExecutionPolicy Bypass -File scripts/build-backend.ps1",
+    "build:chromium": "powershell -ExecutionPolicy Bypass -File scripts/build-chromium.ps1"
   },
   "devDependencies": {
     "electron": "^31.7.7"

@@ -10,8 +10,12 @@
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $resources = Join-Path $root 'resources'
+$backend = Join-Path $root 'backend'
+# Source ABSOLUE pour --add-data : PyInstaller resout le chemin source relatif a
+# --specpath, pas au cwd -> un chemin absolu evite tout malentendu.
+$migrations = Join-Path $backend 'src\db\migrations'
 
-Push-Location (Join-Path $root 'backend')
+Push-Location $backend
 try {
   python -m PyInstaller --noconfirm --onedir --name backend `
     --distpath  $resources `
@@ -20,7 +24,7 @@ try {
     --collect-all playwright `
     --collect-submodules uvicorn `
     --collect-submodules src `
-    --add-data "src/db/migrations;src/db/migrations" `
+    --add-data "$migrations;src/db/migrations" `
     run_backend.py
   if ($LASTEXITCODE -ne 0) { throw "PyInstaller a echoue (code $LASTEXITCODE)" }
   Write-Host "OK -> $(Join-Path $resources 'backend\backend.exe')"
