@@ -10,6 +10,10 @@ resources/backend/
 resources/web/
 resources/chromium/
 *.spec
+# Sorties PyInstaller (backend.exe)
+build_pyi/
+backend/dist/
+backend/build/
 # NB : web/vendor/types/dist EST versionné (build des types vendorisés,
 # nécessaire au `file:` dependency — pas de build à l'installation).
 
