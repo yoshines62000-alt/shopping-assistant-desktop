@@ -1,0 +1,30 @@
+# Dependances
+node_modules/
+web/node_modules/
+web/vendor/types/node_modules/
+
+# Build / sorties
+web/.next/
+web/out/
+resources/backend/
+resources/web/
+resources/chromium/
+*.spec
+# NB : web/vendor/types/dist EST versionné (build des types vendorisés,
+# nécessaire au `file:` dependency — pas de build à l'installation).
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Base locale & logs (dev)
+*.db
+*.log
+backend/start.log
+
+# OS / éditeur
+Thumbs.db
+.DS_Store
+.vscode/

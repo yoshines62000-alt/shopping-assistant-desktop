@@ -1,0 +1,171 @@
+'use client';
+
+import { useState, useEffect, useCallback, ChangeEvent, FormEvent } from 'react';
+import Link from 'next/link';
+import type { PriceAlert } from '@shopping-assistant/types';
+import { Bell, BellOff, BellRing, Trash2, Settings } from 'lucide-react';
+import PageShell from '@/components/ui/PageShell';
+import EmptyState from '@/components/ui/EmptyState';
+import { apiFetch } from '@/lib/api';
+import { toast } from '@/lib/toast';
+import { euro, dateFr } from '@/lib/format';
+
+export default function AlertsPage() {
+  const [alerts, setAlerts] = useState<PriceAlert[]>([]);
+  const [productId, setProductId] = useState('');
+  const [threshold, setThreshold] = useState('');
+
+  const load = useCallback(() => {
+    apiFetch<{ alerts?: PriceAlert[] }>('/alerts')
+      .then((r) => setAlerts(r.alerts ?? []))
+      .catch(() => setAlerts([]));
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const createAlert = async (e: FormEvent) => {
+    e.preventDefault();
+    try {
+      await apiFetch('/alerts', {
+        method: 'POST',
+        json: { productId, thresholdPrice: Number(threshold), channels: ['email'] },
+      });
+      toast.success('Alerte créée');
+      setProductId('');
+      setThreshold('');
+      load();
+    } catch {
+      toast.error('Erreur lors de la création de l’alerte');
+    }
+  };
+
+  const removeAlert = async (alert: PriceAlert) => {
+    await apiFetch(`/alerts/${alert.alertId}`, { method: 'DELETE' }).catch(() => null);
+    load();
+  };
+
+  const handleChange = (setter: (v: string) => void) => (e: ChangeEvent<HTMLInputElement>) => {
+    setter(e.target.value);
+  };
+
+  const active = alerts.filter((a) => a.active);
+  const triggered = alerts.filter((a) => !a.active && a.triggeredAt);
+
+  return (
+    <PageShell
+      title="Alertes prix"
+      icon={<Bell className="h-6 w-6" />}
+      subtitle="Vérifiées automatiquement en arrière-plan — notification Discord quand le prix passe sous le seuil"
+      actions={
+        <Link href="/settings" className="btn-ghost text-xs" title="Configurer le webhook Discord">
+          <Settings className="h-4 w-4" /> Configurer Discord
+        </Link>
+      }
+    >
+      <div className="space-y-4">
+        <div className="card-pad">
+          <h2 className="mb-3 text-sm font-semibold text-slate-100">Créer une alerte</h2>
+          <form onSubmit={createAlert}>
+            <div className="mb-3 grid gap-3 sm:grid-cols-2">
+              <input
+                value={productId}
+                onChange={handleChange(setProductId)}
+                placeholder="ID du produit (URL de l'offre)"
+                className="input"
+                required
+              />
+              <input
+                type="number"
+                value={threshold}
+                onChange={handleChange(setThreshold)}
+                placeholder="Prix cible (€)"
+                className="input"
+                min="0"
+                step="0.01"
+                required
+              />
+            </div>
+            <button type="submit" className="btn-primary">
+              <Bell className="h-4 w-4" /> Créer
+            </button>
+          </form>
+        </div>
+
+        <div className="card-pad">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Alertes actives ({active.length})
+          </h2>
+          {active.length === 0 ? (
+            <EmptyState
+              icon={<BellOff className="h-6 w-6" />}
+              title="Aucune alerte active"
+              description="Créez une alerte depuis la page d'un produit ou avec le formulaire ci-dessus."
+            />
+          ) : (
+            <div className="space-y-1.5">
+              {active.map((a) => (
+                <div
+                  key={a.alertId}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-line bg-ink/40 px-3 py-2.5"
+                >
+                  <Link
+                    href={`/products/${encodeURIComponent(a.productId)}`}
+                    className="truncate text-sm text-slate-300 hover:text-accent"
+                  >
+                    {a.name || `${a.productId.slice(0, 24)}…`} — seuil {euro(a.thresholdPrice)}
+                  </Link>
+                  <span className="flex shrink-0 items-center gap-1.5">
+                    <span className="badge-success">ACTIVE</span>
+                    <button
+                      onClick={() => removeAlert(a)}
+                      className="btn-ghost !p-1.5 hover:!text-rose-300"
+                      title="Supprimer"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {triggered.length > 0 && (
+          <div className="card-pad">
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Alertes déclenchées ({triggered.length})
+            </h2>
+            <div className="space-y-1.5">
+              {triggered.map((a) => (
+                <div
+                  key={a.alertId}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2.5"
+                >
+                  <Link
+                    href={`/products/${encodeURIComponent(a.productId)}`}
+                    className="flex min-w-0 items-center gap-2 text-sm text-slate-300 hover:text-accent"
+                  >
+                    <BellRing className="h-4 w-4 shrink-0 text-emerald-400" />
+                    <span className="truncate">
+                      {a.name || `${a.productId.slice(0, 24)}…`} — seuil {euro(a.thresholdPrice)} atteint
+                      {a.triggeredAt && ` le ${dateFr(a.triggeredAt)}`}
+                    </span>
+                  </Link>
+                  <button
+                    onClick={() => removeAlert(a)}
+                    className="btn-ghost !p-1.5 shrink-0 hover:!text-rose-300"
+                    title="Supprimer"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </PageShell>
+  );
+}

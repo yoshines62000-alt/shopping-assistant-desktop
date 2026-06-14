@@ -1,0 +1,16 @@
+{
+  "name": "shopping-assistant-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shopping Assistant - application de bureau Windows (Electron + Next.js + FastAPI/SQLite)",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron .",
+    "install:web": "npm --prefix web install",
+    "setup": "npm install && npm run install:web"
+  },
+  "devDependencies": {
+    "electron": "^31.7.7"
+  }
+}

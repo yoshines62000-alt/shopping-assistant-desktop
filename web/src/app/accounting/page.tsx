@@ -1,0 +1,434 @@
+'use client';
+
+import { useState, useEffect, useCallback, FormEvent } from 'react';
+import Link from 'next/link';
+import type { AccountingSummary, Sale, Expense } from '@shopping-assistant/types';
+import { Wallet, Undo2, BookOpenCheck, Package, Download, Plus, Trash2 } from 'lucide-react';
+import PageShell from '@/components/ui/PageShell';
+import StatCard from '@/components/ui/StatCard';
+import BarChart from '@/components/ui/BarChart';
+import ErrorBanner from '@/components/ui/ErrorBanner';
+import LoadingBlock from '@/components/ui/LoadingBlock';
+import EmptyState from '@/components/ui/EmptyState';
+import { apiFetch } from '@/lib/api';
+import { euro, dateFr } from '@/lib/format';
+
+function downloadCSV(filename: string, header: string[], rows: (string | number)[][]) {
+  const escape = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
+  const content = [header, ...rows].map((r) => r.map(escape).join(';')).join('\n');
+  // BOM pour qu'Excel détecte l'UTF-8 (accents)
+  const blob = new Blob(['﻿' + content], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+const MONTH_NAMES = [
+  'janv.',
+  'févr.',
+  'mars',
+  'avr.',
+  'mai',
+  'juin',
+  'juil.',
+  'août',
+  'sept.',
+  'oct.',
+  'nov.',
+  'déc.',
+];
+
+function monthLabel(ym: string): string {
+  const [year, month] = ym.split('-');
+  return `${MONTH_NAMES[Number(month) - 1] ?? month} ${year}`;
+}
+
+export default function AccountingPage() {
+  const [summary, setSummary] = useState<AccountingSummary | null>(null);
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [expenseLabel, setExpenseLabel] = useState('');
+  const [expenseAmount, setExpenseAmount] = useState('');
+  const [expenseCategory, setExpenseCategory] = useState('emballage');
+  const [salesPlatform, setSalesPlatform] = useState('all');
+
+  const load = useCallback(async () => {
+    try {
+      const [sum, salesData, expensesData] = await Promise.all([
+        apiFetch<AccountingSummary>('/accounting/summary'),
+        apiFetch<{ sales?: Sale[] }>('/sales'),
+        apiFetch<{ expenses?: Expense[] }>('/expenses'),
+      ]);
+      setSummary(sum);
+      setSales(salesData.sales ?? []);
+      setExpenses(expensesData.expenses ?? []);
+      setError(null);
+    } catch {
+      setError('Impossible de charger les comptes. Vérifiez que le service est démarré.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const addExpense = async (e: FormEvent) => {
+    e.preventDefault();
+    try {
+      await apiFetch('/expenses', {
+        method: 'POST',
+        json: { label: expenseLabel, amount: Number(expenseAmount), category: expenseCategory },
+      });
+      setExpenseLabel('');
+      setExpenseAmount('');
+      load();
+    } catch {
+      setError("Impossible d'ajouter la dépense.");
+    }
+  };
+
+  const removeExpense = async (expense: Expense) => {
+    if (!window.confirm(`Supprimer la dépense « ${expense.label} » (${euro(expense.amount)}) ?`))
+      return;
+    await apiFetch(`/expenses/${expense.id}`, { method: 'DELETE' }).catch(() => null);
+    load();
+  };
+
+  const exportSalesCSV = () => {
+    downloadCSV(
+      `ventes-${new Date().toISOString().split('T')[0]}.csv`,
+      ['Date', 'Objet', 'Quantité', 'Prix unitaire (€)', 'Frais (€)', 'Plateforme', 'Total (€)'],
+      sales.map((s) => [
+        dateFr(s.saleDate),
+        s.itemName,
+        s.quantity,
+        s.unitPrice,
+        s.fees,
+        s.platform,
+        s.total,
+      ])
+    );
+  };
+
+  const exportMonthlyCSV = () => {
+    if (!summary) return;
+    downloadCSV(
+      `bilan-mensuel-${new Date().toISOString().split('T')[0]}.csv`,
+      ['Mois', 'Ventes', 'CA (€)', 'Frais (€)', "Coût d'achat (€)", 'Dépenses (€)', 'Bénéfice net (€)'],
+      summary.monthly.map((m) => [
+        m.month,
+        m.salesCount,
+        m.revenue,
+        m.fees,
+        m.cost,
+        m.expenses,
+        m.profitNet,
+      ])
+    );
+  };
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const cancelSale = async (sale: Sale) => {
+    if (
+      !window.confirm(
+        `Annuler la vente de « ${sale.itemName} » (${euro(sale.total)}) ? La quantité revient en stock.`
+      )
+    )
+      return;
+    await apiFetch(`/sales/${sale.id}`, { method: 'DELETE' }).catch(() => null);
+    load();
+  };
+
+  const salePlatforms = Array.from(new Set(sales.map((s) => s.platform).filter(Boolean)));
+  const filteredSales =
+    salesPlatform === 'all' ? sales : sales.filter((s) => s.platform === salesPlatform);
+  const filteredTotal = filteredSales.reduce((sum, s) => sum + s.total, 0);
+
+  return (
+    <PageShell
+      title="Mes comptes"
+      icon={<BookOpenCheck className="h-6 w-6" />}
+      subtitle="Bilan achat / revente"
+      actions={
+        summary && sales.length > 0 ? (
+          <>
+            <button onClick={exportSalesCSV} className="btn-secondary text-xs">
+              <Download className="h-4 w-4" /> Ventes CSV
+            </button>
+            <button onClick={exportMonthlyCSV} className="btn-secondary text-xs">
+              <Download className="h-4 w-4" /> Bilan CSV
+            </button>
+          </>
+        ) : undefined
+      }
+    >
+      <div className="space-y-6">
+        {error && <ErrorBanner message={error} />}
+        {loading && <LoadingBlock label="Chargement des comptes..." />}
+
+        {summary && (
+          <>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <StatCard label="Investi (total achats)" value={euro(summary.investedTotal)} />
+              <StatCard
+                label="Revenus de vente"
+                value={euro(summary.revenueGross)}
+                sub={`dont frais ${euro(summary.feesTotal)}`}
+                tone="accent"
+              />
+              <StatCard
+                label="Bénéfice net"
+                value={`${summary.profitNet >= 0 ? '+' : ''}${euro(summary.profitNet)}`}
+                sub={`${summary.salesCount} vente(s) · ${euro(summary.expensesTotal)} de dépenses`}
+                tone={summary.profitNet >= 0 ? 'positive' : 'negative'}
+              />
+              <StatCard
+                label="Stock restant"
+                value={euro(summary.stockValue)}
+                sub={`${summary.itemsInStock} exemplaire(s)${summary.stockPotentialNet > 0 ? ` · potentiel ~${euro(summary.stockPotentialNet)}` : ''}`}
+              />
+            </div>
+
+            {(summary.roiPct != null || summary.topProducts.length > 0) && (
+              <div className="grid gap-3 sm:grid-cols-3">
+                <StatCard
+                  label="ROI (marge sur coût vendu)"
+                  value={summary.roiPct != null ? `${summary.roiPct} %` : '—'}
+                  tone="accent"
+                />
+                <StatCard
+                  label="Rotation moyenne"
+                  value={summary.avgDaysToSell != null ? `${summary.avgDaysToSell} j` : '—'}
+                  sub="entre achat et vente"
+                />
+                <div className="card-pad">
+                  <p className="mb-2 text-xs text-slate-500">Top produits (bénéfice)</p>
+                  {summary.topProducts.length === 0 ? (
+                    <p className="text-sm text-slate-500">—</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {summary.topProducts.slice(0, 3).map((p) => (
+                        <div key={p.name} className="flex justify-between gap-2 text-sm">
+                          <span className="truncate text-slate-300">{p.name}</span>
+                          <span
+                            className={`shrink-0 font-semibold ${p.profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}
+                          >
+                            {p.profit >= 0 ? '+' : ''}
+                            {euro(p.profit)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {summary.monthly.length >= 2 && (
+              <div className="card-pad">
+                <h2 className="section-title mb-3">Bénéfice net par mois</h2>
+                <BarChart
+                  values={[...summary.monthly].reverse().map((m) => m.profitNet)}
+                  labels={[...summary.monthly]
+                    .reverse()
+                    .map((m) => MONTH_NAMES[Number(m.month.split('-')[1]) - 1] ?? m.month)}
+                  height={140}
+                />
+              </div>
+            )}
+
+            {summary.monthly.length > 0 && (
+              <div className="card-pad">
+                <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Détail mensuel
+                </h2>
+                <div className="overflow-x-auto">
+                  <table className="table-base">
+                    <thead>
+                      <tr>
+                        <th>Mois</th>
+                        <th>Ventes</th>
+                        <th>Chiffre d&apos;affaires</th>
+                        <th>Frais</th>
+                        <th>Coût d&apos;achat</th>
+                        <th>Dépenses</th>
+                        <th>Bénéfice net</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {summary.monthly.map((m) => (
+                        <tr key={m.month}>
+                          <td className="text-slate-200">{monthLabel(m.month)}</td>
+                          <td className="text-slate-400">{m.salesCount}</td>
+                          <td className="text-slate-300">{euro(m.revenue)}</td>
+                          <td className="text-slate-400">{euro(m.fees)}</td>
+                          <td className="text-slate-400">{euro(m.cost)}</td>
+                          <td className="text-slate-400">{euro(m.expenses)}</td>
+                          <td
+                            className={`font-semibold ${m.profitNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}
+                          >
+                            {m.profitNet >= 0 ? '+' : ''}
+                            {euro(m.profitNet)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <div className="card-pad">
+              <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Dépenses annexes
+              </h2>
+              <form onSubmit={addExpense} className="mb-3 grid gap-2 sm:grid-cols-[1fr_140px_160px_auto]">
+                <input
+                  value={expenseLabel}
+                  onChange={(e) => setExpenseLabel(e.target.value)}
+                  placeholder="Libellé (ex : cartons, essence...)"
+                  className="input"
+                  required
+                  maxLength={300}
+                />
+                <input
+                  type="number"
+                  value={expenseAmount}
+                  onChange={(e) => setExpenseAmount(e.target.value)}
+                  placeholder="Montant (€)"
+                  className="input"
+                  min="0.01"
+                  step="0.01"
+                  required
+                />
+                <select
+                  value={expenseCategory}
+                  onChange={(e) => setExpenseCategory(e.target.value)}
+                  className="input"
+                >
+                  <option value="emballage">Emballage</option>
+                  <option value="transport">Transport</option>
+                  <option value="abonnement">Abonnement</option>
+                  <option value="autre">Autre</option>
+                </select>
+                <button type="submit" className="btn-primary">
+                  <Plus className="h-4 w-4" /> Ajouter
+                </button>
+              </form>
+              {expenses.length === 0 ? (
+                <p className="px-1 text-sm text-slate-500">
+                  Aucune dépense enregistrée — elles sont déduites du bénéfice net.
+                </p>
+              ) : (
+                <div className="space-y-0.5">
+                  {expenses.map((exp) => (
+                    <div
+                      key={exp.id}
+                      className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 hover:bg-white/5"
+                    >
+                      <div className="min-w-0">
+                        <span className="text-sm text-slate-300">{exp.label}</span>
+                        <span className="ml-2 text-xs text-slate-500">
+                          {exp.category} · {dateFr(exp.expenseDate)}
+                        </span>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="text-sm font-semibold text-rose-300">
+                          −{euro(exp.amount)}
+                        </span>
+                        <button
+                          onClick={() => removeExpense(exp)}
+                          className="btn-ghost !p-1.5 hover:!text-rose-300"
+                          title="Supprimer"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="card-pad">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Historique des ventes
+                </h2>
+                {salePlatforms.length > 1 && (
+                  <div className="flex items-center gap-2 text-xs">
+                    <select
+                      value={salesPlatform}
+                      onChange={(e) => setSalesPlatform(e.target.value)}
+                      className="input !py-1 !text-xs"
+                      aria-label="Filtrer par plateforme"
+                    >
+                      <option value="all">Toutes les plateformes</option>
+                      {salePlatforms.map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
+                      ))}
+                    </select>
+                    <span className="whitespace-nowrap text-slate-500">
+                      {filteredSales.length} vente(s) ·{' '}
+                      <span className="font-semibold text-accent">{euro(filteredTotal)}</span>
+                    </span>
+                  </div>
+                )}
+              </div>
+              {sales.length === 0 ? (
+                <EmptyState
+                  icon={<Wallet className="h-6 w-6" />}
+                  title="Aucune vente enregistrée"
+                  description="Vendez un objet depuis votre stock pour voir vos bénéfices ici."
+                  action={
+                    <Link href="/stock" className="btn-secondary text-sm">
+                      <Package className="h-4 w-4" /> Aller au stock
+                    </Link>
+                  }
+                />
+              ) : filteredSales.length === 0 ? (
+                <p className="px-1 text-sm text-slate-500">Aucune vente pour cette plateforme.</p>
+              ) : (
+                <div className="space-y-0.5">
+                  {filteredSales.map((s) => (
+                    <div
+                      key={s.id}
+                      className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 hover:bg-white/5"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm text-slate-200">{s.itemName}</p>
+                        <p className="text-xs text-slate-500">
+                          {dateFr(s.saleDate)} &middot; {s.quantity} × {euro(s.unitPrice)}
+                          {s.fees > 0 && <> &middot; frais {euro(s.fees)}</>}
+                          {s.platform && <> &middot; {s.platform}</>}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <span className="text-sm font-semibold text-accent">{euro(s.total)}</span>
+                        <button
+                          onClick={() => cancelSale(s)}
+                          className="btn-ghost hover:!text-rose-300"
+                          title="Annuler cette vente (retour en stock)"
+                        >
+                          <Undo2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </PageShell>
+  );
+}

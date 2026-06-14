@@ -1,0 +1,205 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================
+   SHOPPING ASSISTANT — DESIGN SYSTEM
+   Thème sombre épuré : navy profond, accent cyan→violet réservé
+   à la marque, sémantique emerald/rose pour gains/pertes.
+============================================================ */
+
+@layer base {
+  body {
+    @apply bg-ink font-sans text-slate-300 antialiased;
+    /* Deux halos d'ambiance (cyan en haut, violet diffus) : profondeur sans bruit */
+    background-image:
+      radial-gradient(58rem 22rem at 50% -10rem, rgba(34, 211, 238, 0.10), transparent 70%),
+      radial-gradient(46rem 30rem at 110% 0%, rgba(139, 92, 246, 0.07), transparent 65%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
+
+  ::selection {
+    @apply bg-accent/30 text-white;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply text-slate-100;
+  }
+
+  /* Barre de défilement discrète, accordée au thème */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-thumb {
+    @apply rounded-full;
+    background-color: rgba(148, 163, 184, 0.22);
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(148, 163, 184, 0.4);
+  }
+}
+
+@layer components {
+  /* ---------- Conteneurs ---------- */
+  .page-container {
+    @apply mx-auto w-full max-w-5xl px-4;
+  }
+
+  .card {
+    @apply rounded-xl border border-line bg-surface shadow-card;
+  }
+
+  .card-pad {
+    @apply card p-5;
+  }
+
+  /* Carte interactive : se soulève légèrement et s'éclaire au survol */
+  .card-hover {
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-card-hover;
+  }
+
+  /* Carte chiffre-clé avec liseré dégradé en haut */
+  .kpi {
+    @apply card-pad relative overflow-hidden;
+  }
+  .kpi::before {
+    content: '';
+    @apply absolute inset-x-0 top-0 h-px opacity-70;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      theme('colors.accent.DEFAULT'),
+      theme('colors.brand.violet'),
+      transparent
+    );
+  }
+
+  /* Tuile d'accès rapide (grille d'accueil) */
+  .tile {
+    @apply card-hover flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3.5 text-sm font-medium text-slate-200;
+  }
+  .tile-icon {
+    @apply flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent;
+  }
+
+  /* ---------- Marque ---------- */
+  .brand-text {
+    background: linear-gradient(90deg, theme('colors.accent.DEFAULT'), theme('colors.brand.violet'));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* ---------- Boutons ---------- */
+  .btn {
+    @apply inline-flex cursor-pointer select-none items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn:focus-visible {
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-ink;
+  }
+
+  .btn-primary {
+    @apply btn bg-accent text-ink hover:bg-cyan-300 hover:shadow-glow;
+  }
+
+  .btn-secondary {
+    @apply btn border border-line-strong bg-surface-raised text-slate-200 hover:border-accent/40 hover:text-white;
+  }
+
+  .btn-ghost {
+    @apply btn px-2.5 py-1.5 text-slate-400 hover:bg-white/5 hover:text-slate-200;
+  }
+
+  .btn-danger {
+    @apply btn border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20;
+  }
+
+  /* ---------- Champs ---------- */
+  .input {
+    @apply w-full rounded-lg border border-line-strong bg-ink/60 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500;
+  }
+
+  .input:focus {
+    @apply border-accent/60 outline-none ring-2 ring-accent/20;
+  }
+
+  /* ---------- Badges ---------- */
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+  }
+
+  .badge-info {
+    @apply badge bg-accent/15 text-accent;
+  }
+
+  .badge-violet {
+    @apply badge bg-brand-violet/15 text-violet-300;
+  }
+
+  .badge-success {
+    @apply badge bg-emerald-500/15 text-emerald-300;
+  }
+
+  .badge-muted {
+    @apply badge bg-slate-500/15 text-slate-400;
+  }
+
+  /* ---------- Libellé de section ---------- */
+  .section-title {
+    @apply text-xs font-semibold uppercase tracking-wide text-slate-500;
+  }
+
+  /* ---------- Navigation ---------- */
+  .nav-link {
+    @apply rounded-lg px-3 py-1.5 text-sm text-slate-400 transition-colors hover:bg-white/5 hover:text-slate-100;
+  }
+
+  .nav-link-active {
+    @apply bg-accent/10 text-accent;
+  }
+
+  /* ---------- Barre de score ---------- */
+  .score-track {
+    @apply h-1.5 overflow-hidden rounded-full bg-white/5;
+  }
+
+  .score-fill {
+    background: linear-gradient(90deg, theme('colors.accent.DEFAULT'), theme('colors.brand.violet'));
+    @apply h-full rounded-full transition-[width] duration-500;
+  }
+
+  /* ---------- Squelettes de chargement ---------- */
+  .skeleton {
+    @apply animate-pulse rounded-md bg-white/5;
+  }
+
+  /* ---------- Tableaux ---------- */
+  .table-base {
+    @apply w-full text-sm;
+  }
+
+  .table-base thead tr {
+    @apply border-b border-line text-left text-xs uppercase tracking-wide text-slate-500;
+  }
+
+  .table-base th {
+    @apply py-2 pr-4 font-medium;
+  }
+
+  .table-base td {
+    @apply py-2.5 pr-4;
+  }
+
+  .table-base tbody tr {
+    @apply border-b border-line last:border-0;
+  }
+}

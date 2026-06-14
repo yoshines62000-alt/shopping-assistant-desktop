@@ -1,0 +1,7 @@
+{
+  "extends": "../../.eslintrc.cjs",
+  "parser": "@typescript-eslint/parser",
+  "rules": {
+    "no-console": "off"
+  }
+}
