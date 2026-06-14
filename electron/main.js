@@ -13,6 +13,7 @@ const { app, BrowserWindow } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
 const http = require('http');
+const fs = require('fs');
 
 // Ports fixes (suffisant pour une app mono-utilisateur ; le choix de ports
 // libres dynamiques pourra venir plus tard, cf. PLAN.md).
@@ -26,10 +27,18 @@ let backendProc = null;
 let frontendProc = null;
 let mainWindow = null;
 
-// Base SQLite dans le dossier de donnees utilisateur (%APPDATA%\<app>), pas
-// dans le dossier d'installation (lecture seule une fois packte).
+// Dossier de donnees de l'app : %APPDATA%\ShoppingAssistant (emplacement stable
+// et lisible, independant du nom interne d'Electron). Cree s'il manque.
+function dataDir() {
+  const dir = path.join(app.getPath('appData'), 'ShoppingAssistant');
+  fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+// Base SQLite dans le dossier de donnees (pas dans le dossier d'installation,
+// en lecture seule une fois packte).
 function databaseUrl() {
-  const dbPath = path.join(app.getPath('userData'), 'shopping.db').replace(/\\/g, '/');
+  const dbPath = path.join(dataDir(), 'shopping.db').replace(/\\/g, '/');
   return `sqlite:///${dbPath}`;
 }
 

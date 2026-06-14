@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from sqlalchemy import text
+from sqlalchemy.engine import make_url
 from sqlmodel import SQLModel, Session, create_engine
 
 from .config import get_settings
@@ -11,13 +12,21 @@ settings = get_settings()
 # pool_pre_ping : teste la connexion avant usage -> évite les erreurs
 # "server closed the connection" quand le conteneur Postgres a redémarré ou
 # que la connexion est restée inactive. pool_recycle : recycle au bout de 30 min.
-#
-# App desktop : la base est SQLite (un fichier local, pas de serveur). Il faut
-# check_same_thread=False car les handlers FastAPI et le threadpool de recherche
-# accedent a la base depuis plusieurs threads.
 _engine_kwargs = {"echo": False, "pool_pre_ping": True, "pool_recycle": 1800}
-if settings.database_url.startswith("sqlite"):
+
+_url = make_url(settings.database_url)
+if _url.drivername.startswith("sqlite"):
+    # App desktop : la base est un fichier SQLite (pas de serveur). Deux
+    # adaptations indispensables :
+    #  - check_same_thread=False : les handlers FastAPI et le threadpool de
+    #    recherche accedent a la base depuis plusieurs threads.
+    #  - creer le dossier parent : SQLite ne cree PAS l'arborescence et echoue
+    #    avec "unable to open database file" si le dossier (ex: %APPDATA%\...)
+    #    n'existe pas encore.
     _engine_kwargs["connect_args"] = {"check_same_thread": False}
+    if _url.database and _url.database != ":memory:":
+        Path(_url.database).expanduser().parent.mkdir(parents=True, exist_ok=True)
+
 engine = create_engine(settings.database_url, **_engine_kwargs)
 
 # Les fichiers SQL vivent dans src/db/migrations/ (et non src/migrations/) :
