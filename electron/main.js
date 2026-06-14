@@ -92,9 +92,10 @@ function startBackend() {
       { cwd, env }
     );
   } else {
-    // TODO (jalon packaging) : lancer resources/backend/backend.exe
-    backendProc = spawn(path.join(process.resourcesPath, 'backend', 'backend.exe'),
-      ['--port', String(BACKEND_PORT)], { cwd, env });
+    // Packte : backend.exe (PyInstaller) depuis resources/backend.
+    const backendDir = path.join(process.resourcesPath, 'backend');
+    backendProc = spawn(path.join(backendDir, 'backend.exe'),
+      ['--port', String(BACKEND_PORT)], { cwd: backendDir, env });
   }
   backendProc.stdout.on('data', (d) => process.stdout.write('[backend] ' + d));
   backendProc.stderr.on('data', (d) => process.stderr.write('[backend] ' + d));
@@ -102,23 +103,28 @@ function startBackend() {
 }
 
 function startFrontend() {
-  const cwd = path.join(ROOT, 'web');
   const env = {
     ...process.env,
     NEXT_PUBLIC_API_URL: `http://127.0.0.1:${BACKEND_PORT}`,
     PORT: String(FRONTEND_PORT),
+    HOSTNAME: '127.0.0.1',
   };
   if (isDev) {
     // shell: true -> resout next.cmd via node_modules/.bin sous Windows.
     frontendProc = spawn('npx', ['next', 'dev', '-p', String(FRONTEND_PORT)], {
-      cwd,
+      cwd: path.join(ROOT, 'web'),
       env,
       shell: true,
     });
   } else {
-    // TODO (jalon packaging) : node resources/web/server.js (sortie standalone)
-    frontendProc = spawn(process.execPath,
-      [path.join(process.resourcesPath, 'web', 'server.js')], { cwd, env });
+    // Packte : serveur Next "standalone" (resources/web/server.js) lance par le
+    // node embarque dans Electron (ELECTRON_RUN_AS_NODE=1). cwd = le dossier
+    // standalone pour qu'il trouve .next/static et public.
+    const webDir = path.join(process.resourcesPath, 'web');
+    frontendProc = spawn(process.execPath, [path.join(webDir, 'server.js')], {
+      cwd: webDir,
+      env: { ...env, ELECTRON_RUN_AS_NODE: '1' },
+    });
   }
   frontendProc.stdout.on('data', (d) => process.stdout.write('[web] ' + d));
   frontendProc.stderr.on('data', (d) => process.stderr.write('[web] ' + d));

@@ -10,9 +10,42 @@
     "install:web": "npm --prefix web install",
     "setup": "npm install && npm run install:web",
     "build:backend": "powershell -ExecutionPolicy Bypass -File scripts/build-backend.ps1",
-    "build:chromium": "powershell -ExecutionPolicy Bypass -File scripts/build-chromium.ps1"
+    "build:chromium": "powershell -ExecutionPolicy Bypass -File scripts/build-chromium.ps1",
+    "build:web": "powershell -ExecutionPolicy Bypass -File scripts/build-web.ps1",
+    "build:resources": "npm run build:backend && npm run build:chromium && npm run build:web",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder"
   },
   "devDependencies": {
-    "electron": "^31.7.7"
+    "electron": "^31.7.7",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.evolveai.shopping-assistant",
+    "productName": "Shopping Assistant",
+    "directories": {
+      "output": "dist_installer"
+    },
+    "files": [
+      "electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      { "from": "resources/backend", "to": "backend" },
+      { "from": "resources/chromium", "to": "chromium" },
+      { "from": "resources/web", "to": "web" }
+    ],
+    "npmRebuild": false,
+    "win": {
+      "target": "nsis"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Shopping Assistant"
+    }
   }
 }

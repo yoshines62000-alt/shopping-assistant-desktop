@@ -14,7 +14,7 @@ le frontend Next.js et le backend FastAPI sont emballés dans une coquille
 - [x] Arrêt propre des sidecars à la fermeture (taskkill /T).
 - [x] Packaging **`backend.exe`** (PyInstaller) — `npm run build:backend` (vérifié : démarre sans Python).
 - [x] **Chromium** embarqué — `npm run build:chromium` (~270 Mo, headless shell ; vérifié : scraping réel OK dans l'exe, sans Playwright global).
-- [ ] Build Next.js `standalone` + installeur NSIS (`electron-builder`) → `setup.exe`.
+- [x] Build Next.js **`standalone`** + **installeur NSIS** (`electron-builder`) → **`setup.exe`** (vérifié : app packagée lance backend.exe + Chromium + frontend, DB et recherche OK).
 
 ## Prérequis (dev)
 
@@ -42,6 +42,31 @@ Au lancement, Electron :
 3. attend que les deux répondent, puis ouvre la fenêtre sur l'UI.
 
 À la fermeture de la fenêtre, les deux sidecars sont tués automatiquement.
+(La base SQLite de l'app installée est dans `%APPDATA%\ShoppingAssistant\shopping.db`.)
+
+## Construire l'installeur `setup.exe`
+
+```powershell
+# 1) Construire les ressources embarquées (une fois, ou après modif du code) :
+npm run build:resources   # = build:backend (PyInstaller) + build:chromium + build:web (Next standalone)
+
+# 2) Fabriquer l'installeur NSIS :
+npm run dist              # -> dist_installer/Shopping Assistant Setup <version>.exe
+
+# (ou, app décompressée sans installeur, utile pour tester :)
+npm run pack             # -> dist_installer/win-unpacked/Shopping Assistant.exe
+```
+
+> **Note Windows / electron-builder** : la création de l'installeur extrait un
+> outil (`winCodeSign`) qui contient des liens symboliques macOS. Sur Windows,
+> leur création exige un privilège : si `npm run dist` échoue avec
+> *« Cannot create symbolic link … winCodeSign … »*, **activez le Mode
+> développeur Windows** (Paramètres → Confidentialité et sécurité → Pour les
+> développeurs) **ou** lancez le terminal **en administrateur**. Les 2 liens
+> concernés (`.dylib`) sont inutiles sous Windows.
+>
+> L'installeur n'est pas signé (pas de certificat) : Windows SmartScreen peut
+> afficher un avertissement au 1er lancement.
 
 ## Structure
 
