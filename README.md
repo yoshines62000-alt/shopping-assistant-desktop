@@ -15,6 +15,7 @@ le frontend Next.js et le backend FastAPI sont emballés dans une coquille
 - [x] Packaging **`backend.exe`** (PyInstaller) — `npm run build:backend` (vérifié : démarre sans Python).
 - [x] **Chromium** embarqué — `npm run build:chromium` (~270 Mo, headless shell ; vérifié : scraping réel OK dans l'exe, sans Playwright global).
 - [x] Build Next.js **`standalone`** + **installeur NSIS** (`electron-builder`) → **`setup.exe`** (vérifié : app packagée lance backend.exe + Chromium + frontend, DB et recherche OK).
+- [x] **Mise à jour automatique** (`electron-updater` + GitHub Releases) : l'app détecte une nouvelle version, la télécharge, et propose de **redémarrer pour l'appliquer**.
 
 ## Prérequis (dev)
 
@@ -67,6 +68,29 @@ npm run pack             # -> dist_installer/win-unpacked/Shopping Assistant.exe
 >
 > L'installeur n'est pas signé (pas de certificat) : Windows SmartScreen peut
 > afficher un avertissement au 1er lancement.
+
+## Mises à jour automatiques
+
+L'app installée vérifie au démarrage (puis toutes les 6 h) s'il existe une
+version plus récente, via les **Releases GitHub** du dépôt
+(`build.publish` dans `package.json`). Si oui : téléchargement en fond, puis une
+fenêtre propose **« Redémarrer maintenant »** / **« Plus tard »**. En cas de
+report, la mise à jour s'applique automatiquement à la prochaine fermeture.
+
+**Publier une mise à jour** (chez le dev) :
+
+```powershell
+# 1) Incrémenter la version dans package.json (ex: 0.1.0 -> 0.1.1)
+# 2) Reconstruire ressources + installeur
+npm run build:resources
+npm run dist
+# 3) Publier sur GitHub : créer une Release taguée v0.1.1 et y uploader
+#    TOUT le contenu de dist_installer/ : le .exe, latest.yml et le .blockmap.
+#    (ou: $env:GH_TOKEN=...; npx electron-builder --publish always)
+```
+
+Les apps déjà installées détecteront la Release et proposeront le redémarrage.
+L'auto-update ne fonctionne **que sur une app installée** (désactivé en dev).
 
 ## Structure
 

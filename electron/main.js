@@ -14,6 +14,7 @@ const { spawn } = require('child_process');
 const path = require('path');
 const http = require('http');
 const fs = require('fs');
+const { initAutoUpdate } = require('./updater');
 
 // Ports fixes (suffisant pour une app mono-utilisateur ; le choix de ports
 // libres dynamiques pourra venir plus tard, cf. PLAN.md).
@@ -189,6 +190,8 @@ if (!gotLock) {
       log('attente des services:', e.message);
     }
     await createWindow();
+    // Verifie les mises a jour (app installee uniquement).
+    initAutoUpdate(() => mainWindow);
   });
 
   app.on('window-all-closed', () => {
