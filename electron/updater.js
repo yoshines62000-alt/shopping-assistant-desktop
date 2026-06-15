@@ -1,25 +1,39 @@
 // Auto-update via electron-updater + GitHub Releases.
 //
-// Comportement voulu : quand une mise a jour validee est publiee (= une nouvelle
-// Release GitHub avec l'installeur + latest.yml), l'app la telecharge en fond,
-// puis INFORME l'utilisateur qu'elle est prete et lui propose de REDEMARRER pour
-// l'appliquer. S'il reporte, elle s'installe a la prochaine fermeture.
+// Comportement : verifie au demarrage puis toutes les 2 h. Quand une mise a jour
+// est publiee, l'app la telecharge en fond (progression dans le titre de la
+// fenetre), puis INFORME l'utilisateur et propose de REDEMARRER pour l'appliquer
+// (sinon application a la prochaine fermeture).
 //
-// Ne s'active qu'en app installee (pas en dev / pas en --dir non installe).
+// `checkForUpdates(true)` permet une verification MANUELLE (depuis le menu) avec
+// un retour visuel meme si l'app est deja a jour.
+//
+// Actif uniquement en app installee (pas en dev / --dir non installe).
 
 const { app, dialog } = require('electron');
+
+let autoUpdater = null;
+let getWin = () => null;
+let manualCheck = false;
+let promptShown = false;
 
 function log(...args) {
   console.log('[updater]', ...args);
 }
 
+function _win() {
+  const w = getWin();
+  return w && !w.isDestroyed() ? w : undefined;
+}
+
 function initAutoUpdate(getWindow) {
+  getWin = getWindow || (() => null);
+
   if (!app.isPackaged) {
     log('dev/non packte : auto-update desactive');
     return;
   }
 
-  let autoUpdater;
   try {
     ({ autoUpdater } = require('electron-updater'));
   } catch (e) {
@@ -27,14 +41,11 @@ function initAutoUpdate(getWindow) {
     return;
   }
 
-  // Telecharge la MAJ des qu'elle est detectee ; si l'utilisateur reporte le
-  // redemarrage, elle est appliquee automatiquement au prochain arret de l'app.
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
 
-  // Feed de test : pointer l'app vers un serveur local (provider "generic") au
-  // lieu des Releases GitHub, pour valider l'auto-update sans rien publier.
-  // En usage normal, la variable n'est pas definie -> feed GitHub (package.json).
+  // Feed de test : pointer vers un serveur local (provider "generic") au lieu de
+  // GitHub, pour valider l'auto-update sans rien publier. Non defini en usage normal.
   const testFeed = process.env.SA_UPDATE_FEED;
   if (testFeed) {
     log('feed de test (generic) :', testFeed);
@@ -42,19 +53,59 @@ function initAutoUpdate(getWindow) {
   }
 
   autoUpdater.on('error', (err) => {
-    log('erreur :', err == null ? 'inconnue' : err.message);
+    const msg = err == null ? 'inconnue' : err.message;
+    log('erreur :', msg);
+    if (manualCheck) {
+      manualCheck = false;
+      dialog.showMessageBox(_win(), {
+        type: 'warning',
+        title: 'Mise a jour',
+        message: 'Impossible de verifier les mises a jour.',
+        detail: msg,
+      });
+    }
   });
-  autoUpdater.on('update-available', (info) => log('MAJ disponible :', info.version));
-  autoUpdater.on('update-not-available', () => log('a jour'));
-  autoUpdater.on('download-progress', (p) => log(`telechargement ${Math.round(p.percent)}%`));
 
-  let promptShown = false;
+  autoUpdater.on('update-available', (info) => {
+    log('MAJ disponible :', info.version);
+    if (manualCheck) {
+      manualCheck = false;
+      dialog.showMessageBox(_win(), {
+        type: 'info',
+        title: 'Mise a jour',
+        message: `Version ${info.version} disponible.`,
+        detail: 'Telechargement en cours... vous serez prevenu quand elle sera prete a installer.',
+      });
+    }
+  });
+
+  autoUpdater.on('update-not-available', () => {
+    log('a jour');
+    if (manualCheck) {
+      manualCheck = false;
+      dialog.showMessageBox(_win(), {
+        type: 'info',
+        title: 'Mise a jour',
+        message: 'Shopping Assistant est a jour.',
+        detail: `Version ${app.getVersion()}.`,
+      });
+    }
+  });
+
+  autoUpdater.on('download-progress', (p) => {
+    const pct = Math.round(p.percent);
+    log(`telechargement ${pct}%`);
+    const w = _win();
+    if (w) w.setTitle(`Shopping Assistant — telechargement mise a jour ${pct}%`);
+  });
+
   autoUpdater.on('update-downloaded', async (info) => {
     log('MAJ telechargee :', info.version);
+    const w = _win();
+    if (w) w.setTitle('Shopping Assistant');
     if (promptShown) return;
     promptShown = true;
-    const win = getWindow && getWindow();
-    const choix = await dialog.showMessageBox(win, {
+    const choix = await dialog.showMessageBox(w, {
       type: 'info',
       buttons: ['Redemarrer maintenant', 'Plus tard'],
       defaultId: 0,
@@ -63,19 +114,34 @@ function initAutoUpdate(getWindow) {
       message: `La version ${info.version} de Shopping Assistant est prete.`,
       detail:
         "Redemarrez pour l'appliquer maintenant.\n" +
-        "Sinon, elle sera installee automatiquement a la prochaine fermeture.",
+        'Sinon, elle sera installee automatiquement a la prochaine fermeture.',
     });
     if (choix.response === 0) {
-      // quitAndInstall ferme l'app (les sidecars sont tues via before-quit) puis
-      // relance l'installeur en mode mise a jour et redemarre l'app.
       autoUpdater.quitAndInstall();
     }
   });
 
-  // Verifie au demarrage, puis toutes les 6 h tant que l'app tourne.
-  const check = () => autoUpdater.checkForUpdates().catch((e) => log('check echoue :', e.message));
-  check();
-  setInterval(check, 6 * 60 * 60 * 1000);
+  checkForUpdates(false);
+  setInterval(() => checkForUpdates(false), 2 * 60 * 60 * 1000);
 }
 
-module.exports = { initAutoUpdate };
+// Declenche une verification. manual=true -> retour visuel (dialogue) meme a jour.
+function checkForUpdates(manual) {
+  if (!autoUpdater) {
+    if (manual) {
+      dialog.showMessageBox(_win(), {
+        type: 'info',
+        title: 'Mise a jour',
+        message: "Les mises a jour ne sont disponibles que sur l'application installee.",
+      });
+    }
+    return;
+  }
+  if (manual) manualCheck = true;
+  autoUpdater.checkForUpdates().catch((e) => {
+    manualCheck = false;
+    log('check echoue :', e.message);
+  });
+}
+
+module.exports = { initAutoUpdate, checkForUpdates };

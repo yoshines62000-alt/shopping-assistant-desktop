@@ -9,12 +9,14 @@
 // Mode packte (app.isPackaged) : lance `backend.exe` + le serveur Next standalone.
 // Un splash couvre le demarrage ; en cas d'echec -> dialogue Reessayer/Quitter.
 
-const { app, BrowserWindow, dialog } = require('electron');
+const { app, BrowserWindow, Menu, dialog, shell } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
 const http = require('http');
 const fs = require('fs');
-const { initAutoUpdate } = require('./updater');
+const { initAutoUpdate, checkForUpdates } = require('./updater');
+
+const REPO_URL = 'https://github.com/yoshines62000-alt/shopping-assistant-desktop';
 
 // Ports fixes (suffisant pour une app mono-utilisateur ; le choix de ports
 // libres dynamiques pourra venir plus tard, cf. PLAN.md).
@@ -133,15 +135,50 @@ function startFrontend() {
   frontendProc.on('exit', (code) => log('frontend termine, code', code));
 }
 
+// Menu minimal (barre masquee par defaut, revelee avec Alt). Donne un acces a la
+// verification manuelle des mises a jour, a la version, et au zoom/rechargement.
+function buildAppMenu() {
+  const template = [
+    {
+      label: 'Fichier',
+      submenu: [
+        { label: 'Verifier les mises a jour...', click: () => checkForUpdates(true) },
+        { type: 'separator' },
+        { role: 'quit', label: 'Quitter' },
+      ],
+    },
+    {
+      label: 'Affichage',
+      submenu: [
+        { role: 'reload', label: 'Recharger' },
+        { role: 'togglefullscreen', label: 'Plein ecran' },
+        { type: 'separator' },
+        { role: 'resetZoom', label: 'Zoom normal' },
+        { role: 'zoomIn', label: 'Zoom +' },
+        { role: 'zoomOut', label: 'Zoom -' },
+      ],
+    },
+    {
+      label: 'Aide',
+      submenu: [
+        { label: `Version ${app.getVersion()}`, enabled: false },
+        { label: 'Code source (GitHub)', click: () => shell.openExternal(REPO_URL) },
+      ],
+    },
+  ];
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template));
+}
+
 async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 860,
     backgroundColor: '#0f1526',
     title: 'Shopping Assistant',
+    autoHideMenuBar: true, // barre de menu masquee par defaut (Alt pour l'afficher)
     webPreferences: { preload: path.join(__dirname, 'preload.js') },
   });
-  mainWindow.removeMenu();
+  buildAppMenu();
   mainWindow.on('closed', () => {
     mainWindow = null;
   });

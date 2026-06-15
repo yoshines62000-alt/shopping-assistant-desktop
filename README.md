@@ -73,11 +73,15 @@ npm run pack             # -> dist_installer/win-unpacked/Shopping Assistant.exe
 
 ## Mises à jour automatiques
 
-L'app installée vérifie au démarrage (puis toutes les 6 h) s'il existe une
+L'app installée vérifie au démarrage (puis toutes les 2 h) s'il existe une
 version plus récente, via les **Releases GitHub** du dépôt
-(`build.publish` dans `package.json`). Si oui : téléchargement en fond, puis une
-fenêtre propose **« Redémarrer maintenant »** / **« Plus tard »**. En cas de
-report, la mise à jour s'applique automatiquement à la prochaine fermeture.
+(`build.publish` dans `package.json`). Si oui : téléchargement en fond
+(progression affichée dans le titre de la fenêtre), puis une fenêtre propose
+**« Redémarrer maintenant »** / **« Plus tard »**. En cas de report, la mise à
+jour s'applique automatiquement à la prochaine fermeture.
+
+On peut aussi **forcer une vérification** via le menu **Fichier → Vérifier les
+mises à jour…** (barre de menu masquée par défaut, **Alt** pour l'afficher).
 
 **Publier une mise à jour** — automatisé par GitHub Actions
 (`.github/workflows/release.yml`). Il suffit de **pousser un tag de version** :
