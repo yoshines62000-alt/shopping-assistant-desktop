@@ -7,6 +7,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel, Field
 from typing import Any, Optional
 from ..config import get_settings
+from ..connectors import health
 from ..connectors.registry import CONNECTORS
 from ..normalization.engine import NormalizationEngine
 from ..scoring.engine import ScoringEngine, ScoringWeights
@@ -247,6 +248,10 @@ async def search_products(payload: SearchPayload) -> dict[str, Any]:
         fetch_count = max_results * 3
         
         async def run_connector(connector_cls):
+            # Circuit breaker : on saute un connecteur qui bloque a repetition.
+            if health.should_skip(connector_cls.site_key):
+                logger.warning("connector %s ignore (circuit ouvert)", connector_cls.site_key)
+                return ([], None)
             try:
                 connector = connector_cls()
                 loop = asyncio.get_running_loop()

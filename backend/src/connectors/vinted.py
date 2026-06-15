@@ -2,6 +2,7 @@ import json
 import logging
 from urllib.parse import quote_plus
 
+from . import health
 from .base import BaseConnector, ProductRaw
 from .browser import fetch_json_via_page
 
@@ -59,7 +60,9 @@ class VintedConnector(BaseConnector):
         body = fetch_json_via_page(api_url, warmup_url=f"{self.base_url}/", profile="vinted")
         if body is None:
             logger.warning("Vinted API inaccessible")
+            health.record(self.site_key, 0, issue="API inaccessible")
             return []
         results = parse_catalog_json(body, max_results)
+        health.record(self.site_key, len(results))
         logger.info("Vinted: %d real listings for '%s'", len(results), query)
         return results

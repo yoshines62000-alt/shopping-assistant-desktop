@@ -4,6 +4,7 @@ import re
 from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
 
+from . import health
 from .base import BaseConnector, ProductRaw
 from .blockcheck import detect_block
 from .browser import fetch_page_html
@@ -118,17 +119,20 @@ class EbayConnector(BaseConnector):
             )
         except Exception as exc:
             logger.error("eBay fetch failed: %s", exc)
+            health.record(self.site_key, 0, issue="erreur reseau")
             return []
 
         results = parse_search_page(html, max_results)
+        issue = None
         if not results:
-            reason = detect_block(html)
-            if reason:
-                logger.warning("eBay: bloqué (%s) pour '%s'", reason, query)
+            issue = detect_block(html)
+            if issue:
+                logger.warning("eBay: bloqué (%s) pour '%s'", issue, query)
             elif len(html) > 20000:
                 logger.warning(
                     "eBay: page reçue (%d Ko) mais 0 annonce extraite — sélecteurs cassés ?",
                     len(html) // 1024,
                 )
+        health.record(self.site_key, len(results), issue)
         logger.info("eBay: %d real listings for '%s'", len(results), query)
         return results

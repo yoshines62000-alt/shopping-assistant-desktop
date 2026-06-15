@@ -4,6 +4,7 @@ from urllib.parse import quote_plus
 
 from bs4 import BeautifulSoup
 
+from . import health
 from .base import BaseConnector, ProductRaw
 from .blockcheck import detect_block
 from .browser import fetch_page_html
@@ -96,17 +97,20 @@ class AmazonConnector(BaseConnector):
             )
         except Exception as exc:
             logger.error("Amazon fetch failed: %s", exc)
+            health.record(self.site_key, 0, issue="erreur reseau")
             return []
 
         results = parse_search_page(html, max_results)
+        issue = None
         if not results:
-            reason = detect_block(html)
-            if reason:
-                logger.warning("Amazon: bloqué (%s) pour '%s'", reason, query)
+            issue = detect_block(html)
+            if issue:
+                logger.warning("Amazon: bloqué (%s) pour '%s'", issue, query)
             elif len(html) > 20000:
                 logger.warning(
                     "Amazon: page reçue (%d Ko) mais 0 produit extrait — sélecteurs cassés ?",
                     len(html) // 1024,
                 )
+        health.record(self.site_key, len(results), issue)
         logger.info("Amazon: %d real products for '%s'", len(results), query)
         return results
