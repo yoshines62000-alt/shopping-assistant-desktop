@@ -13,6 +13,7 @@ import pytest
 
 from src.connectors.amazon import parse_search_page as parse_amazon
 from src.connectors.ebay import parse_search_page as parse_ebay
+from src.connectors.vinted import parse_catalog_json
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 
@@ -44,3 +45,24 @@ def test_ebay_fixture_reelle():
         assert p.title.lower() != "shop on ebay"
         assert any(c.isdigit() for c in p.price_raw), f"prix invalide: {p.price_raw!r}"
         assert "/itm/" in p.url, f"URL annonce invalide: {p.url}"
+
+
+def test_ebay_sold_fixture_reelle():
+    # Page des ventes conclues (LH_Sold), utilisee par l'estimation de revente.
+    results = parse_ebay(_load("ebay_sold.html"), 30)
+    assert len(results) >= 10, "selecteurs eBay (ventes conclues) cassés ?"
+    for p in results:
+        assert p.title
+        assert any(c.isdigit() for c in p.price_raw)
+        assert "/itm/" in p.url
+    # Les ventes conclues portent une date ("Vendu le...") -> calcul de vélocité.
+    assert any(p.extra.get("sold_date_raw") for p in results), "dates de vente introuvables"
+
+
+def test_vinted_fixture_reelle():
+    results = parse_catalog_json(_load("vinted_catalog.json"), 30)
+    assert len(results) >= 10, "format de l'API catalogue Vinted changé ?"
+    for p in results:
+        assert p.title
+        assert any(c.isdigit() for c in p.price_raw), f"prix invalide: {p.price_raw!r}"
+        assert p.url.startswith("http")
