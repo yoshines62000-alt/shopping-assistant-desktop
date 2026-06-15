@@ -79,17 +79,21 @@ version plus récente, via les **Releases GitHub** du dépôt
 fenêtre propose **« Redémarrer maintenant »** / **« Plus tard »**. En cas de
 report, la mise à jour s'applique automatiquement à la prochaine fermeture.
 
-**Publier une mise à jour** (chez le dev) :
+**Publier une mise à jour** — automatisé par GitHub Actions
+(`.github/workflows/release.yml`). Il suffit de **pousser un tag de version** :
 
 ```powershell
-# 1) Incrémenter la version dans package.json (ex: 0.1.0 -> 0.1.1)
-# 2) Reconstruire ressources + installeur
-npm run build:resources
-npm run dist
-# 3) Publier sur GitHub : créer une Release taguée v0.1.1 et y uploader
-#    TOUT le contenu de dist_installer/ : le .exe, latest.yml et le .blockmap.
-#    (ou: $env:GH_TOKEN=...; npx electron-builder --publish always)
+npm version patch        # 0.1.0 -> 0.1.1 : bump package.json + commit + tag v0.1.1
+git push --follow-tags   # -> Actions construit l'installeur ET publie la Release
 ```
+
+GitHub Actions (runner Windows, gratuit car dépôt public) construit le
+`backend.exe`, le Chromium, le frontend, fabrique l'installeur et le publie en
+Release — **sans token local ni build sur ta machine**. Les apps installées
+détectent ensuite la nouvelle Release.
+
+> Build manuel possible aussi : `npm run build:resources` puis
+> `$env:GH_TOKEN="..."; npm run dist -- --publish always`.
 
 Les apps déjà installées détecteront la Release et proposeront le redémarrage.
 L'auto-update ne fonctionne **que sur une app installée** (désactivé en dev).
