@@ -6,10 +6,10 @@
 // Object du panneau PowerShell) pour ne laisser aucun process orphelin.
 //
 // Mode dev (npm start) : lance `python -m uvicorn` et `next dev`.
-// Mode packte (app.isPackaged) : lancera `backend.exe` + serveur Next standalone
-// (jalon ulterieur, voir PLAN.md).
+// Mode packte (app.isPackaged) : lance `backend.exe` + le serveur Next standalone.
+// Un splash couvre le demarrage ; en cas d'echec -> dialogue Reessayer/Quitter.
 
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, dialog } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
 const http = require('http');
@@ -27,6 +27,7 @@ const isDev = !app.isPackaged;
 let backendProc = null;
 let frontendProc = null;
 let mainWindow = null;
+let splashWindow = null;
 
 // Dossier de donnees de l'app : %APPDATA%\ShoppingAssistant (emplacement stable
 // et lisible, independant du nom interne d'Electron). Cree s'il manque.
@@ -167,6 +168,133 @@ function killChildren() {
   frontendProc = null;
 }
 
+// --- Ecran de demarrage (splash) -----------------------------
+function createSplash() {
+  splashWindow = new BrowserWindow({
+    width: 460,
+    height: 300,
+    frame: false,
+    resizable: false,
+    center: true,
+    backgroundColor: '#0f1526',
+    title: 'Shopping Assistant',
+  });
+  splashWindow.removeMenu();
+  splashWindow.loadFile(path.join(__dirname, 'splash.html'));
+}
+
+function splashStatus(text) {
+  log(text);
+  if (splashWindow && !splashWindow.isDestroyed()) {
+    splashWindow.webContents
+      .executeJavaScript(`window.setStatus && window.setStatus(${JSON.stringify(text)})`)
+      .catch(() => {});
+  }
+}
+
+function closeSplash() {
+  if (splashWindow && !splashWindow.isDestroyed()) splashWindow.close();
+  splashWindow = null;
+}
+
+// Promesse qui rejette si le process meurt avant d'etre pret (echec rapide :
+// inutile d'attendre le timeout complet si backend.exe plante au demarrage).
+function rejectOnExit(proc, name) {
+  let handler;
+  const promise = new Promise((_, reject) => {
+    handler = (code) => reject(new Error(`${name} s'est arrete (code ${code}) avant d'etre pret.`));
+    proc.once('exit', handler);
+  });
+  return { promise, dispose: () => proc && proc.removeListener('exit', handler) };
+}
+
+async function waitForServiceReady(proc, url, timeout, name) {
+  const guard = rejectOnExit(proc, name);
+  try {
+    await Promise.race([waitForHttp(url, timeout), guard.promise]);
+  } finally {
+    guard.dispose();
+  }
+}
+
+// Tue un backend.exe orphelin (issu d'un crash precedent) qui squatterait nos
+// ports. Cible uniquement NOTRE binaire (chemin sous resources) -> sans danger.
+function cleanupOrphans() {
+  return new Promise((resolve) => {
+    if (process.platform !== 'win32' || isDev) return resolve();
+    const resDir = process.resourcesPath.replace(/'/g, "''");
+    const ps =
+      `Get-CimInstance Win32_Process -Filter "Name='backend.exe'" | ` +
+      `Where-Object { $_.ExecutablePath -like '${resDir}*' } | ` +
+      `ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }`;
+    try {
+      const p = spawn('powershell', ['-NoProfile', '-NonInteractive', '-Command', ps], {
+        windowsHide: true,
+      });
+      p.on('exit', () => resolve());
+      p.on('error', () => resolve());
+    } catch {
+      resolve();
+    }
+  });
+}
+
+// Demarre les services et attend qu'ils repondent, en mettant a jour le splash.
+async function bootServices() {
+  splashStatus('Verification...');
+  await cleanupOrphans();
+  splashStatus('Demarrage du moteur...');
+  startBackend();
+  await waitForServiceReady(
+    backendProc,
+    `http://127.0.0.1:${BACKEND_PORT}/health/ready`,
+    45000,
+    'Le moteur (backend)'
+  );
+  splashStatus("Preparation de l'interface...");
+  startFrontend();
+  await waitForServiceReady(
+    frontendProc,
+    `http://127.0.0.1:${FRONTEND_PORT}`,
+    120000,
+    "L'interface"
+  );
+  splashStatus('Pret.');
+}
+
+// Orchestration : splash -> services -> fenetre. En cas d'echec, propose de
+// reessayer ou de quitter (au lieu d'une fenetre blanche muette).
+async function startup() {
+  try {
+    await bootServices();
+  } catch (e) {
+    killChildren();
+    const detail =
+      (e && e.message ? e.message : 'Erreur inconnue.') +
+      '\n\nUne instance precedente est peut-etre encore active, ou un port ' +
+      `(${BACKEND_PORT}/${FRONTEND_PORT}) est occupe par un autre programme.`;
+    const res = await dialog.showMessageBox(splashWindow || undefined, {
+      type: 'error',
+      buttons: ['Reessayer', 'Quitter'],
+      defaultId: 0,
+      cancelId: 1,
+      title: 'Demarrage impossible',
+      message: "Shopping Assistant n'a pas pu demarrer.",
+      detail,
+    });
+    if (res.response === 0) {
+      return startup();
+    }
+    app.quit();
+    return;
+  }
+  // Fenetre principale AVANT de fermer le splash (toujours >= 1 fenetre ouverte,
+  // sinon window-all-closed quitterait l'app).
+  await createWindow();
+  closeSplash();
+  initAutoUpdate(() => mainWindow);
+}
+
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
   app.quit();
@@ -178,20 +306,9 @@ if (!gotLock) {
     }
   });
 
-  app.whenReady().then(async () => {
-    startBackend();
-    startFrontend();
-    try {
-      await waitForHttp(`http://127.0.0.1:${BACKEND_PORT}/health/ready`, 60000);
-      log('backend pret');
-      await waitForHttp(`http://127.0.0.1:${FRONTEND_PORT}`, 180000);
-      log('frontend pret');
-    } catch (e) {
-      log('attente des services:', e.message);
-    }
-    await createWindow();
-    // Verifie les mises a jour (app installee uniquement).
-    initAutoUpdate(() => mainWindow);
+  app.whenReady().then(() => {
+    createSplash();
+    startup();
   });
 
   app.on('window-all-closed', () => {

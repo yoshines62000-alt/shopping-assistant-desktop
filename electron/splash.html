@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html, body {
+        margin: 0; height: 100%;
+        background: #0f1526; color: #e2e8f0;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        overflow: hidden; user-select: none;
+      }
+      .wrap {
+        height: 100%; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 18px;
+      }
+      .title { font-size: 26px; font-weight: 600; color: #22d3ee; letter-spacing: 0.5px; }
+      .sub { font-size: 13px; color: #94a3b8; margin-top: -10px; }
+      .spinner {
+        width: 30px; height: 30px; border-radius: 50%;
+        border: 3px solid rgba(148,163,184,0.25);
+        border-top-color: #22d3ee;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .status { font-size: 13px; color: #cbd5e1; min-height: 18px; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="title">Shopping Assistant</div>
+      <div class="sub">Console d'achat / revente</div>
+      <div class="spinner"></div>
+      <div class="status" id="status">Demarrage...</div>
+    </div>
+    <script>
+      window.setStatus = (t) => {
+        const el = document.getElementById('status');
+        if (el) el.textContent = t;
+      };
+    </script>
+  </body>
+</html>

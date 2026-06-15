@@ -16,6 +16,7 @@ le frontend Next.js et le backend FastAPI sont emballés dans une coquille
 - [x] **Chromium** embarqué — `npm run build:chromium` (~270 Mo, headless shell ; vérifié : scraping réel OK dans l'exe, sans Playwright global).
 - [x] Build Next.js **`standalone`** + **installeur NSIS** (`electron-builder`) → **`setup.exe`** (vérifié : app packagée lance backend.exe + Chromium + frontend, DB et recherche OK).
 - [x] **Mise à jour automatique** (`electron-updater` + GitHub Releases) : l'app détecte une nouvelle version, la télécharge, et propose de **redémarrer pour l'appliquer**.
+- [x] **Démarrage robuste** : écran de chargement (splash) avec statut, **gestion d'erreurs** (dialogue *Réessayer / Quitter* au lieu d'une fenêtre blanche si un service ne démarre pas), et nettoyage des `backend.exe` orphelins d'un crash précédent.
 
 ## Prérequis (dev)
 
