@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import quote_plus
 
 from .base import BaseConnector, ProductRaw
+from .blockcheck import detect_block
 from .browser import fetch_page_html
 
 logger = logging.getLogger("connectors.ebay")
@@ -120,5 +121,14 @@ class EbayConnector(BaseConnector):
             return []
 
         results = parse_search_page(html, max_results)
+        if not results:
+            reason = detect_block(html)
+            if reason:
+                logger.warning("eBay: bloqué (%s) pour '%s'", reason, query)
+            elif len(html) > 20000:
+                logger.warning(
+                    "eBay: page reçue (%d Ko) mais 0 annonce extraite — sélecteurs cassés ?",
+                    len(html) // 1024,
+                )
         logger.info("eBay: %d real listings for '%s'", len(results), query)
         return results

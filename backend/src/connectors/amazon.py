@@ -5,6 +5,7 @@ from urllib.parse import quote_plus
 from bs4 import BeautifulSoup
 
 from .base import BaseConnector, ProductRaw
+from .blockcheck import detect_block
 from .browser import fetch_page_html
 
 logger = logging.getLogger("connectors.amazon")
@@ -98,5 +99,14 @@ class AmazonConnector(BaseConnector):
             return []
 
         results = parse_search_page(html, max_results)
+        if not results:
+            reason = detect_block(html)
+            if reason:
+                logger.warning("Amazon: bloqué (%s) pour '%s'", reason, query)
+            elif len(html) > 20000:
+                logger.warning(
+                    "Amazon: page reçue (%d Ko) mais 0 produit extrait — sélecteurs cassés ?",
+                    len(html) // 1024,
+                )
         logger.info("Amazon: %d real products for '%s'", len(results), query)
         return results

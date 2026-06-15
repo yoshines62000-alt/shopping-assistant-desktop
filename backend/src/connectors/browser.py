@@ -14,6 +14,7 @@ import threading
 from playwright.sync_api import sync_playwright
 from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
 from ..config import get_settings
+from .blockcheck import detect_block
 
 logger = logging.getLogger("connectors.browser")
 
@@ -239,10 +240,31 @@ def fetch_page_html(
     visitée qu'à la première utilisation du profil. En cas d'erreur (navigateur
     mort, contexte périmé), la session du thread est recyclée et un second
     essai est tenté.
+
+    Anti-bot : une page de blocage (captcha/DataDome/Akamai...) revient en 200,
+    le parser extrairait 0 produit sans rien signaler. Si un blocage est détecté,
+    on recycle la session (nouvel user-agent) et on retente une fois.
     """
-    try:
+    def attempt() -> str:
         return _fetch(url, wait_selector, timeout_ms, warmup_url, profile)
+
+    try:
+        html = attempt()
     except Exception as exc:
         logger.warning("Session navigateur recyclée après erreur : %s", exc)
         _drop_session()
-        return _fetch(url, wait_selector, timeout_ms, warmup_url, profile)
+        html = attempt()
+
+    reason = detect_block(html)
+    if reason:
+        logger.warning("Blocage détecté (%s) sur %s — recyclage session + nouvel essai", reason, url)
+        _drop_session()
+        try:
+            retry_html = attempt()
+        except Exception as exc:
+            logger.warning("Nouvel essai post-blocage échoué : %s", exc)
+            return html
+        if detect_block(retry_html):
+            logger.warning("Toujours bloqué (%s) après recyclage sur %s", reason, url)
+        return retry_html
+    return html
