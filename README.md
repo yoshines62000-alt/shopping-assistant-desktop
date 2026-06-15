@@ -87,6 +87,7 @@ mises à jour…** (barre de menu masquée par défaut, **Alt** pour l'afficher)
 (`.github/workflows/release.yml`). Il suffit de **pousser un tag de version** :
 
 ```powershell
+# (1) renseigner les changements dans CHANGELOG.md, puis :
 npm version patch        # 0.1.0 -> 0.1.1 : bump package.json + commit + tag v0.1.1
 git push --follow-tags   # -> Actions construit l'installeur ET publie la Release
 ```
