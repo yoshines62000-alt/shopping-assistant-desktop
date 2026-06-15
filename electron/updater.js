@@ -32,6 +32,15 @@ function initAutoUpdate(getWindow) {
   autoUpdater.autoDownload = true;
   autoUpdater.autoInstallOnAppQuit = true;
 
+  // Feed de test : pointer l'app vers un serveur local (provider "generic") au
+  // lieu des Releases GitHub, pour valider l'auto-update sans rien publier.
+  // En usage normal, la variable n'est pas definie -> feed GitHub (package.json).
+  const testFeed = process.env.SA_UPDATE_FEED;
+  if (testFeed) {
+    log('feed de test (generic) :', testFeed);
+    autoUpdater.setFeedURL({ provider: 'generic', url: testFeed });
+  }
+
   autoUpdater.on('error', (err) => {
     log('erreur :', err == null ? 'inconnue' : err.message);
   });

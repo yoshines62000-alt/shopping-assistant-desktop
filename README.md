@@ -15,7 +15,8 @@ le frontend Next.js et le backend FastAPI sont emballés dans une coquille
 - [x] Packaging **`backend.exe`** (PyInstaller) — `npm run build:backend` (vérifié : démarre sans Python).
 - [x] **Chromium** embarqué — `npm run build:chromium` (~270 Mo, headless shell ; vérifié : scraping réel OK dans l'exe, sans Playwright global).
 - [x] Build Next.js **`standalone`** + **installeur NSIS** (`electron-builder`) → **`setup.exe`** (vérifié : app packagée lance backend.exe + Chromium + frontend, DB et recherche OK).
-- [x] **Mise à jour automatique** (`electron-updater` + GitHub Releases) : l'app détecte une nouvelle version, la télécharge, et propose de **redémarrer pour l'appliquer**.
+- [x] **Mise à jour automatique** (`electron-updater` + GitHub Releases) : l'app détecte une nouvelle version, la télécharge, et propose de **redémarrer pour l'appliquer**. *Vérifié de bout en bout* (0.1.0 → 0.1.1, détection + téléchargement + application au redémarrage) via un feed local.
+- [x] **Icône** personnalisée (`build/icon.ico`, généré par `scripts/make-icon.py`).
 - [x] **Démarrage robuste** : écran de chargement (splash) avec statut, **gestion d'erreurs** (dialogue *Réessayer / Quitter* au lieu d'une fenêtre blanche si un service ne démarre pas), et nettoyage des `backend.exe` orphelins d'un crash précédent.
 
 ## Prérequis (dev)
@@ -92,6 +93,11 @@ npm run dist
 
 Les apps déjà installées détecteront la Release et proposeront le redémarrage.
 L'auto-update ne fonctionne **que sur une app installée** (désactivé en dev).
+
+**Tester sans publier sur GitHub** : lancer l'app installée avec la variable
+`SA_UPDATE_FEED=http://127.0.0.1:<port>` pointant sur un serveur local qui sert
+`latest.yml` + l'installeur. Les noms de fichiers doivent correspondre à
+`latest.yml` (ex. `Shopping-Assistant-Setup-0.1.1.exe`, avec tirets).
 
 ## Structure
 
