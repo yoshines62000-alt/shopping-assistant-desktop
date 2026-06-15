@@ -60,7 +60,8 @@
     "publish": {
       "provider": "github",
       "owner": "yoshines62000-alt",
-      "repo": "shopping-assistant-desktop"
+      "repo": "shopping-assistant-desktop",
+      "releaseType": "release"
     }
   },
   "dependencies": {
