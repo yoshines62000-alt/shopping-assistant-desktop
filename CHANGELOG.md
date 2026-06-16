@@ -6,6 +6,9 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 ### Ajouté
+- **Aide au cross-listing** : bouton « Annonce » sur chaque objet du stock —
+  brouillon de titre + description + prix conseillé, adapté à eBay / Vinted /
+  Leboncoin, avec copie en un clic.
 - **Stock dormant** : badge « Dormant · N j » et bandeau récapitulatif (nombre +
   valeur immobilisée) pour les objets en stock depuis plus de 60 jours.
 - **Tendance de prix** : indicateur « bon moment pour acheter » (prix actuel

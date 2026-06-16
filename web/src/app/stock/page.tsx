@@ -13,7 +13,9 @@ import {
   RefreshCw,
   Coins,
   Clock,
+  Megaphone,
 } from 'lucide-react';
+import CrossListingPanel from '@/components/CrossListingPanel';
 import PageShell from '@/components/ui/PageShell';
 import ErrorBanner from '@/components/ui/ErrorBanner';
 import EmptyState from '@/components/ui/EmptyState';
@@ -79,6 +81,7 @@ export default function StockPage() {
     platform: 'eBay',
   });
   const [estimatingId, setEstimatingId] = useState<number | null>(null);
+  const [listingId, setListingId] = useState<number | null>(null);
 
   const loadSettings = useCallback(async () => {
     try {
@@ -457,7 +460,18 @@ export default function StockPage() {
                           Remettre en stock
                         </button>
                       )}
+                      <button
+                        onClick={() => setListingId(listingId === item.id ? null : item.id)}
+                        className="btn-secondary !px-3 !py-1.5 text-xs"
+                        title="Générer un brouillon d'annonce eBay / Vinted / Leboncoin"
+                      >
+                        <Megaphone className="h-4 w-4" /> Annonce
+                      </button>
                     </div>
+                  )}
+
+                  {listingId === item.id && (
+                    <CrossListingPanel item={item} onClose={() => setListingId(null)} />
                   )}
 
                   {sellingId === item.id && (
