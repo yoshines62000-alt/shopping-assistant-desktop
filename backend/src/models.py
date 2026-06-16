@@ -88,6 +88,36 @@ class Sale(SQLModel, table=True):
     sale_date: datetime = Field(default_factory=utcnow_naive)
 
 
+class SavedSearch(SQLModel, table=True):
+    """Recherche favorite surveillée en fond (deal-watcher).
+
+    À chaque cycle, la tâche de fond rejoue la recherche et enregistre toute
+    offre sous `target_price` jamais vue (DealHit) -> notification proactive.
+    """
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    query: str = Field(index=True)
+    target_price: float  # seuil : on ne retient que les offres <= ce prix
+    site: str = Field(default="")  # connecteur unique optionnel (amazon/ebay/vinted)
+    active: bool = Field(default=True)
+    last_checked: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=utcnow_naive)
+
+
+class DealHit(SQLModel, table=True):
+    """Bonne affaire trouvée par le deal-watcher pour une SavedSearch."""
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    saved_search_id: int = Field(index=True, foreign_key="savedsearch.id")
+    product_id: str = Field(index=True)  # sha256 de l'URL (dédoublonnage)
+    name: str = Field(default="")
+    price: float = 0.0
+    source_url: str = Field(default="")
+    site_domain: str = Field(default="")
+    found_at: datetime = Field(default_factory=utcnow_naive)
+    notified: bool = Field(default=False)
+
+
 class SiteReputation(SQLModel, table=True):
     domain: str = Field(primary_key=True)
     trust_score: int = Field(default=50)

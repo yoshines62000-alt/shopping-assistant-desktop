@@ -6,6 +6,9 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 ### Ajouté
+- **Deal-watcher** : surveille des recherches favorites (requête + prix cible),
+  les re-scanne en fond et **notifie** (Discord + notification native Windows)
+  dès qu’une offre passe sous la cible. UI dans « Alertes & surveillances ».
 - **Aide au cross-listing** : bouton « Annonce » sur chaque objet du stock —
   brouillon de titre + description + prix conseillé, adapté à eBay / Vinted /
   Leboncoin, avec copie en un clic.

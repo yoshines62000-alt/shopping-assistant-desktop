@@ -19,7 +19,7 @@ from sqlmodel import select
 from .connectors.browser import fetch_page_html
 from .db import get_session
 from .estimation.engine import estimate_resale
-from .models import Alert, PriceHistory, ProductRef, StockItem
+from .models import Alert, DealHit, PriceHistory, ProductRef, SavedSearch, StockItem
 from .normalization.engine import NormalizationEngine
 from .settings_store import get_app_settings
 
@@ -166,6 +166,95 @@ def reestimate_stale_stock() -> int:
     return done
 
 
+# Deal-watcher : recherches favorites scannées par cycle (chaque scan lance les
+# navigateurs des connecteurs ~10-20 s) et nombre de résultats demandés par scan.
+SAVED_SEARCH_BATCH = 3
+SAVED_SEARCH_RESULTS = 8
+
+
+def _record_deal_hits(search: SavedSearch, results: list[dict]) -> list[dict]:
+    """Enregistre les offres <= seuil jamais vues pour cette recherche.
+
+    Retourne la liste des NOUVELLES offres (pour notification).
+    """
+    fresh: list[dict] = []
+    with get_session() as session:
+        existing = set(
+            session.exec(
+                select(DealHit.product_id).where(DealHit.saved_search_id == search.id)
+            ).all()
+        )
+        for r in results:
+            pid = r.get("id")
+            price = float(r.get("totalPrice") or 0)
+            if not pid or price <= 0 or price > search.target_price or pid in existing:
+                continue
+            existing.add(pid)
+            session.add(
+                DealHit(
+                    saved_search_id=search.id,
+                    product_id=pid,
+                    name=(r.get("name") or "")[:300],
+                    price=price,
+                    source_url=r.get("sourceUrl", ""),
+                    site_domain=r.get("siteDomain", ""),
+                    notified=True,
+                )
+            )
+            fresh.append(r)
+        # Avance last_checked même sans nouveauté pour faire tourner le batch.
+        db_search = session.get(SavedSearch, search.id)
+        if db_search:
+            db_search.last_checked = _utcnow_naive()
+            session.add(db_search)
+        session.commit()
+    return fresh
+
+
+async def scan_saved_searches() -> int:
+    """Rejoue les recherches favorites actives, notifie les nouvelles bonnes
+    affaires sous le seuil. Retourne le nombre de nouvelles offres trouvées."""
+    with get_session() as session:
+        searches = session.exec(select(SavedSearch).where(SavedSearch.active)).all()
+    if not searches:
+        return 0
+
+    # Les moins récemment vérifiées d'abord (None = jamais -> prioritaire).
+    searches.sort(key=lambda s: s.last_checked or datetime.min)
+    batch = searches[:SAVED_SEARCH_BATCH]
+
+    from .routes.search import SearchPayload, search_products
+
+    total_new = 0
+    for search in batch:
+        try:
+            res = await search_products(
+                SearchPayload(
+                    query=search.query,
+                    maxResults=SAVED_SEARCH_RESULTS,
+                    maxPriceEur=search.target_price,
+                    site=search.site or None,
+                )
+            )
+        except Exception as exc:
+            logger.error("scan_saved_searches '%s' failed: %s", search.query, exc)
+            continue
+        fresh = await asyncio.to_thread(_record_deal_hits, search, res.get("results", []))
+        if fresh:
+            total_new += len(fresh)
+            lines = "\n".join(
+                f"• {d.get('name', '')[:70]} — {float(d.get('totalPrice') or 0):.2f} € ({d.get('siteDomain', '')})\n  {d.get('sourceUrl', '')}"
+                for d in fresh[:5]
+            )
+            notify_discord(
+                f"🛍️ {len(fresh)} bon(s) plan(s) pour « {search.query} » "
+                f"(≤ {search.target_price:.0f} €) :\n{lines}"
+            )
+    if total_new:
+        logger.info("Deal-watcher : %d nouvelle(s) offre(s) trouvée(s)", total_new)
+    return total_new
+
+
 async def background_loop(stop_event: asyncio.Event) -> None:
     # Premier passage différé : laisse l'app démarrer (et les tests se terminer)
     try:
@@ -183,6 +272,10 @@ async def background_loop(stop_event: asyncio.Event) -> None:
             await asyncio.to_thread(reestimate_stale_stock)
         except Exception as exc:
             logger.error("reestimate_stale_stock crashed: %s", exc)
+        try:
+            await scan_saved_searches()
+        except Exception as exc:
+            logger.error("scan_saved_searches crashed: %s", exc)
 
         minutes = int(get_app_settings().get("alertCheckMinutes", 60))
         try:

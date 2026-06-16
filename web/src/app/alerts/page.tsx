@@ -6,6 +6,7 @@ import type { PriceAlert } from '@shopping-assistant/types';
 import { Bell, BellOff, BellRing, Trash2, Settings } from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
 import EmptyState from '@/components/ui/EmptyState';
+import SavedSearches from '@/components/SavedSearches';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { euro, dateFr } from '@/lib/format';
@@ -55,9 +56,9 @@ export default function AlertsPage() {
 
   return (
     <PageShell
-      title="Alertes prix"
+      title="Alertes & surveillances"
       icon={<Bell className="h-6 w-6" />}
-      subtitle="Vérifiées automatiquement en arrière-plan — notification Discord quand le prix passe sous le seuil"
+      subtitle="Surveille des recherches favorites ou un produit précis — re-scan automatique en fond et notification quand le prix passe sous ta cible"
       actions={
         <Link href="/settings" className="btn-ghost text-xs" title="Configurer le webhook Discord">
           <Settings className="h-4 w-4" /> Configurer Discord
@@ -65,6 +66,8 @@ export default function AlertsPage() {
       }
     >
       <div className="space-y-4">
+        <SavedSearches />
+
         <div className="card-pad">
           <h2 className="mb-3 text-sm font-semibold text-slate-100">Créer une alerte</h2>
           <form onSubmit={createAlert}>
