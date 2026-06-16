@@ -12,7 +12,6 @@ import logging
 import re
 from datetime import datetime, timedelta, timezone
 
-import requests
 from bs4 import BeautifulSoup
 from sqlmodel import select
 
@@ -21,6 +20,7 @@ from .db import get_session
 from .estimation.engine import estimate_resale
 from .models import Alert, DealHit, PriceHistory, ProductRef, SavedSearch, StockItem
 from .normalization.engine import NormalizationEngine
+from .notifications import notify_all
 from .settings_store import get_app_settings
 
 logger = logging.getLogger("background")
@@ -69,17 +69,12 @@ def fetch_current_price(url: str) -> float | None:
 
 
 def notify_discord(message: str) -> bool:
-    webhook = get_app_settings().get("discordWebhookUrl", "")
-    if not webhook:
-        logger.info("Discord non configuré, notification ignorée : %s", message)
-        return False
-    try:
-        resp = requests.post(webhook, json={"content": message}, timeout=10)
-        resp.raise_for_status()
-        return True
-    except Exception as exc:
-        logger.error("Notification Discord échouée : %s", exc)
-        return False
+    """Compat : diffuse désormais à TOUS les canaux configurés (Discord + Telegram
+    + e-mail). Conservé sous ce nom pour les appels existants."""
+    results = notify_all(message)
+    if not any(results.values()):
+        logger.info("Aucun canal de notification configuré : %s", message)
+    return any(results.values())
 
 
 def _domain(url: str) -> str:

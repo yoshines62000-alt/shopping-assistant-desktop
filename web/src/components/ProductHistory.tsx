@@ -5,6 +5,7 @@ import { Bell, History, ExternalLink, TrendingDown, TrendingUp } from 'lucide-re
 import type { ProductInfo } from '@shopping-assistant/types';
 import EmptyState from '@/components/ui/EmptyState';
 import Sparkline from '@/components/ui/Sparkline';
+import PriceChart from '@/components/PriceChart';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { euro } from '@/lib/format';
@@ -128,11 +129,15 @@ export default function ProductHistory({ productId }: { productId: string }) {
               )}
             </div>
           </div>
-          {chronological.length >= 2 && (
+          {chronological.length >= 3 ? (
+            <div className="mb-4">
+              <PriceChart points={chronological.map((h) => ({ price: h.price, ts: h.ts }))} />
+            </div>
+          ) : chronological.length === 2 ? (
             <div className="mb-4">
               <Sparkline values={chronological.map((h) => h.price)} />
             </div>
-          )}
+          ) : null}
           <div className="space-y-0.5">
             {chronological
               .slice(-10)

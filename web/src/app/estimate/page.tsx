@@ -3,12 +3,13 @@
 import { useState, useEffect, useRef, useCallback, Suspense, FormEvent } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import type { ResaleEstimate } from '@shopping-assistant/types';
+import type { ResaleEstimate, AppSettings } from '@shopping-assistant/types';
 import { Coins, ExternalLink, PackagePlus, Check, SearchX, Loader2 } from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
 import StatCard from '@/components/ui/StatCard';
 import ErrorBanner from '@/components/ui/ErrorBanner';
 import EmptyState from '@/components/ui/EmptyState';
+import MarginCalculator from '@/components/MarginCalculator';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { euro } from '@/lib/format';
@@ -29,7 +30,12 @@ function EstimateContent() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ResaleEstimate | null>(null);
   const [added, setAdded] = useState(false);
+  const [settings, setSettings] = useState<AppSettings | null>(null);
   const autoRan = useRef(false);
+
+  useEffect(() => {
+    apiFetch<AppSettings>('/settings').then(setSettings).catch(() => setSettings(null));
+  }, []);
 
   const run = useCallback(async (q: string, p: string, plat: string) => {
     if (!q.trim()) return;
@@ -233,6 +239,10 @@ function EstimateContent() {
           </div>
         </div>
       )}
+
+      <div className="mt-6">
+        <MarginCalculator settings={settings} />
+      </div>
     </>
   );
 }

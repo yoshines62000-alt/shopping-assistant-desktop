@@ -113,6 +113,14 @@ export interface Expense {
 export interface AppSettings {
   platformFees: Record<string, number>;
   discordWebhookUrl: string;
+  telegramBotToken: string;
+  telegramChatId: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUser: string;
+  smtpPassword: string;
+  emailFrom: string;
+  emailTo: string;
   alertCheckMinutes: number;
   reestimateDays: number;
 }

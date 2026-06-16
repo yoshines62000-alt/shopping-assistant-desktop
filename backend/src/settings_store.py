@@ -22,6 +22,16 @@ DEFAULTS: dict[str, Any] = {
     "platformFees": {"ebay": 0.13, "vinted": 0.0, "leboncoin": 0.0, "autre": 0.10},
     # Webhook Discord pour les notifications d'alerte prix (vide = désactivé)
     "discordWebhookUrl": "",
+    # Telegram : bot token + chat id (les deux requis, sinon désactivé)
+    "telegramBotToken": "",
+    "telegramChatId": "",
+    # E-mail SMTP pour les notifications (emailTo + smtpHost requis)
+    "smtpHost": "",
+    "smtpPort": 587,
+    "smtpUser": "",
+    "smtpPassword": "",
+    "emailFrom": "",
+    "emailTo": "",
     # Intervalle de vérification des alertes prix (minutes)
     "alertCheckMinutes": 60,
     # Âge (jours) au-delà duquel un objet du stock est ré-estimé automatiquement
