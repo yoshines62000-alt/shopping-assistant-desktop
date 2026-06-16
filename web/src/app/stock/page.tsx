@@ -12,6 +12,7 @@ import {
   Tag,
   RefreshCw,
   Coins,
+  Clock,
 } from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
 import ErrorBanner from '@/components/ui/ErrorBanner';
@@ -32,6 +33,19 @@ const STATUS_BADGES: Record<StockStatus, string> = {
   listed: 'badge-violet',
   sold: 'badge-muted',
 };
+
+// Stock dormant : un exemplaire encore en stock (non vendu) depuis trop longtemps
+// immobilise de la trésorerie -> on le signale pour pousser à le solder.
+const DORMANT_DAYS = 60;
+
+function ageDays(iso: string): number {
+  const ms = Date.now() - new Date(iso).getTime();
+  return ms > 0 ? Math.floor(ms / 86_400_000) : 0;
+}
+
+function isDormant(item: StockItem): boolean {
+  return item.remaining > 0 && item.status !== 'sold' && ageDays(item.purchaseDate) >= DORMANT_DAYS;
+}
 
 interface SellForm {
   quantity: string;
@@ -178,6 +192,8 @@ export default function StockPage() {
   const filtered = filter === 'all' ? items : items.filter((i) => i.status === filter);
   const totalRemaining = items.reduce((s, i) => s + i.remaining, 0);
   const stockValue = items.reduce((s, i) => s + i.remaining * i.purchasePrice, 0);
+  const dormantItems = items.filter(isDormant);
+  const dormantValue = dormantItems.reduce((s, i) => s + i.remaining * i.purchasePrice, 0);
   const potentialNet = items.reduce(
     (s, i) => s + (i.estimatedResale ? i.remaining * i.estimatedResale * (1 - feeRate) : 0),
     0
@@ -275,6 +291,16 @@ export default function StockPage() {
           ))}
         </div>
 
+        {!loading && dormantItems.length > 0 && (
+          <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+            <Clock className="h-4 w-4 shrink-0" />
+            <span>
+              {dormantItems.length} objet(s) dormant(s) (&gt; {DORMANT_DAYS} j en stock) ·{' '}
+              {euro(dormantValue)} immobilisé(s) — pense à les solder.
+            </span>
+          </div>
+        )}
+
         {error && <ErrorBanner message={error} />}
         {loading && <LoadingBlock label="Chargement du stock..." />}
 
@@ -309,6 +335,14 @@ export default function StockPage() {
                       <div className="mb-1 flex flex-wrap items-center gap-2">
                         <h3 className="font-semibold text-slate-100">{item.name}</h3>
                         <span className={STATUS_BADGES[item.status]}>{STATUS_LABELS[item.status]}</span>
+                        {isDormant(item) && (
+                          <span
+                            className="badge bg-amber-500/15 text-amber-300"
+                            title={`En stock depuis ${ageDays(item.purchaseDate)} jours`}
+                          >
+                            <Clock className="h-3 w-3" /> Dormant · {ageDays(item.purchaseDate)} j
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm text-slate-400">
                         Achat {euro(item.purchasePrice)}

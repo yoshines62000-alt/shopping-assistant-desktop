@@ -59,6 +59,20 @@ export default function ProductHistory({ productId }: { productId: string }) {
       ? Math.round(((currentPrice - firstPrice) / firstPrice) * 100)
       : null;
 
+  // Indicateur "bon moment pour acheter" : position du prix actuel dans la
+  // fourchette observee. Proche du plus bas -> bon moment ; proche du plus haut -> cher.
+  const prices = chronological.map((h) => h.price).filter((p) => p > 0);
+  const minPrice = prices.length ? Math.min(...prices) : null;
+  const maxPrice = prices.length ? Math.max(...prices) : null;
+  const buyHint =
+    prices.length >= 3 && currentPrice != null && minPrice != null && maxPrice != null && maxPrice > minPrice
+      ? currentPrice <= minPrice * 1.03
+        ? { label: 'Bon moment — proche du plus bas', cls: 'badge-success' }
+        : currentPrice >= maxPrice * 0.97
+          ? { label: 'Prix élevé — proche du plus haut', cls: 'bg-rose-500/15 text-rose-300' }
+          : null
+      : null;
+
   return (
     <div className="space-y-4">
       {info && (info.name || info.sourceUrl) && (
@@ -92,20 +106,27 @@ export default function ProductHistory({ productId }: { productId: string }) {
             <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               Historique des prix
             </h2>
-            {trendPct != null && trendPct !== 0 && (
-              <span
-                className={`badge ${trendPct < 0 ? 'badge-success' : 'bg-amber-500/15 text-amber-300'}`}
-                title="Variation depuis le premier prix observé"
-              >
-                {trendPct < 0 ? (
-                  <TrendingDown className="h-3 w-3" />
-                ) : (
-                  <TrendingUp className="h-3 w-3" />
-                )}
-                {trendPct > 0 ? '+' : ''}
-                {trendPct}%
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {buyHint && (
+                <span className={`badge ${buyHint.cls}`} title="Position du prix actuel dans la fourchette observée">
+                  {buyHint.label}
+                </span>
+              )}
+              {trendPct != null && trendPct !== 0 && (
+                <span
+                  className={`badge ${trendPct < 0 ? 'badge-success' : 'bg-amber-500/15 text-amber-300'}`}
+                  title="Variation depuis le premier prix observé"
+                >
+                  {trendPct < 0 ? (
+                    <TrendingDown className="h-3 w-3" />
+                  ) : (
+                    <TrendingUp className="h-3 w-3" />
+                  )}
+                  {trendPct > 0 ? '+' : ''}
+                  {trendPct}%
+                </span>
+              )}
+            </div>
           </div>
           {chronological.length >= 2 && (
             <div className="mb-4">

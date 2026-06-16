@@ -6,6 +6,10 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 ### Ajouté
+- **Stock dormant** : badge « Dormant · N j » et bandeau récapitulatif (nombre +
+  valeur immobilisée) pour les objets en stock depuis plus de 60 jours.
+- **Tendance de prix** : indicateur « bon moment pour acheter » (prix actuel
+  proche du plus bas / plus haut de la fourchette observée) sur la fiche produit.
 - **Zone de notification (tray)** : fermer la fenêtre la masque (l'app continue
   en fond) ; **notifications natives Windows** quand une alerte prix se déclenche.
 - Santé des connecteurs + **circuit breaker** anti-bot (saute un connecteur
