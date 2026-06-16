@@ -90,6 +90,7 @@ export interface StockItem {
     estimatedAt: string | null;
     status: StockStatus;
     category: string;
+    sku: string;
     notes: string;
 }
 export interface Expense {

@@ -58,6 +58,7 @@ def _item_to_dict(item: StockItem) -> dict[str, Any]:
         "estimatedAt": item.estimated_at.isoformat() if item.estimated_at else None,
         "status": item.status,
         "category": item.category,
+        "sku": item.sku,
         "notes": item.notes,
     }
 
@@ -102,6 +103,13 @@ def create_stock(body: StockCreate):
         session.add(item)
         session.commit()
         session.refresh(item)
+        # SKU auto (F12) : prefixe categorie (ou SA) + id zero-padde, une fois l'id connu.
+        if not item.sku:
+            prefix = "".join(c for c in item.category.upper() if c.isalnum())[:3] or "SA"
+            item.sku = f"{prefix}-{item.id:05d}"
+            session.add(item)
+            session.commit()
+            session.refresh(item)
         return {"ok": True, "item": _item_to_dict(item)}
 
 

@@ -16,8 +16,10 @@ import {
   Megaphone,
   Download,
   Upload,
+  Printer,
 } from 'lucide-react';
 import CrossListingPanel from '@/components/CrossListingPanel';
+import { printStockLabel } from '@/lib/label';
 import PageShell from '@/components/ui/PageShell';
 import ErrorBanner from '@/components/ui/ErrorBanner';
 import EmptyState from '@/components/ui/EmptyState';
@@ -428,6 +430,11 @@ export default function StockPage() {
                     <div className="min-w-0 flex-1">
                       <div className="mb-1 flex flex-wrap items-center gap-2">
                         <h3 className="font-semibold text-slate-100">{item.name}</h3>
+                        {item.sku && (
+                          <span className="font-mono text-xs text-slate-500" title="Code de rangement">
+                            {item.sku}
+                          </span>
+                        )}
                         <span className={STATUS_BADGES[item.status]}>{STATUS_LABELS[item.status]}</span>
                         {item.category && <span className="badge-muted">{item.category}</span>}
                         {isDormant(item) && (
@@ -486,6 +493,13 @@ export default function StockPage() {
                       {item.notes && <p className="mt-1 text-xs text-slate-500">{item.notes}</p>}
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
+                      <button
+                        onClick={() => printStockLabel(item)}
+                        className="btn-ghost"
+                        title="Imprimer l'étiquette de rangement"
+                      >
+                        <Printer className="h-4 w-4" />
+                      </button>
                       {item.sourceUrl && (
                         <a
                           href={item.sourceUrl}
