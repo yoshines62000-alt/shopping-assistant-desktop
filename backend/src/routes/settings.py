@@ -22,6 +22,7 @@ class SettingsUpdate(BaseModel):
     emailTo: Optional[str] = Field(default=None, max_length=200)
     alertCheckMinutes: Optional[int] = Field(default=None, ge=5, le=1440)
     reestimateDays: Optional[int] = Field(default=None, ge=1, le=90)
+    weeklyDigestEnabled: Optional[bool] = None
 
 
 @router.get("/settings")

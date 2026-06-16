@@ -266,6 +266,44 @@ async def scan_saved_searches() -> int:
     return total_new
 
 
+def _build_weekly_digest() -> str | None:
+    """Texte du digest hebdomadaire : baisses de prix (7 j) + activité stock."""
+    from .routes.digest import get_daily_digest
+
+    digest = get_daily_digest(hours=168)
+    drops = digest.get("priceDrops", [])
+    with get_session() as session:
+        in_stock = session.exec(select(StockItem).where(StockItem.remaining > 0)).all()
+    lines = [f"📅 Digest hebdomadaire Shopping Assistant"]
+    lines.append(f"• {len(drops)} baisse(s) de prix cette semaine")
+    for d in drops[:5]:
+        lines.append(f"  - {d['product'][:60]} : {d['oldPrice']:.2f} → {d['newPrice']:.2f} €")
+    lines.append(f"• {sum(i.remaining for i in in_stock)} exemplaire(s) en stock")
+    return "\n".join(lines)
+
+
+def maybe_send_weekly_digest() -> bool:
+    """Envoie le digest hebdo si active et si >= 7 jours depuis le dernier envoi."""
+    settings = get_app_settings()
+    if not settings.get("weeklyDigestEnabled"):
+        return False
+    last_raw = settings.get("weeklyDigestLast") or ""
+    if last_raw:
+        try:
+            last = datetime.fromisoformat(last_raw)
+            if _utcnow_naive() - last < timedelta(days=7):
+                return False
+        except ValueError:
+            pass
+    message = _build_weekly_digest()
+    if message:
+        notify_all(message, subject="Shopping Assistant — digest hebdomadaire")
+    from .settings_store import update_app_settings
+
+    update_app_settings({"weeklyDigestLast": _utcnow_naive().isoformat()})
+    return True
+
+
 async def background_loop(stop_event: asyncio.Event) -> None:
     # Premier passage différé : laisse l'app démarrer (et les tests se terminer)
     try:
@@ -287,6 +325,10 @@ async def background_loop(stop_event: asyncio.Event) -> None:
             await scan_saved_searches()
         except Exception as exc:
             logger.error("scan_saved_searches crashed: %s", exc)
+        try:
+            await asyncio.to_thread(maybe_send_weekly_digest)
+        except Exception as exc:
+            logger.error("maybe_send_weekly_digest crashed: %s", exc)
 
         minutes = int(get_app_settings().get("alertCheckMinutes", 60))
         try:

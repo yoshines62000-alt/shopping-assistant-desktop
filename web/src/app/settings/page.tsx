@@ -33,6 +33,7 @@ export default function SettingsPage() {
   const [emailTo, setEmailTo] = useState('');
   const [alertMinutes, setAlertMinutes] = useState('60');
   const [reestimateDays, setReestimateDays] = useState('7');
+  const [weeklyDigest, setWeeklyDigest] = useState(false);
   const [testing, setTesting] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -56,6 +57,7 @@ export default function SettingsPage() {
         setEmailTo(s.emailTo ?? '');
         setAlertMinutes(String(s.alertCheckMinutes));
         setReestimateDays(String(s.reestimateDays));
+        setWeeklyDigest(!!s.weeklyDigestEnabled);
       })
       .catch(() => setError('Impossible de charger les réglages.'));
   }, []);
@@ -82,6 +84,7 @@ export default function SettingsPage() {
           emailTo: emailTo.trim(),
           alertCheckMinutes: Number(alertMinutes) || 60,
           reestimateDays: Number(reestimateDays) || 7,
+          weeklyDigestEnabled: weeklyDigest,
         },
       });
       setSettings(updated);
@@ -339,6 +342,15 @@ export default function SettingsPage() {
                   />
                 </label>
               </div>
+              <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={weeklyDigest}
+                  onChange={(e) => setWeeklyDigest(e.target.checked)}
+                  className="h-4 w-4 accent-cyan-400"
+                />
+                Envoyer un <strong>digest hebdomadaire</strong> (baisses de prix + activité) aux canaux de notification
+              </label>
             </div>
 
             <div className="card-pad">

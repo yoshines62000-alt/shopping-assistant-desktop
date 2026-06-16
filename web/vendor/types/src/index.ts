@@ -125,6 +125,7 @@ export interface AppSettings {
   emailTo: string;
   alertCheckMinutes: number;
   reestimateDays: number;
+  weeklyDigestEnabled: boolean;
 }
 
 export interface PriceAlert {
