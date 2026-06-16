@@ -69,7 +69,8 @@ npm run pack             # -> dist_installer/win-unpacked/Shopping Assistant.exe
 > concernés (`.dylib`) sont inutiles sous Windows.
 >
 > L'installeur n'est pas signé (pas de certificat) : Windows SmartScreen peut
-> afficher un avertissement au 1er lancement.
+> afficher un avertissement au 1er lancement. Pour le supprimer, voir
+> [SIGNING.md](SIGNING.md) (Azure Trusted Signing ou certificat .pfx).
 
 ## Mises à jour automatiques
 
