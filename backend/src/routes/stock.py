@@ -221,10 +221,31 @@ def list_expenses():
         return {"expenses": [_expense_to_dict(e) for e in expenses]}
 
 
+# Catégorisation automatique (F15) : mots-clés -> catégorie. Appliquée quand
+# l'utilisateur n'a pas choisi de catégorie explicite (défaut "autre").
+_CATEGORY_KEYWORDS: list[tuple[str, tuple[str, ...]]] = [
+    ("emballage", ("carton", "emballage", "scotch", "bulle", "pochette", "enveloppe", "etiquette", "étiquette")),
+    ("transport", ("essence", "carburant", "peage", "péage", "train", "sncf", "metro", "métro", "bus", "parking", "colissimo", "mondial relay", "chronopost", "livraison", "port", "timbre")),
+    ("abonnement", ("abonnement", "premium", "vinted pro", "ebay shop", "boutique", "mensuel")),
+    ("materiel", ("balance", "imprimante", "encre", "rangement", "etagere", "étagère", "bac")),
+]
+
+
+def _auto_category(label: str) -> str:
+    low = label.lower()
+    for category, keywords in _CATEGORY_KEYWORDS:
+        if any(k in low for k in keywords):
+            return category
+    return "autre"
+
+
 @router.post("/expenses")
 def create_expense(body: ExpenseCreate):
+    category = body.category.strip()
+    if not category or category == "autre":
+        category = _auto_category(body.label)
     with get_session() as session:
-        expense = Expense(label=body.label.strip(), amount=body.amount, category=body.category.strip())
+        expense = Expense(label=body.label.strip(), amount=body.amount, category=category)
         if body.expenseDate is not None:
             expense.expense_date = body.expenseDate.replace(tzinfo=None)
         session.add(expense)
