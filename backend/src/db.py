@@ -63,6 +63,44 @@ def _migration_statements(path: Path) -> list[str]:
     return [stmt.strip() for stmt in sql.split(";") if stmt.strip()]
 
 
+# "ALTER TABLE t ADD COLUMN IF NOT EXISTS col <type/defaut...>" : syntaxe Postgres
+# que SQLite ne comprend pas. Sur SQLite on emule l'idempotence via PRAGMA.
+_ADD_COLUMN_IF_NOT_EXISTS = re.compile(
+    r"ALTER\s+TABLE\s+(\w+)\s+ADD\s+COLUMN\s+IF\s+NOT\s+EXISTS\s+(\w+)\s+(.+)",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+def _sqlite_column_exists(conn, table: str, column: str) -> bool:
+    rows = conn.execute(text(f"PRAGMA table_info({table})")).all()
+    return any(row[1] == column for row in rows)
+
+
+def _apply_statement(stmt: str) -> None:
+    """Execute un statement de migration, en traduisant pour SQLite le
+    'ADD COLUMN IF NOT EXISTS' (non supporte) en ajout conditionnel via PRAGMA.
+
+    Indispensable pour que les colonnes ajoutees apres coup (categorie, SKU,
+    options de surveillance...) apparaissent aussi sur les bases SQLite DEJA
+    creees -- sinon create_all() ne les ajoute qu'aux nouvelles bases."""
+    is_sqlite = engine.dialect.name == "sqlite"
+    match = _ADD_COLUMN_IF_NOT_EXISTS.match(stmt.strip())
+    if is_sqlite and match:
+        table, column, rest = match.group(1), match.group(2), match.group(3).strip()
+        with engine.begin() as conn:
+            if _sqlite_column_exists(conn, table, column):
+                return  # deja presente (base recente creee par create_all)
+            conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} {rest}"))
+        return
+    # Postgres (ADD COLUMN IF NOT EXISTS natif) ou autres statements (index...).
+    # try/except : sur une base creee par create_all les colonnes existent deja.
+    try:
+        with engine.begin() as conn:
+            conn.execute(text(stmt))
+    except Exception:
+        pass
+
+
 def init_db():
     SQLModel.metadata.create_all(engine)
     with engine.begin() as conn:
@@ -73,16 +111,10 @@ def init_db():
         if path.name in applied:
             continue
         for stmt in _migration_statements(path):
-            # Chaque statement dans sa propre transaction : certaines migrations
-            # sont ecrites pour Postgres (ex: "ADD COLUMN IF NOT EXISTS", non
-            # supporte par SQLite). Sur une base creee par create_all() les
-            # colonnes existent deja -> on ignore l'echec sans contaminer les
-            # statements suivants (ex: la creation d'index, elle, compatible).
-            try:
-                with engine.begin() as conn:
-                    conn.execute(text(stmt))
-            except Exception:
-                pass
+            # Chaque statement dans sa propre transaction. _apply_statement gere
+            # le cas SQLite (ADD COLUMN IF NOT EXISTS -> ajout conditionnel via
+            # PRAGMA) et ignore les echecs benins (colonne deja presente...).
+            _apply_statement(stmt)
         with engine.begin() as conn:
             conn.execute(
                 text(f"INSERT INTO {MIGRATIONS_TABLE} (filename, applied_at) VALUES (:filename, :applied_at)"),
