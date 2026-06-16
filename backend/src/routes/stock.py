@@ -22,6 +22,7 @@ class StockCreate(BaseModel):
     purchaseDate: Optional[datetime] = None
     sourceUrl: str = Field(default="", max_length=1000)
     estimatedResale: Optional[float] = Field(default=None, ge=0)
+    category: str = Field(default="", max_length=100)
     notes: str = Field(default="", max_length=2000)
 
 
@@ -30,6 +31,7 @@ class StockUpdate(BaseModel):
     purchasePrice: Optional[float] = Field(default=None, ge=0)
     estimatedResale: Optional[float] = Field(default=None, ge=0)
     status: Optional[str] = None
+    category: Optional[str] = Field(default=None, max_length=100)
     notes: Optional[str] = Field(default=None, max_length=2000)
     sourceUrl: Optional[str] = Field(default=None, max_length=1000)
 
@@ -55,6 +57,7 @@ def _item_to_dict(item: StockItem) -> dict[str, Any]:
         "previousEstimate": item.previous_estimate,
         "estimatedAt": item.estimated_at.isoformat() if item.estimated_at else None,
         "status": item.status,
+        "category": item.category,
         "notes": item.notes,
     }
 
@@ -90,6 +93,7 @@ def create_stock(body: StockCreate):
             remaining=body.quantity,
             source_url=body.sourceUrl.strip(),
             estimated_resale=body.estimatedResale,
+            category=body.category.strip(),
             notes=body.notes.strip(),
         )
         if body.purchaseDate is not None:
@@ -116,6 +120,8 @@ def update_stock(item_id: int, body: StockUpdate):
             item.purchase_price = body.purchasePrice
         if body.estimatedResale is not None:
             item.estimated_resale = body.estimatedResale
+        if body.category is not None:
+            item.category = body.category.strip()
         if body.notes is not None:
             item.notes = body.notes.strip()
         if body.sourceUrl is not None:
@@ -343,6 +349,33 @@ def accounting_summary():
     for m in monthly.values():
         m["profitNet"] = m["profit"] - m["expenses"]
 
+    # ROI par categorie (F3) : profit realise + cout des ventes par categorie de
+    # l'objet vendu, plus la valeur du stock encore detenu par categorie.
+    by_cat: dict[str, dict[str, Any]] = defaultdict(
+        lambda: {"profit": 0.0, "cost": 0.0, "salesCount": 0, "stockValue": 0.0}
+    )
+    for s in sales:
+        item = item_map.get(s.item_id)
+        cat = (item.category or "Sans catégorie") if item else "Sans catégorie"
+        cost = s.quantity * item.purchase_price if item else 0.0
+        c = by_cat[cat]
+        c["profit"] += s.unit_price * s.quantity - s.fees - cost
+        c["cost"] += cost
+        c["salesCount"] += 1
+    for i in items:
+        if i.remaining > 0:
+            by_cat[i.category or "Sans catégorie"]["stockValue"] += i.remaining * i.purchase_price
+    by_category = [
+        {
+            "category": cat,
+            "profit": round(v["profit"], 2),
+            "salesCount": v["salesCount"],
+            "stockValue": round(v["stockValue"], 2),
+            "roiPct": round(v["profit"] / v["cost"] * 100, 1) if v["cost"] > 0 else None,
+        }
+        for cat, v in sorted(by_cat.items(), key=lambda kv: kv[1]["profit"], reverse=True)
+    ]
+
     return {
         "investedTotal": round(invested_total, 2),
         "revenueGross": round(revenue_gross, 2),
@@ -360,6 +393,7 @@ def accounting_summary():
         "itemsTotal": len(items),
         "salesCount": len(sales),
         "feeRate": fee_rate,
+        "byCategory": by_category,
         "monthly": [
             {"month": month, **{k: round(v, 2) for k, v in data.items()}}
             for month, data in sorted(monthly.items(), reverse=True)

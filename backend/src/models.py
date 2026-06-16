@@ -71,6 +71,7 @@ class StockItem(SQLModel, table=True):
     previous_estimate: Optional[float] = None  # estimation précédente (tendance ↗↘)
     estimated_at: Optional[datetime] = None  # date de la dernière estimation
     status: str = Field(default="in_stock")  # in_stock | listed | sold
+    category: str = Field(default="", index=True)  # catégorie libre (ROI par catégorie)
     notes: str = Field(default="")
     created_at: datetime = Field(default_factory=utcnow_naive)
 

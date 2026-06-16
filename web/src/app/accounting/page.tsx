@@ -219,6 +219,45 @@ export default function AccountingPage() {
               </div>
             )}
 
+            {summary.byCategory.filter((c) => c.salesCount > 0 || c.stockValue > 0).length > 0 && (
+              <div className="card-pad">
+                <h2 className="section-title mb-3">ROI par catégorie</h2>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-xs text-slate-500">
+                        <th className="py-1 text-left font-medium">Catégorie</th>
+                        <th className="py-1 text-right font-medium">Ventes</th>
+                        <th className="py-1 text-right font-medium">Bénéfice</th>
+                        <th className="py-1 text-right font-medium">ROI</th>
+                        <th className="py-1 text-right font-medium">Stock</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {summary.byCategory
+                        .filter((c) => c.salesCount > 0 || c.stockValue > 0)
+                        .map((c) => (
+                          <tr key={c.category} className="border-t border-line/60">
+                            <td className="py-1.5 text-slate-200">{c.category}</td>
+                            <td className="py-1.5 text-right text-slate-400">{c.salesCount}</td>
+                            <td
+                              className={`py-1.5 text-right font-semibold ${c.profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}
+                            >
+                              {c.profit >= 0 ? '+' : ''}
+                              {euro(c.profit)}
+                            </td>
+                            <td className="py-1.5 text-right text-slate-300">
+                              {c.roiPct != null ? `${c.roiPct} %` : '—'}
+                            </td>
+                            <td className="py-1.5 text-right text-slate-400">{euro(c.stockValue)}</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
             {summary.monthly.length >= 2 && (
               <div className="card-pad">
                 <h2 className="section-title mb-3">Bénéfice net par mois</h2>

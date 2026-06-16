@@ -72,6 +72,7 @@ export default function StockPage() {
   const [price, setPrice] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [estimated, setEstimated] = useState('');
+  const [category, setCategory] = useState('');
   const [sourceUrl, setSourceUrl] = useState('');
   const [notes, setNotes] = useState('');
 
@@ -126,6 +127,7 @@ export default function StockPage() {
           purchasePrice: Number(price),
           quantity: Number(quantity) || 1,
           estimatedResale: estimated ? Number(estimated) : null,
+          category: category.trim(),
           sourceUrl,
           notes,
         },
@@ -134,6 +136,7 @@ export default function StockPage() {
       setPrice('');
       setQuantity('1');
       setEstimated('');
+      setCategory('');
       setSourceUrl('');
       setNotes('');
       setShowForm(false);
@@ -304,6 +307,19 @@ export default function StockPage() {
                 step="0.01"
               />
               <input
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                placeholder="Catégorie (ex : Sneakers, Lego, Tech...)"
+                className="input"
+                maxLength={100}
+                list="stock-categories"
+              />
+              <datalist id="stock-categories">
+                {Array.from(new Set(items.map((i) => i.category).filter(Boolean))).map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
+              <input
                 value={sourceUrl}
                 onChange={(e) => setSourceUrl(e.target.value)}
                 placeholder="URL de l'annonce d'achat"
@@ -413,6 +429,7 @@ export default function StockPage() {
                       <div className="mb-1 flex flex-wrap items-center gap-2">
                         <h3 className="font-semibold text-slate-100">{item.name}</h3>
                         <span className={STATUS_BADGES[item.status]}>{STATUS_LABELS[item.status]}</span>
+                        {item.category && <span className="badge-muted">{item.category}</span>}
                         {isDormant(item) && (
                           <span
                             className="badge bg-amber-500/15 text-amber-300"

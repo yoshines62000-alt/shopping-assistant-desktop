@@ -89,6 +89,7 @@ export interface StockItem {
     previousEstimate: number | null;
     estimatedAt: string | null;
     status: StockStatus;
+    category: string;
     notes: string;
 }
 export interface Expense {
@@ -173,7 +174,15 @@ export interface AccountingSummary {
     itemsTotal: number;
     salesCount: number;
     feeRate: number;
+    byCategory: CategoryROI[];
     monthly: MonthlyAccounting[];
+}
+export interface CategoryROI {
+    category: string;
+    profit: number;
+    salesCount: number;
+    stockValue: number;
+    roiPct: number | null;
 }
 export interface SoldListing {
     title: string;
