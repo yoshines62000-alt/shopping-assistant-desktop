@@ -303,6 +303,43 @@ def delete_expense(expense_id: int):
         return {"ok": True}
 
 
+# Barèmes micro-entrepreneur 2025 — vente de marchandises (BIC).
+MICRO_BIC_CEILING = 188_700.0       # plafond de CA du régime micro-BIC
+VAT_FRANCHISE = 85_000.0            # seuil de franchise en base de TVA (vente)
+VAT_FRANCHISE_MAJORED = 93_500.0   # seuil majoré (tolérance)
+URSSAF_RATE_GOODS = 0.123          # cotisations sociales (vente de marchandises)
+LIBERATOIRE_RATE_GOODS = 0.01      # versement libératoire IR (option)
+
+
+@router.get("/accounting/fiscal")
+def accounting_fiscal(year: Optional[int] = None):
+    """Aide micro-entrepreneur (F13) : CA de l'année, cotisations URSSAF estimées,
+    seuils de franchise TVA et plafond micro-BIC (vente de marchandises)."""
+    from datetime import datetime as _dt
+
+    y = year or _dt.now().year
+    with get_session() as session:
+        sales = session.exec(select(Sale)).all()
+    revenue = sum(
+        s.unit_price * s.quantity
+        for s in sales
+        if not s.returned and s.sale_date.year == y
+    )
+    return {
+        "year": y,
+        "revenue": round(revenue, 2),
+        "urssafContributions": round(revenue * URSSAF_RATE_GOODS, 2),
+        "urssafRate": URSSAF_RATE_GOODS,
+        "liberatoireOption": round(revenue * LIBERATOIRE_RATE_GOODS, 2),
+        "vatFranchise": VAT_FRANCHISE,
+        "vatFranchiseMajored": VAT_FRANCHISE_MAJORED,
+        "vatExceeded": revenue > VAT_FRANCHISE,
+        "microCeiling": MICRO_BIC_CEILING,
+        "microCeilingPct": round(revenue / MICRO_BIC_CEILING * 100, 1),
+        "microExceeded": revenue > MICRO_BIC_CEILING,
+    }
+
+
 @router.get("/accounting/summary")
 def accounting_summary():
     settings = get_settings()

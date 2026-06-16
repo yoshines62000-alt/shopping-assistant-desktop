@@ -182,6 +182,19 @@ export interface AccountingSummary {
     byCategory: CategoryROI[];
     monthly: MonthlyAccounting[];
 }
+export interface FiscalSummary {
+    year: number;
+    revenue: number;
+    urssafContributions: number;
+    urssafRate: number;
+    liberatoireOption: number;
+    vatFranchise: number;
+    vatFranchiseMajored: number;
+    vatExceeded: boolean;
+    microCeiling: number;
+    microCeilingPct: number;
+    microExceeded: boolean;
+}
 export interface CategoryROI {
     category: string;
     profit: number;

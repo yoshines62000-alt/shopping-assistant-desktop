@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, FormEvent } from 'react';
 import Link from 'next/link';
-import type { AccountingSummary, Sale, Expense } from '@shopping-assistant/types';
+import type { AccountingSummary, Sale, Expense, FiscalSummary } from '@shopping-assistant/types';
 import { Wallet, Undo2, BookOpenCheck, Package, Download, Plus, Trash2, FileText, RotateCcw } from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
 import StatCard from '@/components/ui/StatCard';
@@ -37,6 +37,7 @@ function monthLabel(ym: string): string {
 
 export default function AccountingPage() {
   const [summary, setSummary] = useState<AccountingSummary | null>(null);
+  const [fiscal, setFiscal] = useState<FiscalSummary | null>(null);
   const [sales, setSales] = useState<Sale[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -48,14 +49,16 @@ export default function AccountingPage() {
 
   const load = useCallback(async () => {
     try {
-      const [sum, salesData, expensesData] = await Promise.all([
+      const [sum, salesData, expensesData, fiscalData] = await Promise.all([
         apiFetch<AccountingSummary>('/accounting/summary'),
         apiFetch<{ sales?: Sale[] }>('/sales'),
         apiFetch<{ expenses?: Expense[] }>('/expenses'),
+        apiFetch<FiscalSummary>('/accounting/fiscal').catch(() => null),
       ]);
       setSummary(sum);
       setSales(salesData.sales ?? []);
       setExpenses(expensesData.expenses ?? []);
+      setFiscal(fiscalData);
       setError(null);
     } catch {
       setError('Impossible de charger les comptes. Vérifiez que le service est démarré.');
@@ -227,6 +230,47 @@ export default function AccountingPage() {
                     </div>
                   )}
                 </div>
+              </div>
+            )}
+
+            {fiscal && fiscal.revenue > 0 && (
+              <div className="card-pad">
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <h2 className="section-title">Micro-entrepreneur {fiscal.year}</h2>
+                  <span className="text-xs text-slate-500">vente de marchandises</span>
+                </div>
+                <p className="mb-3 text-xs text-slate-500">
+                  Estimations indicatives (barèmes {fiscal.year}). CA = ventes encaissées, hors retours.
+                </p>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                  <StatCard label={`CA ${fiscal.year}`} value={euro(fiscal.revenue)} tone="accent" />
+                  <StatCard
+                    label={`Cotisations URSSAF (${Math.round(fiscal.urssafRate * 100)} %)`}
+                    value={`~${euro(fiscal.urssafContributions)}`}
+                    sub={`+ ${euro(fiscal.liberatoireOption)} si versement libératoire`}
+                  />
+                  <StatCard
+                    label="Plafond micro-BIC"
+                    value={`${fiscal.microCeilingPct} %`}
+                    sub={`de ${euro(fiscal.microCeiling)}`}
+                    tone={fiscal.microExceeded ? 'negative' : undefined}
+                  />
+                </div>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/5">
+                  <div
+                    className={`h-full rounded-full ${fiscal.microCeilingPct >= 80 ? 'bg-amber-400' : 'bg-accent'}`}
+                    style={{ width: `${Math.min(100, fiscal.microCeilingPct)}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-xs text-slate-500">
+                  {fiscal.vatExceeded ? (
+                    <span className="text-amber-300">
+                      ⚠️ Seuil de franchise de TVA dépassé ({euro(fiscal.vatFranchise)}) — TVA potentiellement due.
+                    </span>
+                  ) : (
+                    <>Franchise de TVA : il te reste {euro(fiscal.vatFranchise - fiscal.revenue)} avant le seuil de {euro(fiscal.vatFranchise)}.</>
+                  )}
+                </p>
               </div>
             )}
 
