@@ -24,6 +24,8 @@ def _search_to_camel(s: SavedSearch, deal_count: int = 0) -> dict[str, Any]:
         "targetPrice": s.target_price,
         "site": s.site or None,
         "active": s.active,
+        "intervalMinutes": s.interval_minutes,
+        "seeded": s.seeded,
         "lastChecked": s.last_checked.isoformat() if s.last_checked else None,
         "createdAt": s.created_at.isoformat(),
         "dealCount": deal_count,
@@ -47,6 +49,7 @@ class SavedSearchPayload(BaseModel):
     query: str = Field(min_length=1, max_length=300)
     targetPrice: float = Field(gt=0)
     site: Optional[str] = None
+    intervalMinutes: int = Field(default=0, ge=0, le=10080)
 
 
 @router.get("/watch/searches")
@@ -67,6 +70,7 @@ def create_search(payload: SavedSearchPayload) -> dict[str, Any]:
             query=payload.query.strip(),
             target_price=float(payload.targetPrice),
             site=site if site and site != "all" else "",
+            interval_minutes=payload.intervalMinutes,
         )
         session.add(search)
         session.commit()
@@ -85,6 +89,11 @@ def update_search(search_id: int, payload: dict[str, Any]) -> dict[str, Any]:
         if "targetPrice" in payload:
             try:
                 search.target_price = float(payload["targetPrice"])
+            except (TypeError, ValueError):
+                pass
+        if "intervalMinutes" in payload:
+            try:
+                search.interval_minutes = max(0, int(payload["intervalMinutes"]))
             except (TypeError, ValueError):
                 pass
         session.add(search)

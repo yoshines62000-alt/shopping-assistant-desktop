@@ -167,10 +167,12 @@ SAVED_SEARCH_BATCH = 3
 SAVED_SEARCH_RESULTS = 8
 
 
-def _record_deal_hits(search: SavedSearch, results: list[dict]) -> list[dict]:
+def _record_deal_hits(search: SavedSearch, results: list[dict], seed_only: bool = False) -> list[dict]:
     """Enregistre les offres <= seuil jamais vues pour cette recherche.
 
-    Retourne la liste des NOUVELLES offres (pour notification).
+    Retourne la liste des NOUVELLES offres (pour notification). Si `seed_only`
+    (F21, 1er scan), on enregistre la baseline sans rien retourner -> aucune
+    notification pour les annonces déjà en ligne au moment de l'abonnement.
     """
     fresh: list[dict] = []
     with get_session() as session:
@@ -193,14 +195,17 @@ def _record_deal_hits(search: SavedSearch, results: list[dict]) -> list[dict]:
                     price=price,
                     source_url=r.get("sourceUrl", ""),
                     site_domain=r.get("siteDomain", ""),
-                    notified=True,
+                    notified=not seed_only,
                 )
             )
-            fresh.append(r)
+            if not seed_only:
+                fresh.append(r)
         # Avance last_checked même sans nouveauté pour faire tourner le batch.
         db_search = session.get(SavedSearch, search.id)
         if db_search:
             db_search.last_checked = _utcnow_naive()
+            if seed_only:
+                db_search.seeded = True
             session.add(db_search)
         session.commit()
     return fresh
@@ -214,9 +219,18 @@ async def scan_saved_searches() -> int:
     if not searches:
         return 0
 
+    # F18 : ne garder que les recherches "dues" (intervalle min écoulé).
+    now = _utcnow_naive()
+
+    def _is_due(s: SavedSearch) -> bool:
+        if not s.interval_minutes or s.last_checked is None:
+            return True
+        return (now - s.last_checked).total_seconds() >= s.interval_minutes * 60
+
+    due = [s for s in searches if _is_due(s)]
     # Les moins récemment vérifiées d'abord (None = jamais -> prioritaire).
-    searches.sort(key=lambda s: s.last_checked or datetime.min)
-    batch = searches[:SAVED_SEARCH_BATCH]
+    due.sort(key=lambda s: s.last_checked or datetime.min)
+    batch = due[:SAVED_SEARCH_BATCH]
 
     from .routes.search import SearchPayload, search_products
 
@@ -234,7 +248,9 @@ async def scan_saved_searches() -> int:
         except Exception as exc:
             logger.error("scan_saved_searches '%s' failed: %s", search.query, exc)
             continue
-        fresh = await asyncio.to_thread(_record_deal_hits, search, res.get("results", []))
+        fresh = await asyncio.to_thread(
+            _record_deal_hits, search, res.get("results", []), not search.seeded
+        )
         if fresh:
             total_new += len(fresh)
             lines = "\n".join(

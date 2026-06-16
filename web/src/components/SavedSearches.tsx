@@ -13,8 +13,21 @@ interface SavedSearch {
   targetPrice: number;
   site: string | null;
   active: boolean;
+  intervalMinutes: number;
+  seeded: boolean;
   lastChecked: string | null;
   dealCount: number;
+}
+
+const INTERVAL_OPTIONS = [
+  { value: 0, label: 'Fréquent' },
+  { value: 60, label: '≥ 1 h' },
+  { value: 360, label: '≥ 6 h' },
+  { value: 1440, label: '≥ 24 h' },
+];
+
+function intervalLabel(min: number): string {
+  return INTERVAL_OPTIONS.find((o) => o.value === min)?.label ?? `≥ ${Math.round(min / 60)} h`;
 }
 
 interface DealHit {
@@ -38,6 +51,7 @@ export default function SavedSearches() {
   const [query, setQuery] = useState('');
   const [target, setTarget] = useState('');
   const [site, setSite] = useState('');
+  const [interval, setIntervalMin] = useState('0');
 
   const load = useCallback(() => {
     apiFetch<{ searches?: SavedSearch[] }>('/watch/searches')
@@ -61,12 +75,18 @@ export default function SavedSearches() {
     try {
       await apiFetch('/watch/searches', {
         method: 'POST',
-        json: { query: query.trim(), targetPrice: Number(target), site: site || null },
+        json: {
+          query: query.trim(),
+          targetPrice: Number(target),
+          site: site || null,
+          intervalMinutes: Number(interval) || 0,
+        },
       });
       toast.success('Recherche surveillée — re-scannée en fond');
       setQuery('');
       setTarget('');
       setSite('');
+      setIntervalMin('0');
       load();
     } catch {
       toast.error('Impossible d’ajouter la surveillance');
@@ -99,7 +119,7 @@ export default function SavedSearches() {
           Re-scannée automatiquement en fond — notification (Discord + Windows) dès qu’une offre
           passe sous ton prix cible.
         </p>
-        <form onSubmit={add} className="grid gap-3 sm:grid-cols-[1fr_auto_auto_auto]">
+        <form onSubmit={add} className="grid gap-3 sm:grid-cols-[1fr_auto_auto_auto_auto]">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -124,6 +144,18 @@ export default function SavedSearches() {
             <option value="ebay">eBay</option>
             <option value="vinted">Vinted</option>
             <option value="leboncoin">Leboncoin</option>
+          </select>
+          <select
+            value={interval}
+            onChange={(e) => setIntervalMin(e.target.value)}
+            className="input sm:w-28"
+            title="Fréquence minimale de re-scan"
+          >
+            {INTERVAL_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
           </select>
           <button type="submit" className="btn-primary">
             <Radar className="h-4 w-4" /> Surveiller
@@ -161,6 +193,17 @@ export default function SavedSearches() {
                           <span className="badge-success">active</span>
                         ) : (
                           <span className="badge-muted">en pause</span>
+                        )}
+                        {s.intervalMinutes > 0 && (
+                          <span className="badge-muted">{intervalLabel(s.intervalMinutes)}</span>
+                        )}
+                        {!s.seeded && (
+                          <span
+                            className="badge bg-sky-500/15 text-sky-300"
+                            title="Premier scan : on enregistre les annonces déjà en ligne sans notifier, puis on n’alerte que les nouveautés."
+                          >
+                            baseline…
+                          </span>
                         )}
                         {s.dealCount > 0 && (
                           <span className="badge bg-amber-500/15 text-amber-300">

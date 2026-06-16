@@ -101,6 +101,11 @@ class SavedSearch(SQLModel, table=True):
     target_price: float  # seuil : on ne retient que les offres <= ce prix
     site: str = Field(default="")  # connecteur unique optionnel (amazon/ebay/vinted)
     active: bool = Field(default=True)
+    # F18 : intervalle min entre 2 scans de CETTE recherche (0 = chaque cycle).
+    interval_minutes: int = Field(default=0)
+    # F21 : 1er scan = on enregistre les offres existantes SANS notifier (baseline),
+    # pour ne notifier ensuite que les NOUVELLES annonces.
+    seeded: bool = Field(default=False)
     last_checked: Optional[datetime] = None
     created_at: datetime = Field(default_factory=utcnow_naive)
 
