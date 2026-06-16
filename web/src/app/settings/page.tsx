@@ -7,6 +7,7 @@ import PageShell from '@/components/ui/PageShell';
 import ErrorBanner from '@/components/ui/ErrorBanner';
 import LoadingBlock from '@/components/ui/LoadingBlock';
 import { apiFetch } from '@/lib/api';
+import ScrapingHealth from '@/components/ScrapingHealth';
 
 const PLATFORM_LABELS: Record<string, string> = {
   ebay: 'eBay',
@@ -181,6 +182,8 @@ export default function SettingsPage() {
             </div>
           </form>
         )}
+
+        <ScrapingHealth />
       </div>
     </PageShell>
   );
