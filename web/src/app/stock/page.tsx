@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, FormEvent } from 'react';
+import { useState, useEffect, useCallback, useRef, FormEvent } from 'react';
 import Link from 'next/link';
 import type { StockItem, StockStatus, ResaleEstimate, AppSettings } from '@shopping-assistant/types';
 import {
@@ -14,6 +14,8 @@ import {
   Coins,
   Clock,
   Megaphone,
+  Download,
+  Upload,
 } from 'lucide-react';
 import CrossListingPanel from '@/components/CrossListingPanel';
 import PageShell from '@/components/ui/PageShell';
@@ -22,6 +24,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import LoadingBlock from '@/components/ui/LoadingBlock';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
+import { downloadCSV, parseCSV } from '@/lib/csv';
 import { euro, dateFr } from '@/lib/format';
 
 const STATUS_LABELS: Record<StockStatus, string> = {
@@ -82,6 +85,7 @@ export default function StockPage() {
   });
   const [estimatingId, setEstimatingId] = useState<number | null>(null);
   const [listingId, setListingId] = useState<number | null>(null);
+  const csvInput = useRef<HTMLInputElement>(null);
 
   const loadSettings = useCallback(async () => {
     try {
@@ -192,6 +196,51 @@ export default function StockPage() {
     load();
   };
 
+  const exportCSV = () => {
+    downloadCSV(
+      `stock-${new Date().toISOString().split('T')[0]}.csv`,
+      ['Nom', "Prix d'achat", 'Quantité', 'Restant', 'Statut', 'Revente estimée', "Date d'achat", 'Notes'],
+      items.map((i) => [
+        i.name,
+        i.purchasePrice,
+        i.quantity,
+        i.remaining,
+        STATUS_LABELS[i.status],
+        i.estimatedResale ?? '',
+        i.purchaseDate.split('T')[0],
+        i.notes,
+      ])
+    );
+  };
+
+  const importCSV = async (file: File) => {
+    try {
+      const rows = parseCSV(await file.text());
+      let ok = 0;
+      for (const r of rows) {
+        const name = (r['Nom'] || r['name'] || '').trim();
+        const purchasePrice = Number((r["Prix d'achat"] || r['purchasePrice'] || '').replace(',', '.'));
+        if (!name || !purchasePrice) continue;
+        await apiFetch('/stock', {
+          method: 'POST',
+          json: {
+            name,
+            purchasePrice,
+            quantity: Number(r['Quantité'] || r['quantity'] || 1) || 1,
+            estimatedResale: r['Revente estimée'] ? Number(String(r['Revente estimée']).replace(',', '.')) : null,
+            notes: r['Notes'] || r['notes'] || 'Importé CSV',
+          },
+        }).then(() => ok++).catch(() => null);
+      }
+      toast.success(`${ok} objet(s) importé(s)`);
+      load();
+    } catch {
+      setError('Import CSV impossible (fichier invalide ?).');
+    } finally {
+      if (csvInput.current) csvInput.current.value = '';
+    }
+  };
+
   const filtered = filter === 'all' ? items : items.filter((i) => i.status === filter);
   const totalRemaining = items.reduce((s, i) => s + i.remaining, 0);
   const stockValue = items.reduce((s, i) => s + i.remaining * i.purchasePrice, 0);
@@ -280,7 +329,7 @@ export default function StockPage() {
           </form>
         )}
 
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {(['all', 'in_stock', 'listed', 'sold'] as const).map((f) => (
             <button
               key={f}
@@ -292,6 +341,32 @@ export default function StockPage() {
                 : `${STATUS_LABELS[f]} (${items.filter((i) => i.status === f).length})`}
             </button>
           ))}
+          <span className="mx-1 hidden h-4 w-px bg-line sm:inline-block" />
+          <button
+            onClick={exportCSV}
+            disabled={items.length === 0}
+            className="btn-secondary !px-3 !py-1 text-xs"
+            title="Exporter le stock en CSV"
+          >
+            <Download className="h-3.5 w-3.5" /> CSV
+          </button>
+          <button
+            onClick={() => csvInput.current?.click()}
+            className="btn-secondary !px-3 !py-1 text-xs"
+            title="Importer des objets depuis un CSV"
+          >
+            <Upload className="h-3.5 w-3.5" /> Importer
+          </button>
+          <input
+            ref={csvInput}
+            type="file"
+            accept=".csv,text/csv"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) importCSV(f);
+            }}
+          />
         </div>
 
         {!loading && dormantItems.length > 0 && (

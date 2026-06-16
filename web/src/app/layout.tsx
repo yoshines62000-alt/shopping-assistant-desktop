@@ -4,6 +4,7 @@ import Nav from './Nav';
 import Footer from '@/components/Footer';
 import PwaRegister from '@/components/PwaRegister';
 import Toaster from '@/components/ui/Toaster';
+import CommandPalette from '@/components/CommandPalette';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -29,6 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <div className="flex-1">{children}</div>
         <Footer />
         <Toaster />
+        <CommandPalette />
       </body>
     </html>
   );

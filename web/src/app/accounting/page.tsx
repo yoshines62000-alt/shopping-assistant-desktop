@@ -12,19 +12,7 @@ import LoadingBlock from '@/components/ui/LoadingBlock';
 import EmptyState from '@/components/ui/EmptyState';
 import { apiFetch } from '@/lib/api';
 import { euro, dateFr } from '@/lib/format';
-
-function downloadCSV(filename: string, header: string[], rows: (string | number)[][]) {
-  const escape = (v: string | number) => `"${String(v).replace(/"/g, '""')}"`;
-  const content = [header, ...rows].map((r) => r.map(escape).join(';')).join('\n');
-  // BOM pour qu'Excel détecte l'UTF-8 (accents)
-  const blob = new Blob(['﻿' + content], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
+import { downloadCSV } from '@/lib/csv';
 
 const MONTH_NAMES = [
   'janv.',
