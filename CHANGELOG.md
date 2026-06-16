@@ -6,9 +6,12 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 ### Ajouté
+- **Zone de notification (tray)** : fermer la fenêtre la masque (l'app continue
+  en fond) ; **notifications natives Windows** quand une alerte prix se déclenche.
 - Santé des connecteurs + **circuit breaker** anti-bot (saute un connecteur
-  bloqué à répétition) ; endpoint `/api/v1/connectors/health`.
-- Script `scripts/sync-from-main.ps1` (sync du backend depuis le projet principal).
+  bloqué à répétition) ; endpoint `/api/v1/connectors/health` + section
+  « Santé du scraping » dans Réglages.
+- Script `scripts/sync-from-main.ps1` (sync backend + frontend depuis le projet principal).
 
 ## [0.1.2] — 2026-06-15
 ### Ajouté

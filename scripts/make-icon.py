@@ -43,3 +43,9 @@ img.save(build / "icon.ico", format="ICO",
          sizes=[(256, 256), (128, 128), (64, 64), (48, 48), (32, 32), (16, 16)])
 img.save(build / "icon.png")
 print("icone ecrite ->", build / "icon.ico")
+
+# Icone de la zone de notification (tray) : petite taille, bundlee dans electron/.
+electron = root / "electron"
+if electron.exists():
+    img.resize((32, 32), Image.LANCZOS).save(electron / "tray.png")
+    print("tray ecrit  ->", electron / "tray.png")

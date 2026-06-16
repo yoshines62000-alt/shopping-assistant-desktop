@@ -9,12 +9,13 @@
 // Mode packte (app.isPackaged) : lance `backend.exe` + le serveur Next standalone.
 // Un splash couvre le demarrage ; en cas d'echec -> dialogue Reessayer/Quitter.
 
-const { app, BrowserWindow, Menu, dialog, shell } = require('electron');
+const { app, BrowserWindow, Menu, Tray, dialog, shell } = require('electron');
 const { spawn } = require('child_process');
 const path = require('path');
 const http = require('http');
 const fs = require('fs');
 const { initAutoUpdate, checkForUpdates } = require('./updater');
+const { initAlertNotifications } = require('./alerts');
 
 const REPO_URL = 'https://github.com/yoshines62000-alt/shopping-assistant-desktop';
 
@@ -30,6 +31,8 @@ let backendProc = null;
 let frontendProc = null;
 let mainWindow = null;
 let splashWindow = null;
+let tray = null;
+let reallyQuit = false; // vrai quand on quitte vraiment (vs reduire dans le tray)
 
 // Dossier de donnees de l'app : %APPDATA%\ShoppingAssistant (emplacement stable
 // et lisible, independant du nom interne d'Electron). Cree s'il manque.
@@ -169,6 +172,33 @@ function buildAppMenu() {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
+// --- Zone de notification (tray) -----------------------------
+function showMainWindow() {
+  if (!mainWindow) return;
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
+}
+
+function createTray() {
+  if (tray) return;
+  try {
+    tray = new Tray(path.join(__dirname, 'tray.png'));
+  } catch (e) {
+    log('tray indisponible :', e.message);
+    return;
+  }
+  tray.setToolTip('Shopping Assistant');
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { label: 'Ouvrir', click: showMainWindow },
+      { type: 'separator' },
+      { label: 'Quitter', click: () => { reallyQuit = true; app.quit(); } },
+    ])
+  );
+  tray.on('double-click', showMainWindow);
+}
+
 async function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -179,6 +209,14 @@ async function createWindow() {
     webPreferences: { preload: path.join(__dirname, 'preload.js') },
   });
   buildAppMenu();
+  // Fermer la fenetre ne quitte pas : on la masque dans la zone de notification
+  // (l'app continue de surveiller les alertes en fond). Quitter = menu du tray.
+  mainWindow.on('close', (e) => {
+    if (!reallyQuit) {
+      e.preventDefault();
+      mainWindow.hide();
+    }
+  });
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
@@ -329,7 +367,9 @@ async function startup() {
   // sinon window-all-closed quitterait l'app).
   await createWindow();
   closeSplash();
+  createTray();
   initAutoUpdate(() => mainWindow);
+  initAlertNotifications(BACKEND_PORT);
 }
 
 const gotLock = app.requestSingleInstanceLock();
@@ -337,10 +377,7 @@ if (!gotLock) {
   app.quit();
 } else {
   app.on('second-instance', () => {
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore();
-      mainWindow.focus();
-    }
+    showMainWindow();
   });
 
   app.whenReady().then(() => {
@@ -352,6 +389,9 @@ if (!gotLock) {
     killChildren();
     app.quit();
   });
-  app.on('before-quit', killChildren);
+  app.on('before-quit', () => {
+    reallyQuit = true;
+    killChildren();
+  });
   process.on('exit', killChildren);
 }
