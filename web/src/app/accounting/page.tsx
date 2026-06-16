@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, FormEvent } from 'react';
 import Link from 'next/link';
 import type { AccountingSummary, Sale, Expense } from '@shopping-assistant/types';
-import { Wallet, Undo2, BookOpenCheck, Package, Download, Plus, Trash2 } from 'lucide-react';
+import { Wallet, Undo2, BookOpenCheck, Package, Download, Plus, Trash2, FileText } from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
 import StatCard from '@/components/ui/StatCard';
 import BarChart from '@/components/ui/BarChart';
@@ -13,6 +13,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { apiFetch } from '@/lib/api';
 import { euro, dateFr } from '@/lib/format';
 import { downloadCSV } from '@/lib/csv';
+import { printSaleInvoice } from '@/lib/invoice';
 
 const MONTH_NAMES = [
   'janv.',
@@ -401,6 +402,13 @@ export default function AccountingPage() {
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
                         <span className="text-sm font-semibold text-accent">{euro(s.total)}</span>
+                        <button
+                          onClick={() => printSaleInvoice(s)}
+                          className="btn-ghost"
+                          title="Bon de vente / facture (PDF)"
+                        >
+                          <FileText className="h-4 w-4" />
+                        </button>
                         <button
                           onClick={() => cancelSale(s)}
                           className="btn-ghost hover:!text-rose-300"
