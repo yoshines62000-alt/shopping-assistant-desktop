@@ -139,6 +139,7 @@ export interface Sale {
     unitPrice: number;
     fees: number;
     platform: string;
+    returned: boolean;
     saleDate: string;
     total: number;
 }
@@ -173,6 +174,8 @@ export interface AccountingSummary {
     itemsInStock: number;
     itemsTotal: number;
     salesCount: number;
+    returnedCount: number;
+    returnRate: number | null;
     feeRate: number;
     byCategory: CategoryROI[];
     monthly: MonthlyAccounting[];

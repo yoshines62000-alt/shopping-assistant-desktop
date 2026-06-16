@@ -71,6 +71,7 @@ def _sale_to_dict(sale: Sale) -> dict[str, Any]:
         "unitPrice": sale.unit_price,
         "fees": sale.fees,
         "platform": sale.platform,
+        "returned": sale.returned,
         "saleDate": sale.sale_date.isoformat(),
         "total": round(sale.unit_price * sale.quantity - sale.fees, 2),
     }
@@ -185,6 +186,29 @@ def list_sales():
         return {"sales": [_sale_to_dict(s) for s in sales]}
 
 
+@router.post("/sales/{sale_id}/return")
+def return_sale(sale_id: int):
+    """Marque une vente comme retournée (F10) : la quantité revient en stock et la
+    vente est exclue de la compta, mais l'enregistrement est conservé (taux de retour)."""
+    with get_session() as session:
+        sale = session.get(Sale, sale_id)
+        if not sale:
+            raise HTTPException(status_code=404, detail="Vente introuvable")
+        if sale.returned:
+            return {"ok": True, "sale": _sale_to_dict(sale)}
+        sale.returned = True
+        item = session.get(StockItem, sale.item_id)
+        if item:
+            item.remaining += sale.quantity
+            if item.status == "sold" and item.remaining > 0:
+                item.status = "in_stock"
+            session.add(item)
+        session.add(sale)
+        session.commit()
+        session.refresh(sale)
+        return {"ok": True, "sale": _sale_to_dict(sale)}
+
+
 @router.delete("/sales/{sale_id}")
 def delete_sale(sale_id: int):
     """Annule une vente (erreur de saisie) : la quantité revient en stock."""
@@ -277,8 +301,14 @@ def accounting_summary():
     fee_rate = settings.resale_fee_rate
     with get_session() as session:
         items = session.exec(select(StockItem)).all()
-        sales = session.exec(select(Sale)).all()
+        all_sales = session.exec(select(Sale)).all()
         expenses = session.exec(select(Expense)).all()
+
+    # F10 : les ventes retournées sont conservées (taux de retour) mais exclues
+    # de tous les agrégats financiers (CA, profit, mensuel, catégories...).
+    returned_count = sum(1 for s in all_sales if s.returned)
+    sales = [s for s in all_sales if not s.returned]
+    return_rate = round(returned_count / len(all_sales) * 100, 1) if all_sales else None
 
     item_map = {i.id: i for i in items}
 
@@ -392,6 +422,8 @@ def accounting_summary():
         "itemsInStock": sum(i.remaining for i in items),
         "itemsTotal": len(items),
         "salesCount": len(sales),
+        "returnedCount": returned_count,
+        "returnRate": return_rate,
         "feeRate": fee_rate,
         "byCategory": by_category,
         "monthly": [

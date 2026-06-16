@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, FormEvent } from 'react';
 import Link from 'next/link';
 import type { AccountingSummary, Sale, Expense } from '@shopping-assistant/types';
-import { Wallet, Undo2, BookOpenCheck, Package, Download, Plus, Trash2, FileText } from 'lucide-react';
+import { Wallet, Undo2, BookOpenCheck, Package, Download, Plus, Trash2, FileText, RotateCcw } from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
 import StatCard from '@/components/ui/StatCard';
 import BarChart from '@/components/ui/BarChart';
@@ -122,6 +122,17 @@ export default function AccountingPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  const returnSale = async (sale: Sale) => {
+    if (
+      !window.confirm(
+        `Marquer la vente de « ${sale.itemName} » comme retournée ? La quantité revient en stock et la vente est exclue de la compta (mais conservée pour le taux de retour).`
+      )
+    )
+      return;
+    await apiFetch(`/sales/${sale.id}/return`, { method: 'POST' }).catch(() => null);
+    load();
+  };
 
   const cancelSale = async (sale: Sale) => {
     if (
@@ -386,8 +397,13 @@ export default function AccountingPage() {
 
             <div className="card-pad">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Historique des ventes
+                  {summary.returnedCount > 0 && summary.returnRate != null && (
+                    <span className="badge bg-amber-500/15 text-amber-300 normal-case">
+                      <RotateCcw className="h-3 w-3" /> {summary.returnedCount} retour(s) · {summary.returnRate} %
+                    </span>
+                  )}
                 </h2>
                 {salePlatforms.length > 1 && (
                   <div className="flex items-center gap-2 text-xs">
@@ -432,7 +448,10 @@ export default function AccountingPage() {
                       className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 hover:bg-white/5"
                     >
                       <div className="min-w-0">
-                        <p className="truncate text-sm text-slate-200">{s.itemName}</p>
+                        <p className={`truncate text-sm ${s.returned ? 'text-slate-500 line-through' : 'text-slate-200'}`}>
+                          {s.itemName}
+                          {s.returned && <span className="ml-2 badge-muted no-underline">Retournée</span>}
+                        </p>
                         <p className="text-xs text-slate-500">
                           {dateFr(s.saleDate)} &middot; {s.quantity} × {euro(s.unitPrice)}
                           {s.fees > 0 && <> &middot; frais {euro(s.fees)}</>}
@@ -440,7 +459,9 @@ export default function AccountingPage() {
                         </p>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
-                        <span className="text-sm font-semibold text-accent">{euro(s.total)}</span>
+                        <span className={`text-sm font-semibold ${s.returned ? 'text-slate-500' : 'text-accent'}`}>
+                          {euro(s.total)}
+                        </span>
                         <button
                           onClick={() => printSaleInvoice(s)}
                           className="btn-ghost"
@@ -448,10 +469,19 @@ export default function AccountingPage() {
                         >
                           <FileText className="h-4 w-4" />
                         </button>
+                        {!s.returned && (
+                          <button
+                            onClick={() => returnSale(s)}
+                            className="btn-ghost hover:!text-amber-300"
+                            title="Marquer comme retournée (exclue de la compta)"
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </button>
+                        )}
                         <button
                           onClick={() => cancelSale(s)}
                           className="btn-ghost hover:!text-rose-300"
-                          title="Annuler cette vente (retour en stock)"
+                          title="Annuler cette vente (supprime l'enregistrement)"
                         >
                           <Undo2 className="h-4 w-4" />
                         </button>

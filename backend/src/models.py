@@ -86,6 +86,7 @@ class Sale(SQLModel, table=True):
     unit_price: float
     fees: float = Field(default=0.0)  # frais plateforme + livraison à charge
     platform: str = Field(default="")
+    returned: bool = Field(default=False)  # F10 : vente retournée (exclue de la compta)
     sale_date: datetime = Field(default_factory=utcnow_naive)
 
 
