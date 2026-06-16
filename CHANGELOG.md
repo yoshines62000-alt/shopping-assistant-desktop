@@ -6,6 +6,9 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 ### Ajouté
+- **Connecteur Leboncoin** : recherche leboncoin.fr (parse `__NEXT_DATA__`),
+  intégré à la recherche / santé / surveillances. *(DataDome bloque sans proxy
+  résidentiel : dégradation propre + circuit breaker.)*
 - **Deal-watcher** : surveille des recherches favorites (requête + prix cible),
   les re-scanne en fond et **notifie** (Discord + notification native Windows)
   dès qu’une offre passe sous la cible. UI dans « Alertes & surveillances ».

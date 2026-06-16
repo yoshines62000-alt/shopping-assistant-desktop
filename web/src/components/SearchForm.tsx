@@ -53,6 +53,7 @@ const SITE_OPTIONS = [
   { value: 'amazon', label: 'Amazon.fr' },
   { value: 'ebay', label: 'eBay.fr' },
   { value: 'vinted', label: 'Vinted.fr' },
+  { value: 'leboncoin', label: 'Leboncoin.fr' },
 ];
 
 const POPULAR_SUGGESTIONS = [

@@ -123,6 +123,7 @@ export default function SavedSearches() {
             <option value="amazon">Amazon</option>
             <option value="ebay">eBay</option>
             <option value="vinted">Vinted</option>
+            <option value="leboncoin">Leboncoin</option>
           </select>
           <button type="submit" className="btn-primary">
             <Radar className="h-4 w-4" /> Surveiller

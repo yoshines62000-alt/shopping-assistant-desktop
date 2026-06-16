@@ -24,7 +24,7 @@ def test_no_fake_connectors_registered():
     """Le système de recherche ne doit contenir que des sources réelles."""
     response = client.get("/api/v1/connectors/")
     connectors = set(response.json()["connectors"])
-    assert connectors == {"amazon", "ebay", "vinted"}
+    assert connectors == {"amazon", "ebay", "vinted", "leboncoin"}
     assert not connectors & {"ai", "static", "dummyjson", "fakestore", "wikidata"}
 
 
