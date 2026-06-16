@@ -5,6 +5,8 @@ Versions notables de l'application desktop. Format inspiré de
 À mettre à jour à chaque release (avant `npm version` + publication).
 
 ## [Non publié]
+
+## [0.2.0] — 2026-06-16
 ### Ajouté
 - **Connecteur Leboncoin** : recherche leboncoin.fr (parse `__NEXT_DATA__`),
   intégré à la recherche / santé / surveillances. *(DataDome bloque sans proxy
