@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import type { AccountingSummary, Sale } from '@shopping-assistant/types';
+import type { AccountingSummary, Sale, StockItem } from '@shopping-assistant/types';
 import {
   Search,
   Coins,
@@ -15,6 +15,7 @@ import {
   BarChart3,
   ArrowRight,
   Sparkles,
+  Clock,
 } from 'lucide-react';
 import StatCard from '@/components/ui/StatCard';
 import Sparkline from '@/components/ui/Sparkline';
@@ -40,9 +41,24 @@ const quickLinks = [
   { href: '/alerts', label: 'Alertes prix', icon: <Bell className="h-4 w-4" /> },
 ];
 
+const DORMANT_DAYS = 60;
+
+function dormantCount(items: StockItem[]): number {
+  const now = Date.now();
+  return items.filter(
+    (i) =>
+      i.remaining > 0 &&
+      i.status !== 'sold' &&
+      (now - new Date(i.purchaseDate).getTime()) / 86_400_000 >= DORMANT_DAYS
+  ).length;
+}
+
 export default function Home() {
   const [summary, setSummary] = useState<AccountingSummary | null>(null);
   const [sales, setSales] = useState<Sale[]>([]);
+  const [dormant, setDormant] = useState(0);
+  const [activeAlerts, setActiveAlerts] = useState(0);
+  const [recentDeals, setRecentDeals] = useState(0);
 
   useEffect(() => {
     apiFetch<AccountingSummary>('/accounting/summary')
@@ -51,7 +67,43 @@ export default function Home() {
     apiFetch<{ sales?: Sale[] }>('/sales')
       .then((d) => setSales((d.sales ?? []).slice(0, 5)))
       .catch(() => setSales([]));
+    apiFetch<{ items?: StockItem[] }>('/stock')
+      .then((d) => setDormant(dormantCount(d.items ?? [])))
+      .catch(() => setDormant(0));
+    apiFetch<{ alerts?: { active: boolean }[] }>('/alerts')
+      .then((d) => setActiveAlerts((d.alerts ?? []).filter((a) => a.active).length))
+      .catch(() => setActiveAlerts(0));
+    apiFetch<{ deals?: { foundAt: string }[] }>('/watch/deals')
+      .then((d) => {
+        const weekAgo = Date.now() - 7 * 86_400_000;
+        setRecentDeals((d.deals ?? []).filter((x) => new Date(x.foundAt).getTime() >= weekAgo).length);
+      })
+      .catch(() => setRecentDeals(0));
   }, []);
+
+  const followUps = [
+    dormant > 0 && {
+      href: '/stock',
+      icon: <Clock className="h-4 w-4" />,
+      label: `${dormant} objet(s) dormant(s)`,
+      sub: `en stock > ${DORMANT_DAYS} j`,
+      tone: 'text-amber-300',
+    },
+    activeAlerts > 0 && {
+      href: '/alerts',
+      icon: <Bell className="h-4 w-4" />,
+      label: `${activeAlerts} alerte(s) active(s)`,
+      sub: 'surveillance prix',
+      tone: 'text-sky-300',
+    },
+    recentDeals > 0 && {
+      href: '/alerts',
+      icon: <Sparkles className="h-4 w-4" />,
+      label: `${recentDeals} bon(s) plan(s)`,
+      sub: '7 derniers jours',
+      tone: 'text-emerald-300',
+    },
+  ].filter(Boolean) as { href: string; icon: JSX.Element; label: string; sub: string; tone: string }[];
 
   const currentMonth = new Date().toISOString().slice(0, 7);
   const thisMonth = summary?.monthly.find((m) => m.month === currentMonth);
@@ -97,6 +149,30 @@ export default function Home() {
         hasStock={!!summary && summary.itemsTotal > 0}
         hasSale={!!summary && summary.salesCount > 0}
       />
+
+      {followUps.length > 0 && (
+        <section className="animate-fade-in mt-10">
+          <h2 className="section-title mb-3">À suivre</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {followUps.map((f) => (
+              <Link
+                key={f.label}
+                href={f.href}
+                className="card-pad flex items-center gap-3 transition-colors hover:bg-white/5"
+              >
+                <span className={`flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 ${f.tone}`}>
+                  {f.icon}
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-slate-100">{f.label}</span>
+                  <span className="block text-xs text-slate-500">{f.sub}</span>
+                </span>
+                <ArrowRight className="ml-auto h-4 w-4 shrink-0 text-slate-600" />
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {hasActivity && summary && (
         <section className="animate-fade-in mt-12 space-y-4">
