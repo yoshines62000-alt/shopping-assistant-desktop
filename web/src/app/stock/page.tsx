@@ -17,8 +17,10 @@ import {
   Download,
   Upload,
   Printer,
+  Image as ImageIcon,
 } from 'lucide-react';
 import CrossListingPanel from '@/components/CrossListingPanel';
+import StockPhotos from '@/components/StockPhotos';
 import { printStockLabel } from '@/lib/label';
 import PageShell from '@/components/ui/PageShell';
 import ErrorBanner from '@/components/ui/ErrorBanner';
@@ -88,6 +90,7 @@ export default function StockPage() {
   });
   const [estimatingId, setEstimatingId] = useState<number | null>(null);
   const [listingId, setListingId] = useState<number | null>(null);
+  const [photosId, setPhotosId] = useState<number | null>(null);
   const csvInput = useRef<HTMLInputElement>(null);
 
   const loadSettings = useCallback(async () => {
@@ -573,8 +576,18 @@ export default function StockPage() {
                       >
                         <Megaphone className="h-4 w-4" /> Annonce
                       </button>
+                      <button
+                        onClick={() => setPhotosId(photosId === item.id ? null : item.id)}
+                        className="btn-secondary !px-3 !py-1.5 text-xs"
+                        title="Photos de l'objet"
+                      >
+                        <ImageIcon className="h-4 w-4" />
+                        {item.photos && item.photos.length > 0 ? ` ${item.photos.length}` : ' Photos'}
+                      </button>
                     </div>
                   )}
+
+                  {photosId === item.id && <StockPhotos item={item} onUpdated={load} />}
 
                   {listingId === item.id && (
                     <CrossListingPanel item={item} onClose={() => setListingId(null)} />

@@ -73,6 +73,7 @@ class StockItem(SQLModel, table=True):
     status: str = Field(default="in_stock")  # in_stock | listed | sold
     category: str = Field(default="", index=True)  # catégorie libre (ROI par catégorie)
     sku: str = Field(default="", index=True)  # F12 : code de rangement (étiquette)
+    photos: str = Field(default="[]")  # F8 : JSON d'URLs data (vignettes base64)
     notes: str = Field(default="")
     created_at: datetime = Field(default_factory=utcnow_naive)
 

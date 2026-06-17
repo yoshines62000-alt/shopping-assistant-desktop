@@ -101,6 +101,7 @@ export interface StockItem {
   status: StockStatus;
   category: string;
   sku: string;
+  photos: string[];
   notes: string;
 }
 

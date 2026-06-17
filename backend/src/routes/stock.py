@@ -1,3 +1,4 @@
+import json
 from collections import defaultdict
 from datetime import datetime
 from typing import Any, Optional
@@ -23,6 +24,7 @@ class StockCreate(BaseModel):
     sourceUrl: str = Field(default="", max_length=1000)
     estimatedResale: Optional[float] = Field(default=None, ge=0)
     category: str = Field(default="", max_length=100)
+    photos: list[str] = Field(default_factory=list)
     notes: str = Field(default="", max_length=2000)
 
 
@@ -32,8 +34,20 @@ class StockUpdate(BaseModel):
     estimatedResale: Optional[float] = Field(default=None, ge=0)
     status: Optional[str] = None
     category: Optional[str] = Field(default=None, max_length=100)
+    photos: Optional[list[str]] = None
     notes: Optional[str] = Field(default=None, max_length=2000)
     sourceUrl: Optional[str] = Field(default=None, max_length=1000)
+
+
+# Garde-fou : on borne le nombre de photos et la taille des vignettes (base64)
+# pour eviter de gonfler la base / les sauvegardes.
+_MAX_PHOTOS = 6
+_MAX_PHOTO_LEN = 600_000  # ~600 Ko de base64 par vignette
+
+
+def _clean_photos(photos: list[str]) -> str:
+    valid = [p for p in photos if isinstance(p, str) and p.startswith("data:image") and len(p) <= _MAX_PHOTO_LEN]
+    return json.dumps(valid[:_MAX_PHOTOS])
 
 
 class SellRequest(BaseModel):
@@ -59,6 +73,7 @@ def _item_to_dict(item: StockItem) -> dict[str, Any]:
         "status": item.status,
         "category": item.category,
         "sku": item.sku,
+        "photos": json.loads(item.photos or "[]"),
         "notes": item.notes,
     }
 
@@ -96,6 +111,7 @@ def create_stock(body: StockCreate):
             source_url=body.sourceUrl.strip(),
             estimated_resale=body.estimatedResale,
             category=body.category.strip(),
+            photos=_clean_photos(body.photos),
             notes=body.notes.strip(),
         )
         if body.purchaseDate is not None:
@@ -131,6 +147,8 @@ def update_stock(item_id: int, body: StockUpdate):
             item.estimated_resale = body.estimatedResale
         if body.category is not None:
             item.category = body.category.strip()
+        if body.photos is not None:
+            item.photos = _clean_photos(body.photos)
         if body.notes is not None:
             item.notes = body.notes.strip()
         if body.sourceUrl is not None:
