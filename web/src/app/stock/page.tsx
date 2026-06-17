@@ -56,6 +56,27 @@ function isDormant(item: StockItem): boolean {
   return item.remaining > 0 && item.status !== 'sold' && ageDays(item.purchaseDate) >= DORMANT_DAYS;
 }
 
+// Suggestion de re-tarification (F4) : pour un objet EN VENTE, si le marché a
+// bougé depuis la dernière estimation (estimation actuelle vs précédente), on
+// recommande de repositionner le prix. Réutilise les données déjà suivies.
+function repriceHint(item: StockItem): { label: string; cls: string } | null {
+  if (item.status !== 'listed' || item.estimatedResale == null || item.previousEstimate == null)
+    return null;
+  if (item.previousEstimate <= 0) return null;
+  const move = (item.estimatedResale - item.previousEstimate) / item.previousEstimate;
+  if (move <= -0.05)
+    return {
+      label: `Marché en baisse ${Math.round(move * 100)}% — repositionne à ~${euro(item.estimatedResale)}`,
+      cls: 'bg-amber-500/15 text-amber-300',
+    };
+  if (move >= 0.05)
+    return {
+      label: `Sous-coté +${Math.round(move * 100)}% — tu peux monter à ~${euro(item.estimatedResale)}`,
+      cls: 'badge-success',
+    };
+  return null;
+}
+
 interface SellForm {
   quantity: string;
   unitPrice: string;
@@ -448,6 +469,14 @@ export default function StockPage() {
                             <Clock className="h-3 w-3" /> Dormant · {ageDays(item.purchaseDate)} j
                           </span>
                         )}
+                        {(() => {
+                          const hint = repriceHint(item);
+                          return hint ? (
+                            <span className={`badge ${hint.cls}`} title="Suggestion de re-tarification">
+                              <TrendingUp className="h-3 w-3" /> {hint.label}
+                            </span>
+                          ) : null;
+                        })()}
                       </div>
                       <p className="text-sm text-slate-400">
                         Achat {euro(item.purchasePrice)}
