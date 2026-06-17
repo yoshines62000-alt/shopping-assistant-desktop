@@ -65,6 +65,13 @@ def parse_search_page(html: str, max_results: int) -> list[ProductRaw]:
                 delivery_raw = row_text
                 break
 
+        img_el = item.select_one(".s-card__image img, .s-item__image img, img")
+        image_url = ""
+        if img_el:
+            image_url = img_el.get("src") or img_el.get("data-src") or ""
+            if image_url.startswith("//"):
+                image_url = "https:" + image_url
+
         seller_el = item.select_one(".s-item__seller-info-text")
         reviews_el = item.select_one(".s-item__reviews-count span, .s-card__reviews-count")
         rating_el = item.select_one(".x-star-rating .clipped, .star-rating")
@@ -89,6 +96,7 @@ def parse_search_page(html: str, max_results: int) -> list[ProductRaw]:
                 url=url,
                 extra={
                     "item_id": item_id,
+                    "image_url": image_url,
                     "rating_raw": rating_el.get_text(" ", strip=True) if rating_el else "",
                     "sponsored": bool(item.select_one(".s-item__adBadge, .s-card__badge-sponsored, [data-badge='sponsored']")),
                     "sold_date_raw": sold_date_raw,

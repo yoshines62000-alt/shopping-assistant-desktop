@@ -49,6 +49,7 @@ def _to_camel(data: dict[str, Any]) -> dict[str, Any]:
         "siteDomain": data.get("site_domain", ""),
         "sourceUrl": source_url,
         "seller": data.get("seller"),
+        "imageUrl": data.get("image_url"),
         "inStock": data.get("in_stock", True),
         "scores": data.get("scores"),
     }

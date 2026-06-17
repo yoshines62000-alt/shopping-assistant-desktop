@@ -29,6 +29,10 @@ def parse_catalog_json(body: str, max_results: int) -> list[ProductRaw]:
             continue
 
         user = item.get("user") or {}
+        photo = item.get("photo") or {}
+        image_url = ""
+        if isinstance(photo, dict):
+            image_url = str(photo.get("url") or photo.get("full_size_url") or "")
         results.append(
             ProductRaw(
                 title=title[:200],
@@ -42,6 +46,7 @@ def parse_catalog_json(body: str, max_results: int) -> list[ProductRaw]:
                     "brand": item.get("brand_title", ""),
                     "size": item.get("size_title", ""),
                     "status": item.get("status", ""),
+                    "image_url": image_url,
                 },
             )
         )

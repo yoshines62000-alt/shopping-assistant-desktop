@@ -12,6 +12,7 @@ class ProductNormalized(BaseModel):
     site_domain: str
     source_url: str
     seller: Optional[str] = None
+    image_url: Optional[str] = None
     in_stock: bool = True
     raw: dict[str, Any] = {}
 

@@ -9,6 +9,7 @@ export interface Product {
     siteDomain: string;
     sourceUrl: string;
     seller: string | null;
+    imageUrl?: string | null;
     inStock: boolean;
     raw: ProductRaw;
     scores?: ProductScores | null;

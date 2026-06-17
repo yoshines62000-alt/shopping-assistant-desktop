@@ -95,6 +95,12 @@ def parse_search_page(html: str, max_results: int) -> list[ProductRaw]:
 
         location = ad.get("location") if isinstance(ad.get("location"), dict) else {}
         owner = ad.get("owner") if isinstance(ad.get("owner"), dict) else {}
+        images = ad.get("images") if isinstance(ad.get("images"), dict) else {}
+        image_url = str(images.get("thumb_url") or "")
+        if not image_url:
+            urls = images.get("urls") or images.get("urls_thumb")
+            if isinstance(urls, list) and urls:
+                image_url = str(urls[0])
         results.append(
             ProductRaw(
                 title=title[:200],
@@ -107,6 +113,7 @@ def parse_search_page(html: str, max_results: int) -> list[ProductRaw]:
                     "list_id": ad.get("list_id"),
                     "city": location.get("city", ""),
                     "category": ad.get("category_name", ""),
+                    "image_url": image_url,
                 },
             )
         )

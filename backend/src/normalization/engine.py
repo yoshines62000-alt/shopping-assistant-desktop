@@ -15,6 +15,7 @@ class NormalizationEngine:
         reviews_count = self._extract_reviews_count(raw.reviews_raw)
         rating = self._extract_rating(raw.extra.get("rating_raw", "") if raw.extra else "")
         site_domain = self._extract_site_domain(raw.url, raw.extra)
+        image_url = self._clean_image_url(raw.extra.get("image_url") if raw.extra else None)
 
         return ProductNormalized(
             name=raw.title,
@@ -26,6 +27,7 @@ class NormalizationEngine:
             site_domain=site_domain,
             source_url=raw.url,
             seller=raw.seller,
+            image_url=image_url,
             in_stock=True,
             raw=raw.__dict__,
         )
@@ -112,6 +114,14 @@ class NormalizationEngine:
             return None
         value = float(m.group(1))
         return value if value <= 5 else None
+
+    @staticmethod
+    def _clean_image_url(url: Any) -> str | None:
+        """N'accepte qu'une URL http(s) d'image (sécurité : pas de data:/javascript:)."""
+        if not isinstance(url, str):
+            return None
+        url = url.strip()
+        return url if url.startswith("http") else None
 
     @staticmethod
     def _extract_site_domain(url: str, extra: dict[str, Any] | None) -> str:

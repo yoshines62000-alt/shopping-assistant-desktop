@@ -66,6 +66,9 @@ def parse_search_page(html: str, max_results: int) -> list[ProductRaw]:
         delivery_el = item.select_one('[data-cy="delivery-recipe"]')
         delivery_raw = delivery_el.get_text(" ", strip=True) if delivery_el else ""
 
+        img_el = item.select_one("img.s-image")
+        image_url = img_el.get("src", "") if img_el else ""
+
         results.append(
             ProductRaw(
                 title=title[:200],
@@ -74,7 +77,12 @@ def parse_search_page(html: str, max_results: int) -> list[ProductRaw]:
                 seller="Amazon",
                 reviews_raw=reviews_raw,
                 url=f"{BASE_URL}/dp/{asin}",
-                extra={"asin": asin, "rating_raw": rating_raw, "sponsored": is_sponsored},
+                extra={
+                    "asin": asin,
+                    "rating_raw": rating_raw,
+                    "sponsored": is_sponsored,
+                    "image_url": image_url,
+                },
             )
         )
         if len(results) >= max_results:
