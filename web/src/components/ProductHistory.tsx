@@ -145,7 +145,7 @@ export default function ProductHistory({ productId }: { productId: string }) {
               .map((entry, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 hover:bg-white/5"
+                  className="flex items-center justify-between gap-3 rounded-lg px-2 py-2.5 hover:bg-[rgb(var(--overlay)/0.05)]"
                 >
                   <span className="text-sm text-slate-400">
                     {new Date(entry.ts * 1000).toLocaleString('fr-FR')}

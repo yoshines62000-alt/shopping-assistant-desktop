@@ -4,24 +4,37 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Fonds
-        ink: '#0a0e17',
+        // Pilotées par variables CSS (thème clair/sombre — voir globals.css).
+        // Triplets RGB pour que les modificateurs d'alpha (bg-accent/30...) marchent.
+        ink: 'rgb(var(--c-ink) / <alpha-value>)',
         surface: {
-          DEFAULT: '#101729',
-          raised: '#16203a',
+          DEFAULT: 'rgb(var(--c-surface) / <alpha-value>)',
+          raised: 'rgb(var(--c-surface-raised) / <alpha-value>)',
         },
-        // Bordures
         line: {
-          DEFAULT: 'rgba(148, 163, 184, 0.10)',
-          strong: 'rgba(148, 163, 184, 0.22)',
+          DEFAULT: 'var(--c-line)',
+          strong: 'var(--c-line-strong)',
         },
-        // Accent de marque
         accent: {
-          DEFAULT: '#22d3ee',
-          deep: '#0891b2',
+          DEFAULT: 'rgb(var(--c-accent) / <alpha-value>)',
+          deep: 'rgb(var(--c-accent-deep) / <alpha-value>)',
         },
         brand: {
-          violet: '#8b5cf6',
+          violet: 'rgb(var(--c-brand-violet) / <alpha-value>)',
+        },
+        // Échelle de gris en triplets RGB -> les modificateurs d'alpha (/80...) marchent.
+        slate: {
+          50: 'rgb(var(--s-50) / <alpha-value>)',
+          100: 'rgb(var(--s-100) / <alpha-value>)',
+          200: 'rgb(var(--s-200) / <alpha-value>)',
+          300: 'rgb(var(--s-300) / <alpha-value>)',
+          400: 'rgb(var(--s-400) / <alpha-value>)',
+          500: 'rgb(var(--s-500) / <alpha-value>)',
+          600: 'rgb(var(--s-600) / <alpha-value>)',
+          700: 'rgb(var(--s-700) / <alpha-value>)',
+          800: 'rgb(var(--s-800) / <alpha-value>)',
+          900: 'rgb(var(--s-900) / <alpha-value>)',
+          950: 'rgb(var(--s-950) / <alpha-value>)',
         },
       },
       boxShadow: {

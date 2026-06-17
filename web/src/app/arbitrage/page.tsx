@@ -134,7 +134,7 @@ function OfferBox({
       href={offer.sourceUrl}
       target="_blank"
       rel="noreferrer"
-      className="block rounded-lg border border-line bg-ink/40 p-3 transition-colors hover:bg-white/5"
+      className="block rounded-lg border border-line bg-ink/40 p-3 transition-colors hover:bg-[rgb(var(--overlay)/0.05)]"
     >
       <div className="flex items-center justify-between text-xs">
         <span className={tone === 'buy' ? 'text-cyan-300' : 'text-amber-300'}>

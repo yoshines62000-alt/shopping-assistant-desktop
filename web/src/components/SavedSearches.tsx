@@ -239,7 +239,7 @@ export default function SavedSearches() {
                           href={d.sourceUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="flex items-center justify-between gap-2 rounded px-1.5 py-1 text-sm hover:bg-white/5"
+                          className="flex items-center justify-between gap-2 rounded px-1.5 py-1 text-sm hover:bg-[rgb(var(--overlay)/0.05)]"
                         >
                           <span className="truncate text-slate-300">{d.name || d.sourceUrl}</span>
                           <span className="flex shrink-0 items-center gap-1.5">

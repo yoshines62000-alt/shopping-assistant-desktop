@@ -8,13 +8,69 @@
    à la marque, sémantique emerald/rose pour gains/pertes.
 ============================================================ */
 
+/* ---------- Thème (variables CSS) ----------
+   Sombre par défaut. Le thème clair (F23) inverse l'échelle de gris et éclaircit
+   fonds/bordures. data-theme="light" est posé sur <html> par ThemeToggle. */
+:root {
+  --c-ink: 10 14 23;
+  --c-surface: 16 23 41;
+  --c-surface-raised: 22 32 58;
+  --c-line: rgba(148, 163, 184, 0.1);
+  --c-line-strong: rgba(148, 163, 184, 0.22);
+  --c-accent: 34 211 238;
+  --c-accent-deep: 8 145 178;
+  --c-brand-violet: 139 92 246;
+  --halo-cyan: rgba(34, 211, 238, 0.1);
+  --halo-violet: rgba(139, 92, 246, 0.07);
+  --overlay: 255 255 255; /* survols/skeletons : blanc en sombre */
+
+  --s-50: 248 250 252;
+  --s-100: 241 245 249;
+  --s-200: 226 232 240;
+  --s-300: 203 213 225;
+  --s-400: 148 163 184;
+  --s-500: 100 116 139;
+  --s-600: 71 85 105;
+  --s-700: 51 65 85;
+  --s-800: 30 41 59;
+  --s-900: 15 23 42;
+  --s-950: 2 6 23;
+}
+
+:root[data-theme='light'] {
+  --c-ink: 238 241 247;
+  --c-surface: 255 255 255;
+  --c-surface-raised: 246 248 252;
+  --c-line: rgba(15, 23, 42, 0.1);
+  --c-line-strong: rgba(15, 23, 42, 0.16);
+  --c-accent: 8 145 178;
+  --c-accent-deep: 14 116 144;
+  --c-brand-violet: 124 58 237;
+  --halo-cyan: rgba(34, 211, 238, 0.12);
+  --halo-violet: rgba(139, 92, 246, 0.08);
+  --overlay: 15 23 42; /* survols/skeletons : sombre en clair */
+
+  /* Échelle de gris inversée : le texte "clair" (100-300) devient sombre. */
+  --s-50: 15 23 42;
+  --s-100: 15 23 42;
+  --s-200: 30 41 59;
+  --s-300: 51 65 85;
+  --s-400: 71 85 105;
+  --s-500: 100 116 139;
+  --s-600: 148 163 184;
+  --s-700: 203 213 225;
+  --s-800: 226 232 240;
+  --s-900: 241 245 249;
+  --s-950: 248 250 252;
+}
+
 @layer base {
   body {
     @apply bg-ink font-sans text-slate-300 antialiased;
     /* Deux halos d'ambiance (cyan en haut, violet diffus) : profondeur sans bruit */
     background-image:
-      radial-gradient(58rem 22rem at 50% -10rem, rgba(34, 211, 238, 0.10), transparent 70%),
-      radial-gradient(46rem 30rem at 110% 0%, rgba(139, 92, 246, 0.07), transparent 65%);
+      radial-gradient(58rem 22rem at 50% -10rem, var(--halo-cyan), transparent 70%),
+      radial-gradient(46rem 30rem at 110% 0%, var(--halo-violet), transparent 65%);
     background-attachment: fixed;
     background-repeat: no-repeat;
   }
@@ -108,15 +164,15 @@
   }
 
   .btn-primary {
-    @apply btn bg-accent text-ink hover:bg-cyan-300 hover:shadow-glow;
+    @apply btn bg-accent text-white hover:bg-accent-deep hover:shadow-glow;
   }
 
   .btn-secondary {
-    @apply btn border border-line-strong bg-surface-raised text-slate-200 hover:border-accent/40 hover:text-white;
+    @apply btn border border-line-strong bg-surface-raised text-slate-200 hover:border-accent/40 hover:text-slate-100;
   }
 
   .btn-ghost {
-    @apply btn px-2.5 py-1.5 text-slate-400 hover:bg-white/5 hover:text-slate-200;
+    @apply btn px-2.5 py-1.5 text-slate-400 hover:bg-[rgb(var(--overlay)/0.06)] hover:text-slate-200;
   }
 
   .btn-danger {
@@ -160,7 +216,7 @@
 
   /* ---------- Navigation ---------- */
   .nav-link {
-    @apply rounded-lg px-3 py-1.5 text-sm text-slate-400 transition-colors hover:bg-white/5 hover:text-slate-100;
+    @apply rounded-lg px-3 py-1.5 text-sm text-slate-400 transition-colors hover:bg-[rgb(var(--overlay)/0.06)] hover:text-slate-100;
   }
 
   .nav-link-active {
@@ -169,7 +225,7 @@
 
   /* ---------- Barre de score ---------- */
   .score-track {
-    @apply h-1.5 overflow-hidden rounded-full bg-white/5;
+    @apply h-1.5 overflow-hidden rounded-full bg-[rgb(var(--overlay)/0.08)];
   }
 
   .score-fill {
@@ -179,7 +235,7 @@
 
   /* ---------- Squelettes de chargement ---------- */
   .skeleton {
-    @apply animate-pulse rounded-md bg-white/5;
+    @apply animate-pulse rounded-md bg-[rgb(var(--overlay)/0.08)];
   }
 
   /* ---------- Tableaux ---------- */

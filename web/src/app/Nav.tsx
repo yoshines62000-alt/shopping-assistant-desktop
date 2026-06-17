@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { ShoppingBag, Settings, ScanBarcode } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
+import ThemeToggle from '@/components/ThemeToggle';
 import clsx from 'clsx';
 
 const navItems = [
@@ -57,6 +58,7 @@ export default function Nav() {
           >
             <ScanBarcode className="h-4 w-4" />
           </Link>
+          <ThemeToggle />
           <Link
             href="/settings"
             className={clsx(

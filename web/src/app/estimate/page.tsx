@@ -224,7 +224,7 @@ function EstimateContent() {
                   href={l.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="group flex items-center justify-between gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-white/5"
+                  className="group flex items-center justify-between gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-[rgb(var(--overlay)/0.05)]"
                 >
                   <span className="truncate text-sm text-slate-300 group-hover:text-slate-100">
                     {l.title}

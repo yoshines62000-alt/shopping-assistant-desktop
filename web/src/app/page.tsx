@@ -158,9 +158,9 @@ export default function Home() {
               <Link
                 key={f.label}
                 href={f.href}
-                className="card-pad flex items-center gap-3 transition-colors hover:bg-white/5"
+                className="card-pad flex items-center gap-3 transition-colors hover:bg-[rgb(var(--overlay)/0.05)]"
               >
-                <span className={`flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 ${f.tone}`}>
+                <span className={`flex h-9 w-9 items-center justify-center rounded-lg bg-[rgb(var(--overlay)/0.05)] ${f.tone}`}>
                   {f.icon}
                 </span>
                 <span className="min-w-0">

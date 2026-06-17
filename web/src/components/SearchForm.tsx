@@ -270,7 +270,7 @@ export default function SearchForm({ onSearch, initialQuery = '', initialFilters
           required
           aria-label="Rechercher des produits"
         />
-        <kbd className="absolute right-10 top-1/2 hidden -translate-y-1/2 rounded border border-line-strong bg-white/5 px-1.5 py-0.5 font-mono text-[10px] text-slate-500 sm:block">
+        <kbd className="absolute right-10 top-1/2 hidden -translate-y-1/2 rounded border border-line-strong bg-[rgb(var(--overlay)/0.05)] px-1.5 py-0.5 font-mono text-[10px] text-slate-500 sm:block">
           Ctrl+K
         </kbd>
         <button
@@ -290,7 +290,7 @@ export default function SearchForm({ onSearch, initialQuery = '', initialFilters
                 key={text}
                 type="button"
                 onClick={() => { setQuery(text); setShowSuggestions(false); handleSubmit(undefined, text); }}
-                className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-sm hover:bg-white/5"
+                className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-sm hover:bg-[rgb(var(--overlay)/0.05)]"
               >
                 {recent ? (
                   <History className="h-3 w-3 text-accent" />

@@ -256,7 +256,7 @@ export default function AccountingPage() {
                     tone={fiscal.microExceeded ? 'negative' : undefined}
                   />
                 </div>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/5">
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-[rgb(var(--overlay)/0.05)]">
                   <div
                     className={`h-full rounded-full ${fiscal.microCeilingPct >= 80 ? 'bg-amber-400' : 'bg-accent'}`}
                     style={{ width: `${Math.min(100, fiscal.microCeilingPct)}%` }}
@@ -413,7 +413,7 @@ export default function AccountingPage() {
                   {expenses.map((exp) => (
                     <div
                       key={exp.id}
-                      className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 hover:bg-white/5"
+                      className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 hover:bg-[rgb(var(--overlay)/0.05)]"
                     >
                       <div className="min-w-0">
                         <span className="text-sm text-slate-300">{exp.label}</span>
@@ -489,7 +489,7 @@ export default function AccountingPage() {
                   {filteredSales.map((s) => (
                     <div
                       key={s.id}
-                      className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 hover:bg-white/5"
+                      className="flex items-center justify-between gap-3 rounded-lg px-2 py-2 hover:bg-[rgb(var(--overlay)/0.05)]"
                     >
                       <div className="min-w-0">
                         <p className={`truncate text-sm ${s.returned ? 'text-slate-500 line-through' : 'text-slate-200'}`}>
