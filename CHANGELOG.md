@@ -6,6 +6,15 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.4.0] — 2026-06-17
+### Ajouté
+- **Thème clair / sombre** : bascule dans la barre de navigation (préférence
+  mémorisée, sans clignotement au démarrage).
+- **Photos d'annonce** : ajout de photos par objet (redimensionnées et
+  compressées localement), galerie + suppression.
+- **Suggestion de re-tarification** : sur un objet en vente, un indicateur
+  conseille de baisser ou monter le prix quand le marché a bougé.
+
 ## [0.3.0] — 2026-06-16
 ### Ajouté (18 nouveautés)
 - **Pilotage** : bande « À suivre » sur l'accueil (objets dormants, alertes
