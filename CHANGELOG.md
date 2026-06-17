@@ -6,6 +6,26 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.3.0] — 2026-06-16
+### Ajouté (18 nouveautés)
+- **Pilotage** : bande « À suivre » sur l'accueil (objets dormants, alertes
+  actives, nouveaux bons plans) ; **ROI par catégorie** sur les comptes.
+- **Prix** : **calculateur de marge** détaillé (frais + port → net/marge/ROI) et
+  **graphe d'historique** complet (min/médiane/max) sur la fiche produit.
+- **Stock & ventes** : **import/export CSV**, **facture / bon de vente PDF**,
+  **suivi des retours** (+ taux de retour), **SKU + étiquette** de rangement,
+  **catégorie** d'objet.
+- **Compta / fiscal** : **aide micro-entrepreneur** (CA, cotisations URSSAF,
+  seuils TVA / micro-BIC) ; **catégorisation auto des dépenses**.
+- **Notifications** : **Telegram + e-mail** (en plus de Discord) avec bouton de
+  test ; **digest hebdomadaire** automatique.
+- **Surveillances** : fréquence réglable par recherche + **veille « nouveautés »**
+  (plus de flot initial).
+- **Données & confort** : **sauvegarde / restauration** de la base (JSON) ;
+  **palette de commandes** (Ctrl+K).
+- **Robustesse** : migrations de schéma désormais compatibles SQLite (ajout de
+  colonnes sur base existante).
+
 ## [0.2.0] — 2026-06-16
 ### Ajouté
 - **Connecteur Leboncoin** : recherche leboncoin.fr (parse `__NEXT_DATA__`),
