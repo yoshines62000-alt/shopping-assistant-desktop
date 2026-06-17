@@ -6,6 +6,14 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.5.0] — 2026-06-17
+### Ajouté
+- **Photos des produits dans les résultats de recherche** : chaque offre
+  (Amazon / eBay / Vinted / Leboncoin) affiche désormais sa vignette à côté du
+  titre, du prix et des infos.
+- **Miniatures de tes photos dans le stock** : la première photo d'un objet
+  s'affiche directement dans la liste (clic → galerie).
+
 ## [0.4.0] — 2026-06-17
 ### Ajouté
 - **Thème clair / sombre** : bascule dans la barre de navigation (préférence
