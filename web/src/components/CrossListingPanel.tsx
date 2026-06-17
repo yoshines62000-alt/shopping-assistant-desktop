@@ -109,6 +109,25 @@ export default function CrossListingPanel({
       </div>
 
       <div className="space-y-3">
+        {item.photos && item.photos.length > 0 && (
+          <div>
+            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Photos ({item.photos.length}) — clic droit → enregistrer pour ton annonce
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {item.photos.map((src, i) => (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  key={i}
+                  src={src}
+                  alt={`Photo ${i + 1}`}
+                  className="h-16 w-16 rounded-lg object-cover ring-1 ring-line"
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         <div>
           <div className="mb-1 flex items-center justify-between">
             <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">
