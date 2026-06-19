@@ -23,6 +23,9 @@
   --halo-cyan: rgba(34, 211, 238, 0.1);
   --halo-violet: rgba(139, 92, 246, 0.07);
   --overlay: 255 255 255; /* survols/skeletons : blanc en sombre */
+  /* Ombres des cartes (thémées) : profondes sur fond sombre */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 30px -16px rgba(0, 0, 0, 0.55);
+  --shadow-card-hover: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px -18px rgba(0, 0, 0, 0.7);
 
   --s-50: 248 250 252;
   --s-100: 241 245 249;
@@ -49,6 +52,9 @@
   --halo-cyan: rgba(34, 211, 238, 0.12);
   --halo-violet: rgba(139, 92, 246, 0.08);
   --overlay: 15 23 42; /* survols/skeletons : sombre en clair */
+  /* Ombres douces et froides sur fond clair (le noir profond ferait sale) */
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px -14px rgba(15, 23, 42, 0.18);
+  --shadow-card-hover: 0 1px 2px rgba(15, 23, 42, 0.08), 0 16px 36px -16px rgba(15, 23, 42, 0.26);
 
   /* Échelle de gris inversée : le texte "clair" (100-300) devient sombre. */
   --s-50: 15 23 42;
@@ -110,7 +116,8 @@
   }
 
   .card {
-    @apply rounded-xl border border-line bg-surface shadow-card;
+    @apply rounded-xl border border-line bg-surface;
+    box-shadow: var(--shadow-card);
   }
 
   .card-pad {
@@ -119,14 +126,18 @@
 
   /* Carte interactive : se soulève légèrement et s'éclaire au survol */
   .card-hover {
-    @apply transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/30 hover:shadow-card-hover;
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/30;
+  }
+  .card-hover:hover {
+    box-shadow: var(--shadow-card-hover);
   }
 
   /* Carte chiffre-clé avec liseré dégradé en haut */
   .kpi {
     @apply card-pad relative overflow-hidden;
   }
-  .kpi::before {
+  .kpi::before,
+  .stat-card::before {
     content: '';
     @apply absolute inset-x-0 top-0 h-px opacity-70;
     background: linear-gradient(
@@ -136,6 +147,11 @@
       theme('colors.brand.violet'),
       transparent
     );
+  }
+
+  /* Carte statistique : KPI compact avec liseré + survol discret */
+  .stat-card {
+    @apply card-pad relative overflow-hidden transition-colors duration-200 hover:border-accent/25;
   }
 
   /* Tuile d'accès rapide (grille d'accueil) */

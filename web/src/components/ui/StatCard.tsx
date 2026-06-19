@@ -16,9 +16,9 @@ interface StatCardProps {
 
 export default function StatCard({ label, value, sub, tone = 'default' }: StatCardProps) {
   return (
-    <div className="card-pad text-center">
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className={`mt-1 text-2xl font-bold tracking-tight ${TONE_CLASSES[tone]}`}>{value}</p>
+    <div className="stat-card text-center">
+      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
+      <p className={`mt-1.5 text-2xl font-bold tracking-tight ${TONE_CLASSES[tone]}`}>{value}</p>
       {sub && <p className="mt-1 text-xs text-slate-500">{sub}</p>}
     </div>
   );
