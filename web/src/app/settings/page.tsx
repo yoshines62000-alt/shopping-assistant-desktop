@@ -9,6 +9,7 @@ import LoadingBlock from '@/components/ui/LoadingBlock';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import ScrapingHealth from '@/components/ScrapingHealth';
+import AccentPicker from '@/components/AccentPicker';
 
 const PLATFORM_LABELS: Record<string, string> = {
   ebay: 'eBay',
@@ -158,6 +159,16 @@ export default function SettingsPage() {
     >
       <div className="space-y-4">
         {error && <ErrorBanner message={error} />}
+
+        <div className="card-pad">
+          <h2 className="mb-1 text-sm font-semibold text-slate-100">Apparence</h2>
+          <p className="mb-4 text-xs text-slate-500">
+            Couleur d&apos;accent de l&apos;interface (appliquée et mémorisée aussitôt). Le thème
+            clair/sombre se change depuis la barre du haut.
+          </p>
+          <AccentPicker />
+        </div>
+
         {!settings && !error && <LoadingBlock label="Chargement des réglages..." />}
 
         {settings && (

@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import PwaRegister from '@/components/PwaRegister';
 import Toaster from '@/components/ui/Toaster';
 import CommandPalette from '@/components/CommandPalette';
+import AccentInit from '@/components/AccentInit';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Footer />
         <Toaster />
         <CommandPalette />
+        <AccentInit />
       </body>
     </html>
   );
