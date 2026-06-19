@@ -32,13 +32,13 @@ function monthShort(ym: string): string {
 }
 
 const quickLinks = [
-  { href: '/deals', label: 'Bonnes affaires', icon: <Sparkles className="h-4 w-4" /> },
-  { href: '/search', label: 'Rechercher', icon: <Search className="h-4 w-4" /> },
-  { href: '/estimate', label: 'Estimer une revente', icon: <Coins className="h-4 w-4" /> },
-  { href: '/scan', label: 'Scanner un code-barres', icon: <ScanBarcode className="h-4 w-4" /> },
-  { href: '/stock', label: 'Mon stock', icon: <Package className="h-4 w-4" /> },
-  { href: '/accounting', label: 'Mes comptes', icon: <BookOpenCheck className="h-4 w-4" /> },
-  { href: '/alerts', label: 'Alertes prix', icon: <Bell className="h-4 w-4" /> },
+  { href: '/deals', label: 'Bonnes affaires', icon: <Sparkles className="h-4 w-4" />, tint: 'bg-amber-500/10 text-amber-300' },
+  { href: '/search', label: 'Rechercher', icon: <Search className="h-4 w-4" />, tint: 'bg-accent/10 text-accent' },
+  { href: '/estimate', label: 'Estimer une revente', icon: <Coins className="h-4 w-4" />, tint: 'bg-emerald-500/10 text-emerald-300' },
+  { href: '/scan', label: 'Scanner un code-barres', icon: <ScanBarcode className="h-4 w-4" />, tint: 'bg-violet-500/10 text-violet-300' },
+  { href: '/stock', label: 'Mon stock', icon: <Package className="h-4 w-4" />, tint: 'bg-sky-500/10 text-sky-300' },
+  { href: '/accounting', label: 'Mes comptes', icon: <BookOpenCheck className="h-4 w-4" />, tint: 'bg-teal-500/10 text-teal-300' },
+  { href: '/alerts', label: 'Alertes prix', icon: <Bell className="h-4 w-4" />, tint: 'bg-rose-500/10 text-rose-300' },
 ];
 
 const DORMANT_DAYS = 60;
@@ -268,7 +268,7 @@ export default function Home() {
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {quickLinks.map((q) => (
             <Link key={q.href} href={q.href} className="tile">
-              <span className="tile-icon">{q.icon}</span>
+              <span className={`tile-icon ${q.tint}`}>{q.icon}</span>
               {q.label}
             </Link>
           ))}
