@@ -2,27 +2,29 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { Product } from '@shopping-assistant/types';
 import {
   TrendingDown,
   Clock,
   Star,
   ExternalLink,
-  ShoppingCart,
-  Check,
   ChevronDown,
   ChevronUp,
   Coins,
   BarChart3,
+  Heart,
+  Bell,
+  Copy,
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import ScoreDetails from '@/components/ScoreDetails';
 import DealAnalysis from '@/components/DealAnalysis';
 import ProductThumb from '@/components/ui/ProductThumb';
+import ContextMenu, { type ContextMenuItem } from '@/components/ui/ContextMenu';
 import { euro } from '@/lib/format';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
-import { Heart } from 'lucide-react';
 
 interface Props {
   products: Product[];
@@ -80,6 +82,7 @@ function ProductSkeleton() {
 export default function SearchResults({ products, isLoading }: Props) {
   const { shoppingList, watchList, addToShoppingList, removeFromShoppingList, addToWatchList, removeFromWatchList } = useAppStore();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const router = useRouter();
 
   const watchedIds = useMemo(() => new Set(watchList.map((w) => w.productId)), [watchList]);
 
@@ -134,8 +137,53 @@ export default function SearchResults({ products, isLoading }: Props) {
         const inList = shoppingList.some((item) => item.id === p.id);
         const isWatched = watchedIds.has(p.id);
         const expanded = expandedId === p.id;
+        const menuItems: ContextMenuItem[] = [
+          {
+            label: inList ? 'Retirer des favoris' : 'Ajouter aux favoris',
+            icon: <Heart className={`h-4 w-4 ${inList ? 'fill-rose-500 text-rose-500' : ''}`} />,
+            onClick: () => (inList ? removeFromShoppingList(p.id) : addToShoppingList(p)),
+          },
+          {
+            label: isWatched ? 'Retirer la surveillance' : 'Surveiller le prix',
+            icon: <Bell className="h-4 w-4" />,
+            onClick: () => toggleWatch(p),
+          },
+          {
+            label: 'Estimer la revente',
+            icon: <Coins className="h-4 w-4" />,
+            onClick: () =>
+              router.push(`/estimate?q=${encodeURIComponent(p.name.slice(0, 80))}&price=${p.totalPrice}`),
+          },
+          {
+            label: 'Comparer les sites',
+            icon: <BarChart3 className="h-4 w-4" />,
+            onClick: () => router.push(`/compare?q=${encodeURIComponent(p.name.slice(0, 80))}`),
+          },
+          {
+            label: 'Historique & alertes',
+            icon: <TrendingDown className="h-4 w-4" />,
+            onClick: () => router.push(`/products/${encodeURIComponent(p.id)}`),
+          },
+          {
+            label: "Ouvrir l'annonce",
+            icon: <ExternalLink className="h-4 w-4" />,
+            onClick: () => window.open(p.sourceUrl, '_blank', 'noopener'),
+            separatorBefore: true,
+          },
+          {
+            label: 'Copier le lien',
+            icon: <Copy className="h-4 w-4" />,
+            onClick: () => {
+              navigator.clipboard?.writeText(p.sourceUrl).then(
+                () => toast.success('Lien copié'),
+                () => toast.error('Copie impossible')
+              );
+            },
+          },
+        ];
         return (
-          <article key={p.id} className="card-pad card-hover" aria-label={p.name}>
+          <ContextMenu key={p.id} items={menuItems}>
+          <article className="card-pad card-hover" aria-label={p.name}>
             <div className="flex items-start justify-between gap-4">
               <ProductThumb src={p.imageUrl} alt={p.name} />
               <div className="min-w-0 flex-1">
@@ -172,22 +220,23 @@ export default function SearchResults({ products, isLoading }: Props) {
                 <button
                   type="button"
                   onClick={() => (inList ? removeFromShoppingList(p.id) : addToShoppingList(p))}
-                  className={`btn-ghost text-xs ${inList ? 'text-accent' : ''}`}
-                  title={inList ? 'Retirer de la liste' : 'Ajouter à la liste'}
+                  className="btn-ghost !px-1.5 !py-1 text-xs"
+                  title={inList ? 'Retirer des favoris' : 'Ajouter aux favoris'}
                   aria-pressed={inList}
                 >
-                  {inList ? <Check className="h-4 w-4" /> : <ShoppingCart className="h-4 w-4" />}
-                  {inList ? 'Ajouté' : 'Liste'}
+                  <Heart
+                    className={`h-4 w-4 transition-colors ${inList ? 'fill-rose-500 text-rose-500' : 'text-slate-400'}`}
+                  />
                 </button>
                 <button
                   type="button"
                   onClick={() => toggleWatch(p)}
                   className="btn-ghost !px-1.5 !py-1 text-xs"
-                  title={isWatched ? 'Retirer la surveillance du prix' : 'Surveiller le prix (alerte Discord)'}
+                  title={isWatched ? 'Retirer la surveillance du prix' : 'Surveiller le prix (alerte)'}
                   aria-pressed={isWatched}
                 >
-                  <Heart
-                    className={`h-3.5 w-3.5 ${isWatched ? 'fill-rose-500 text-rose-500' : 'text-slate-400'}`}
+                  <Bell
+                    className={`h-3.5 w-3.5 ${isWatched ? 'fill-accent text-accent' : 'text-slate-400'}`}
                   />
                 </button>
                 <Link
@@ -258,6 +307,7 @@ export default function SearchResults({ products, isLoading }: Props) {
 
             <DealAnalysis name={p.name} purchasePrice={p.totalPrice} />
           </article>
+          </ContextMenu>
         );
       })}
     </div>

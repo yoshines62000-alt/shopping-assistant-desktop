@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAppStore } from '@/lib/store';
-import { History, Trash2, ExternalLink, Download, ShoppingCart, Search } from 'lucide-react';
+import { History, Trash2, ExternalLink, Download, Heart, Search } from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
 import EmptyState from '@/components/ui/EmptyState';
+import ProductThumb from '@/components/ui/ProductThumb';
 import { euro, dateFr } from '@/lib/format';
 
 export default function ShoppingListPage() {
@@ -30,7 +31,7 @@ export default function ShoppingListPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `shopping-list-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `favoris-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -40,12 +41,12 @@ export default function ShoppingListPage() {
 
   return (
     <PageShell
-      title="Ma liste"
-      icon={<ShoppingCart className="h-6 w-6" />}
+      title="Mes favoris"
+      icon={<Heart className="h-6 w-6" />}
       subtitle={
         isEmpty
           ? undefined
-          : `${shoppingList.length} article${shoppingList.length > 1 ? 's' : ''} · total ${euro(total)}`
+          : `${shoppingList.length} favori${shoppingList.length > 1 ? 's' : ''} · total ${euro(total)}`
       }
       actions={
         isEmpty ? undefined : (
@@ -63,9 +64,9 @@ export default function ShoppingListPage() {
       {isEmpty ? (
         mounted && (
           <EmptyState
-            icon={<ShoppingCart className="h-6 w-6" />}
-            title="Liste vide"
-            description="Ajoutez des produits depuis la recherche pour les retrouver ici."
+            icon={<Heart className="h-6 w-6" />}
+            title="Aucun favori"
+            description="Appuie sur le ♥ d'un résultat de recherche pour l'ajouter à tes favoris."
             action={
               <Link href="/search" className="btn-primary text-sm">
                 <Search className="h-4 w-4" /> Rechercher
@@ -76,8 +77,9 @@ export default function ShoppingListPage() {
       ) : (
         <div className="space-y-3">
           {shoppingList.map(({ product, addedAt }) => (
-            <div key={product.id} className="card-pad">
+            <div key={product.id} className="card-pad card-hover">
               <div className="flex items-start justify-between gap-3">
+                <ProductThumb src={product.imageUrl} alt={product.name} />
                 <div className="min-w-0 flex-1">
                   <h3 className="truncate font-semibold text-slate-100">{product.name}</h3>
                   <p className="text-sm text-slate-400">

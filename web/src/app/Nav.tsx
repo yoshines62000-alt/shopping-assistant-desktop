@@ -13,7 +13,7 @@ import {
   Coins,
   Package,
   Wallet,
-  ListChecks,
+  Heart,
   Bell,
   Newspaper,
 } from 'lucide-react';
@@ -29,7 +29,7 @@ const navItems = [
   { href: '/estimate', label: 'Estimation', icon: <Coins className={ICON} /> },
   { href: '/stock', label: 'Stock', icon: <Package className={ICON} /> },
   { href: '/accounting', label: 'Comptes', icon: <Wallet className={ICON} /> },
-  { href: '/shopping-list', label: 'Liste', icon: <ListChecks className={ICON} /> },
+  { href: '/shopping-list', label: 'Favoris', icon: <Heart className={ICON} /> },
   { href: '/alerts', label: 'Alertes', icon: <Bell className={ICON} /> },
   { href: '/digest', label: 'Digest', icon: <Newspaper className={ICON} /> },
 ];
