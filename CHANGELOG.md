@@ -6,6 +6,18 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.6.0] — 2026-06-17
+### Amélioré (interface)
+- **Refonte visuelle** : vignettes produit unifiées (avec placeholder propre)
+  partout où l'on liste des offres — recherche, affaires, arbitrage, comparaison,
+  stock et ventes analysées.
+- **Navigation** rangée avec une icône devant chaque rubrique.
+- **En-têtes de page** plus soignés (icône pastillée), cartes **KPI** à liseré
+  dégradé, et **ombres adaptées au thème** (douces en clair).
+- Photos de l'objet affichées dans le **brouillon d'annonce** (cross-listing).
+### Corrigé
+- Disparition d'un avertissement React au chargement (thème).
+
 ## [0.5.0] — 2026-06-17
 ### Ajouté
 - **Photos des produits dans les résultats de recherche** : chaque offre
