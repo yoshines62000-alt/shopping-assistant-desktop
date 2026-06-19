@@ -7,6 +7,7 @@ import type { Product } from '@shopping-assistant/types';
 import { apiFetch } from '@/lib/api';
 import PageShell from '@/components/ui/PageShell';
 import SearchResults from '@/components/SearchResults';
+import ProductThumb from '@/components/ui/ProductThumb';
 import { euro } from '@/lib/format';
 import { Suspense } from 'react';
 
@@ -45,8 +46,11 @@ function CompareContent() {
         <div className="space-y-6">
           {comparisons.map((c) => (
             <div key={c.name} className="card-pad">
-              <h3 className="mb-3 font-semibold text-slate-200">{c.items[0].name}</h3>
-              
+              <div className="mb-3 flex items-center gap-3">
+                <ProductThumb src={c.items[0].imageUrl} alt={c.items[0].name} size="sm" />
+                <h3 className="min-w-0 font-semibold text-slate-200">{c.items[0].name}</h3>
+              </div>
+
               {/* Comparison table */}
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">

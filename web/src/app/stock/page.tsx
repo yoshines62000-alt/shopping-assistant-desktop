@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import CrossListingPanel from '@/components/CrossListingPanel';
 import StockPhotos from '@/components/StockPhotos';
+import ProductThumb from '@/components/ui/ProductThumb';
 import { printStockLabel } from '@/lib/label';
 import PageShell from '@/components/ui/PageShell';
 import ErrorBanner from '@/components/ui/ErrorBanner';
@@ -451,20 +452,11 @@ export default function StockPage() {
               return (
                 <article key={item.id} className="card-pad" aria-label={item.name}>
                   <div className="flex items-start justify-between gap-3">
-                    {item.photos && item.photos.length > 0 && (
-                      <button
-                        onClick={() => setPhotosId(photosId === item.id ? null : item.id)}
-                        className="shrink-0"
-                        title="Voir les photos"
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={item.photos[0]}
-                          alt=""
-                          className="h-14 w-14 rounded-lg object-cover ring-1 ring-line"
-                        />
-                      </button>
-                    )}
+                    <ProductThumb
+                      src={item.photos?.[0]}
+                      alt={item.name}
+                      onClick={() => setPhotosId(photosId === item.id ? null : item.id)}
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="mb-1 flex flex-wrap items-center gap-2">
                         <h3 className="font-semibold text-slate-100">{item.name}</h3>

@@ -229,6 +229,7 @@ export interface SoldListing {
   title: string;
   price: number;
   url: string;
+  imageUrl?: string | null;
 }
 
 export interface ResaleEstimate {
@@ -274,6 +275,7 @@ export interface Deal {
   siteDomain: string;
   sourceUrl: string;
   seller?: string | null;
+  imageUrl?: string | null;
   deliveryDays?: number | null;
   rating?: number | null;
   reviewCount?: number | null;
@@ -316,6 +318,7 @@ export interface ArbitrageOffer {
   totalPrice: number;
   siteDomain: string;
   sourceUrl: string;
+  imageUrl?: string | null;
   rating?: number | null;
   reviewCount?: number | null;
 }

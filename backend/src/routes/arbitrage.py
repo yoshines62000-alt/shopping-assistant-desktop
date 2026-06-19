@@ -82,7 +82,10 @@ def _platform_fee(site_domain: str, fees: dict[str, Any], default_rate: float) -
 
 
 def _slim(item: dict[str, Any]) -> dict[str, Any]:
-    return {k: item.get(k) for k in ("id", "name", "totalPrice", "siteDomain", "sourceUrl", "rating", "reviewCount")}
+    return {
+        k: item.get(k)
+        for k in ("id", "name", "totalPrice", "siteDomain", "sourceUrl", "rating", "reviewCount", "imageUrl")
+    }
 
 
 def find_arbitrage(products: list[dict[str, Any]], min_margin_pct: float) -> list[dict[str, Any]]:

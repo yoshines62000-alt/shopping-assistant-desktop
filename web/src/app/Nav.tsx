@@ -3,21 +3,35 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { ShoppingBag, Settings, ScanBarcode } from 'lucide-react';
+import {
+  ShoppingBag,
+  Settings,
+  ScanBarcode,
+  Search,
+  Sparkles,
+  ArrowLeftRight,
+  Coins,
+  Package,
+  Wallet,
+  ListChecks,
+  Bell,
+  Newspaper,
+} from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import ThemeToggle from '@/components/ThemeToggle';
 import clsx from 'clsx';
 
+const ICON = 'h-3.5 w-3.5 shrink-0';
 const navItems = [
-  { href: '/search', label: 'Recherche' },
-  { href: '/deals', label: 'Affaires' },
-  { href: '/arbitrage', label: 'Arbitrage' },
-  { href: '/estimate', label: 'Estimation' },
-  { href: '/stock', label: 'Stock' },
-  { href: '/accounting', label: 'Comptes' },
-  { href: '/shopping-list', label: 'Liste' },
-  { href: '/alerts', label: 'Alertes' },
-  { href: '/digest', label: 'Digest' },
+  { href: '/search', label: 'Recherche', icon: <Search className={ICON} /> },
+  { href: '/deals', label: 'Affaires', icon: <Sparkles className={ICON} /> },
+  { href: '/arbitrage', label: 'Arbitrage', icon: <ArrowLeftRight className={ICON} /> },
+  { href: '/estimate', label: 'Estimation', icon: <Coins className={ICON} /> },
+  { href: '/stock', label: 'Stock', icon: <Package className={ICON} /> },
+  { href: '/accounting', label: 'Comptes', icon: <Wallet className={ICON} /> },
+  { href: '/shopping-list', label: 'Liste', icon: <ListChecks className={ICON} /> },
+  { href: '/alerts', label: 'Alertes', icon: <Bell className={ICON} /> },
+  { href: '/digest', label: 'Digest', icon: <Newspaper className={ICON} /> },
 ];
 
 export default function Nav() {
@@ -40,8 +54,12 @@ export default function Nav() {
             <Link
               key={item.href}
               href={item.href}
-              className={clsx('nav-link', pathname.startsWith(item.href) && 'nav-link-active')}
+              className={clsx(
+                'nav-link inline-flex items-center gap-1.5',
+                pathname.startsWith(item.href) && 'nav-link-active'
+              )}
             >
+              {item.icon}
               {item.label}
               {item.href === '/shopping-list' && listCount > 0 && (
                 <span className="ml-1.5 inline-flex h-4 min-w-[18px] items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-ink">

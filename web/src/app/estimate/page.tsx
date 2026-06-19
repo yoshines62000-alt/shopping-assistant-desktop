@@ -10,6 +10,7 @@ import StatCard from '@/components/ui/StatCard';
 import ErrorBanner from '@/components/ui/ErrorBanner';
 import EmptyState from '@/components/ui/EmptyState';
 import MarginCalculator from '@/components/MarginCalculator';
+import ProductThumb from '@/components/ui/ProductThumb';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { euro } from '@/lib/format';
@@ -226,8 +227,11 @@ function EstimateContent() {
                   rel="noreferrer"
                   className="group flex items-center justify-between gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-[rgb(var(--overlay)/0.05)]"
                 >
-                  <span className="truncate text-sm text-slate-300 group-hover:text-slate-100">
-                    {l.title}
+                  <span className="flex min-w-0 items-center gap-3">
+                    <ProductThumb src={l.imageUrl} alt="" size="sm" />
+                    <span className="truncate text-sm text-slate-300 group-hover:text-slate-100">
+                      {l.title}
+                    </span>
                   </span>
                   <span className="flex shrink-0 items-center gap-2">
                     <span className="text-sm font-semibold text-accent">{euro(l.price)}</span>

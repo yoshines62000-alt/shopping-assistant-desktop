@@ -18,6 +18,7 @@ import {
 import { useAppStore } from '@/lib/store';
 import ScoreDetails from '@/components/ScoreDetails';
 import DealAnalysis from '@/components/DealAnalysis';
+import ProductThumb from '@/components/ui/ProductThumb';
 import { euro } from '@/lib/format';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
@@ -136,18 +137,7 @@ export default function SearchResults({ products, isLoading }: Props) {
         return (
           <article key={p.id} className="card-pad card-hover" aria-label={p.name}>
             <div className="flex items-start justify-between gap-4">
-              {p.imageUrl && (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={p.imageUrl}
-                  alt=""
-                  loading="lazy"
-                  className="h-16 w-16 shrink-0 rounded-lg object-cover ring-1 ring-line"
-                  onError={(e) => {
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-              )}
+              <ProductThumb src={p.imageUrl} alt={p.name} />
               <div className="min-w-0 flex-1">
                 <div className="mb-1 flex flex-wrap items-center gap-2">
                   <h3 className="font-semibold text-slate-100">{p.name}</h3>

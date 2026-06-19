@@ -6,6 +6,7 @@ import type { ArbitrageResponse, ArbitragePair } from '@shopping-assistant/types
 import PageShell from '@/components/ui/PageShell';
 import ErrorBanner from '@/components/ui/ErrorBanner';
 import EmptyState from '@/components/ui/EmptyState';
+import ProductThumb from '@/components/ui/ProductThumb';
 import { apiFetch } from '@/lib/api';
 import { euro } from '@/lib/format';
 
@@ -103,7 +104,10 @@ function ArbitrageCard({ pair }: { pair: ArbitragePair }) {
   return (
     <article className="card-pad">
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h3 className="min-w-0 truncate font-semibold text-slate-100">{pair.name}</h3>
+        <div className="flex min-w-0 items-center gap-3">
+          <ProductThumb src={pair.buy.imageUrl ?? pair.sell.imageUrl} alt={pair.name} size="sm" />
+          <h3 className="min-w-0 truncate font-semibold text-slate-100">{pair.name}</h3>
+        </div>
         <span className="shrink-0 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
           +{euro(pair.marginEur)} ({pair.marginPct} %)
         </span>

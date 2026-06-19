@@ -194,7 +194,12 @@ def estimate_resale(
         if price <= 0:
             continue
         prices.append(price)
-        listings.append({"title": raw.title, "price": price, "url": raw.url})
+        listings.append({
+            "title": raw.title,
+            "price": price,
+            "url": raw.url,
+            "imageUrl": (raw.extra or {}).get("image_url"),
+        })
         sold = _parse_sold_date((raw.extra or {}).get("sold_date_raw", "")) if raw.extra else None
         if sold:
             sold_dates.append(sold)

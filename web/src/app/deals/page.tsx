@@ -7,6 +7,7 @@ import { Sparkles, ExternalLink, Coins, Loader2, SearchX } from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
 import EmptyState from '@/components/ui/EmptyState';
 import ErrorBanner from '@/components/ui/ErrorBanner';
+import ProductThumb from '@/components/ui/ProductThumb';
 import { apiFetch } from '@/lib/api';
 import { euro } from '@/lib/format';
 
@@ -30,6 +31,7 @@ function DealCard({ deal }: { deal: Deal }) {
   return (
     <article className="card-pad card-hover">
       <div className="flex items-start justify-between gap-4">
+        <ProductThumb src={deal.imageUrl} alt={deal.name} />
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex flex-wrap items-center gap-2">
             {v && <span className={v.cls}>{v.label}</span>}
