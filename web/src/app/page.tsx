@@ -118,11 +118,23 @@ export default function Home() {
   return (
     <div className="page-container py-10">
       {/* Hero */}
-      <section className="animate-rise mx-auto max-w-2xl text-center">
-        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 shadow-glow">
-          <ShoppingBag className="h-7 w-7 text-accent" />
+      <section className="animate-rise relative mx-auto max-w-2xl text-center">
+        {/* Halo d'ambiance derrière le hero */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-0 -z-10 h-48 w-[34rem] max-w-full -translate-x-1/2 rounded-full opacity-60 blur-3xl"
+          style={{
+            background:
+              'radial-gradient(closest-side, rgb(var(--c-accent) / 0.18), transparent 70%)',
+          }}
+        />
+        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-brand-violet text-white shadow-glow ring-1 ring-white/10">
+          <ShoppingBag className="h-8 w-8" />
         </div>
-        <h1 className="text-4xl font-bold tracking-tight md:text-5xl">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-line-strong bg-surface/60 px-3 py-1 text-xs font-medium text-slate-400">
+          <Sparkles className="h-3 w-3 text-accent" /> Achat malin · Revente rentable
+        </span>
+        <h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">
           <span className="brand-text">Shopping Assistant</span>
         </h1>
         <p className="mt-3 text-lg text-slate-400">
