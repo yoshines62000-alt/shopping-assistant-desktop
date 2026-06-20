@@ -368,7 +368,10 @@ export default function SettingsPage() {
               <h2 className="mb-1 text-sm font-semibold text-slate-100">Sauvegarde des données</h2>
               <p className="mb-4 text-xs text-slate-500">
                 Exporte toute ta base (stock, ventes, alertes, historique…) en un fichier JSON, ou
-                restaure une sauvegarde précédente. Idéal avant de changer de machine.
+                restaure une sauvegarde précédente. Idéal avant de changer de machine. Les
+                identifiants (webhook Discord, token Telegram, mot de passe SMTP) sont{' '}
+                <span className="text-slate-400">exclus du fichier</span> pour ta sécurité — ils
+                restent en place lors d&apos;une restauration.
               </p>
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={exportBackup} className="btn-secondary">

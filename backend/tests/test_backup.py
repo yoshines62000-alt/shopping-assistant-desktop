@@ -54,3 +54,27 @@ def test_import_round_trip(client):
 
     items = client.get("/api/v1/stock").json()["items"]
     assert any(i["id"] == created["id"] and i["name"] == MARK for i in items)
+
+
+def test_export_redacts_secrets_and_import_preserves_them(client):
+    import json
+
+    # Configure un secret (mot de passe SMTP).
+    client.put("/api/v1/settings", json={"smtpPassword": "super-secret-pw", "smtpHost": "smtp.test"})
+
+    # Export : le secret doit etre caviarde (vide), pas le reglage non-secret.
+    data = client.get("/api/v1/backup/export").json()
+    app_rows = data["tables"]["appSettings"]
+    app_row = next((r for r in app_rows if r["key"] == "app"), None)
+    assert app_row is not None
+    exported = json.loads(app_row["value"])
+    assert exported.get("smtpPassword") == ""  # caviarde
+    assert exported.get("smtpHost") == "smtp.test"  # non-secret conserve
+
+    # Import du backup caviarde : le secret en place doit etre PRESERVE.
+    client.post("/api/v1/backup/import", json={"version": 1, "tables": {"appSettings": app_rows}, "replace": True})
+    settings = client.get("/api/v1/settings").json()
+    assert settings["smtpPassword"] == "super-secret-pw"  # pas ecrase par le vide
+
+    # Nettoyage
+    client.put("/api/v1/settings", json={"smtpPassword": "", "smtpHost": ""})
