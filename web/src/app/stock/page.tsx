@@ -31,6 +31,7 @@ import LoadingBlock from '@/components/ui/LoadingBlock';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { downloadCSV, parseCSV } from '@/lib/csv';
+import { ageDays, isDormant, computeReprice, DORMANT_DAYS } from '@/lib/resale';
 import { euro, dateFr } from '@/lib/format';
 
 const STATUS_LABELS: Record<StockStatus, string> = {
@@ -45,38 +46,20 @@ const STATUS_BADGES: Record<StockStatus, string> = {
   sold: 'badge-muted',
 };
 
-// Stock dormant : un exemplaire encore en stock (non vendu) depuis trop longtemps
-// immobilise de la trésorerie -> on le signale pour pousser à le solder.
-const DORMANT_DAYS = 60;
-
-function ageDays(iso: string): number {
-  const ms = Date.now() - new Date(iso).getTime();
-  return ms > 0 ? Math.floor(ms / 86_400_000) : 0;
-}
-
-function isDormant(item: StockItem): boolean {
-  return item.remaining > 0 && item.status !== 'sold' && ageDays(item.purchaseDate) >= DORMANT_DAYS;
-}
-
-// Suggestion de re-tarification (F4) : pour un objet EN VENTE, si le marché a
-// bougé depuis la dernière estimation (estimation actuelle vs précédente), on
-// recommande de repositionner le prix. Réutilise les données déjà suivies.
+// Logique financière (marge, dormant, re-tarification) : voir lib/resale (testée).
+// Le libellé/style de la suggestion de re-tarification reste ici (présentation).
 function repriceHint(item: StockItem): { label: string; cls: string } | null {
-  if (item.status !== 'listed' || item.estimatedResale == null || item.previousEstimate == null)
-    return null;
-  if (item.previousEstimate <= 0) return null;
-  const move = (item.estimatedResale - item.previousEstimate) / item.previousEstimate;
-  if (move <= -0.05)
+  const r = computeReprice(item);
+  if (!r) return null;
+  if (r.dir === 'down')
     return {
-      label: `Marché en baisse ${Math.round(move * 100)}% — repositionne à ~${euro(item.estimatedResale)}`,
+      label: `Marché en baisse ${r.movePct}% — repositionne à ~${euro(r.target)}`,
       cls: 'bg-amber-500/15 text-amber-300',
     };
-  if (move >= 0.05)
-    return {
-      label: `Sous-coté +${Math.round(move * 100)}% — tu peux monter à ~${euro(item.estimatedResale)}`,
-      cls: 'badge-success',
-    };
-  return null;
+  return {
+    label: `Sous-coté +${r.movePct}% — tu peux monter à ~${euro(r.target)}`,
+    cls: 'badge-success',
+  };
 }
 
 interface SellForm {

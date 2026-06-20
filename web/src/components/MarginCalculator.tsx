@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import type { AppSettings } from '@shopping-assistant/types';
 import { Calculator } from 'lucide-react';
 import { euro } from '@/lib/format';
+import { computeMargin } from '@/lib/resale';
 
 const PLATFORM_LABELS: Record<string, string> = {
   ebay: 'eBay',
@@ -30,11 +31,8 @@ export default function MarginCalculator({ settings }: { settings: AppSettings |
     const s = Number(sell) || 0;
     const ship = Number(shipping) || 0;
     const feeRate = fees[platform] ?? 0;
-    const feeAmount = s * feeRate;
-    const net = s - feeAmount - ship - b;
-    const margin = s > 0 ? (net / s) * 100 : 0; // marge sur prix de vente
-    const roi = b > 0 ? (net / b) * 100 : 0; // retour sur l'achat
-    return { feeRate, feeAmount, net, margin, roi, hasInput: b > 0 || s > 0 };
+    const m = computeMargin(b, s, ship, feeRate);
+    return { feeRate, feeAmount: m.feeAmount, net: m.net, margin: m.marginPct, roi: m.roiPct, hasInput: b > 0 || s > 0 };
   }, [buy, sell, shipping, platform, fees]);
 
   return (
