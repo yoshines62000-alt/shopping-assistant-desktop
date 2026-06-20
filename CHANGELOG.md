@@ -6,6 +6,19 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.7.2] — 2026-06-20
+### Sécurité
+- La **sauvegarde** n'exporte plus en clair les identifiants (webhook Discord,
+  token Telegram, mot de passe SMTP) ; ils restent en place lors d'une restauration.
+### Ajouté
+- **Sauvegarde automatique** de la base : un instantané par jour (rotation 7 jours)
+  dans `%APPDATA%\ShoppingAssistant\backups\`.
+- **Alerte de connecteur** : notification quand une source (Amazon/eBay/…) tombe
+  ou se rétablit.
+### Interne
+- Logique financière testée + carte de stock refactorisée (corrige un comptage
+  erroné des objets « dormants »).
+
 ## [0.7.1] — 2026-06-20
 ### Ajouté
 - **Menu clic droit** étendu au stock, aux affaires et aux favoris (en plus de
