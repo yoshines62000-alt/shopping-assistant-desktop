@@ -6,6 +6,7 @@ import PwaRegister from '@/components/PwaRegister';
 import Toaster from '@/components/ui/Toaster';
 import CommandPalette from '@/components/CommandPalette';
 import AccentInit from '@/components/AccentInit';
+import KeyboardShortcuts from '@/components/KeyboardShortcuts';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Toaster />
         <CommandPalette />
         <AccentInit />
+        <KeyboardShortcuts />
       </body>
     </html>
   );
