@@ -6,6 +6,20 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.7.0] — 2026-06-20
+### Ajouté
+- **Favoris** : « Liste » devient « Favoris ». Le **cœur** d'un résultat de
+  recherche l'ajoute aux favoris ; la surveillance de prix passe sur une cloche.
+- **Menu clic droit** sur les résultats : actions rapides (favoris, surveiller,
+  estimer, comparer, historique, ouvrir l'annonce, copier le lien).
+- **Couleur d'accent personnalisable** (Réglages → Apparence) : 6 teintes,
+  appliquée et mémorisée aussitôt, adaptée au thème clair/sombre.
+### Amélioré (interface)
+- Refonte visuelle avancée : boutons primaires en **dégradé** suivant l'accent,
+  léger retour tactile au clic, onglet actif plus net.
+- Accueil retravaillé (hero), tuiles d'accès rapide colorées, états vides
+  illustrés et chargements en fondu.
+
 ## [0.6.0] — 2026-06-17
 ### Amélioré (interface)
 - **Refonte visuelle** : vignettes produit unifiées (avec placeholder propre)
