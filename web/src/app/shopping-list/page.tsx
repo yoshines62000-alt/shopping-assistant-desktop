@@ -2,15 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/lib/store';
-import { History, Trash2, ExternalLink, Download, Heart, Search } from 'lucide-react';
+import { History, Trash2, ExternalLink, Download, Heart, Search, Coins, BarChart3, Copy } from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
 import EmptyState from '@/components/ui/EmptyState';
 import ProductThumb from '@/components/ui/ProductThumb';
+import ContextMenu, { type ContextMenuItem } from '@/components/ui/ContextMenu';
+import { toast } from '@/lib/toast';
 import { euro, dateFr } from '@/lib/format';
 
 export default function ShoppingListPage() {
   const { shoppingList, removeFromShoppingList, clearShoppingList } = useAppStore();
+  const router = useRouter();
   // La liste vient du localStorage : on attend le montage pour éviter
   // un mismatch d'hydratation entre le HTML serveur et le client.
   const [mounted, setMounted] = useState(false);
@@ -76,8 +80,50 @@ export default function ShoppingListPage() {
         )
       ) : (
         <div className="space-y-3">
-          {shoppingList.map(({ product, addedAt }) => (
-            <div key={product.id} className="card-pad card-hover">
+          {shoppingList.map(({ product, addedAt }) => {
+            const menuItems: ContextMenuItem[] = [
+              {
+                label: 'Estimer la revente',
+                icon: <Coins className="h-4 w-4" />,
+                onClick: () =>
+                  router.push(`/estimate?q=${encodeURIComponent(product.name.slice(0, 80))}&price=${product.totalPrice}`),
+              },
+              {
+                label: 'Comparer les sites',
+                icon: <BarChart3 className="h-4 w-4" />,
+                onClick: () => router.push(`/compare?q=${encodeURIComponent(product.name.slice(0, 80))}`),
+              },
+              {
+                label: 'Historique & alertes',
+                icon: <History className="h-4 w-4" />,
+                onClick: () => router.push(`/products/${encodeURIComponent(product.id)}`),
+              },
+              {
+                label: "Ouvrir l'annonce",
+                icon: <ExternalLink className="h-4 w-4" />,
+                onClick: () => window.open(product.sourceUrl, '_blank', 'noopener'),
+                separatorBefore: true,
+              },
+              {
+                label: 'Copier le lien',
+                icon: <Copy className="h-4 w-4" />,
+                onClick: () =>
+                  navigator.clipboard?.writeText(product.sourceUrl).then(
+                    () => toast.success('Lien copié'),
+                    () => toast.error('Copie impossible')
+                  ),
+              },
+              {
+                label: 'Retirer des favoris',
+                icon: <Trash2 className="h-4 w-4" />,
+                onClick: () => removeFromShoppingList(product.id),
+                danger: true,
+                separatorBefore: true,
+              },
+            ];
+            return (
+            <ContextMenu key={product.id} items={menuItems}>
+            <div className="card-pad card-hover">
               <div className="flex items-start justify-between gap-3">
                 <ProductThumb src={product.imageUrl} alt={product.name} />
                 <div className="min-w-0 flex-1">
@@ -114,7 +160,9 @@ export default function ShoppingListPage() {
                 </div>
               </div>
             </div>
-          ))}
+            </ContextMenu>
+            );
+          })}
         </div>
       )}
     </PageShell>
