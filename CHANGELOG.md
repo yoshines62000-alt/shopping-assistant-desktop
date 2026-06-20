@@ -6,6 +6,13 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.7.1] — 2026-06-20
+### Ajouté
+- **Menu clic droit** étendu au stock, aux affaires et aux favoris (en plus de
+  la recherche) : actions rapides adaptées à chaque objet.
+- **Raccourcis clavier** : `/` (recherche), `?` (aide), et `g` + lettre pour
+  naviguer (g s = stock, g f = favoris, g c = comptes…).
+
 ## [0.7.0] — 2026-06-20
 ### Ajouté
 - **Favoris** : « Liste » devient « Favoris ». Le **cœur** d'un résultat de
