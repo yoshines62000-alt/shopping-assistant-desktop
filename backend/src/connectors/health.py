@@ -32,16 +32,44 @@ def _entry(site_key: str) -> dict:
             "last_count": None,
             "consecutive_failures": 0,
             "last_issue": None,
+            "notified": False,  # une seule notif par episode de panne (#4)
         },
     )
+
+
+def _notify_async(kind: str, site_key: str, issue: str | None, count: int) -> None:
+    """Notifie (en fond, multi-canal) qu'un connecteur tombe ou se retablit.
+    Silencieux si aucun canal configure ; jamais bloquant pour la recherche."""
+
+    def _send() -> None:
+        try:
+            from ..notifications import notify_all
+        except Exception:
+            return
+        if kind == "down":
+            notify_all(
+                f"⚠️ Connecteur {site_key} en panne : {count} échecs consécutifs "
+                f"({issue}). Scraping suspendu temporairement (cooldown). "
+                f"Le site a peut-être changé ou bloque (anti-bot).",
+                subject=f"Connecteur dégradé : {site_key}",
+            )
+        else:
+            notify_all(
+                f"✅ Connecteur {site_key} rétabli ({count} résultats).",
+                subject=f"Connecteur rétabli : {site_key}",
+            )
+
+    threading.Thread(target=_send, daemon=True).start()
 
 
 def record(site_key: str, count: int, issue: str | None = None) -> None:
     """Enregistre le resultat d'une tentative.
 
     `issue` non vide = echec (blocage anti-bot, erreur reseau...). `count > 0`
-    sans issue = succes (remet les echecs a zero).
+    sans issue = succes (remet les echecs a zero). Notifie au passage si le
+    connecteur vient de tomber (circuit ouvert) ou de se retablir.
     """
+    transition: tuple[str, str, str | None, int] | None = None
     with _lock:
         e = _entry(site_key)
         e["last_attempt"] = time.time()
@@ -49,9 +77,18 @@ def record(site_key: str, count: int, issue: str | None = None) -> None:
         if issue:
             e["last_issue"] = issue
             e["consecutive_failures"] += 1
+            if e["consecutive_failures"] == FAIL_THRESHOLD and not e["notified"]:
+                e["notified"] = True
+                transition = ("down", site_key, issue, e["consecutive_failures"])
         elif count > 0:
+            was_down = e["notified"]
             e["last_success"] = time.time()
             e["consecutive_failures"] = 0
+            e["notified"] = False
+            if was_down:
+                transition = ("up", site_key, None, count)
+    if transition:
+        _notify_async(*transition)
 
 
 def should_skip(site_key: str) -> bool:
