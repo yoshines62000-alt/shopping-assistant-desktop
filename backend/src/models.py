@@ -127,6 +127,43 @@ class DealHit(SQLModel, table=True):
     notified: bool = Field(default=False)
 
 
+class FavoriteList(SQLModel, table=True):
+    """Liste/étiquette pour ranger les favoris (un favori peut en avoir plusieurs)."""
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(index=True)
+    color: str = Field(default="")  # teinte d'affichage (ex. #f59e0b)
+    sort_order: int = Field(default=0)
+    created_at: datetime = Field(default_factory=utcnow_naive)
+
+
+class Favorite(SQLModel, table=True):
+    """Offre mise en favori, avec ses infos produit + annotations perso."""
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    product_id: str = Field(index=True, unique=True)  # sha256 de l'URL (dédoublonnage)
+    name: str = Field(default="")
+    price: float = Field(default=0.0)
+    site_domain: str = Field(default="")
+    source_url: str = Field(default="")
+    image_url: str = Field(default="")
+    seller: str = Field(default="")
+    rating: Optional[float] = None
+    review_count: Optional[int] = None
+    delivery_days: Optional[int] = None
+    notes: str = Field(default="")  # note personnelle
+    target_price: Optional[float] = None  # prix cible perso
+    added_at: datetime = Field(default_factory=utcnow_naive)
+
+
+class FavoriteTag(SQLModel, table=True):
+    """Lien many-to-many entre un favori et une liste (étiquette)."""
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    favorite_id: int = Field(index=True, foreign_key="favorite.id")
+    list_id: int = Field(index=True, foreign_key="favoritelist.id")
+
+
 class SiteReputation(SQLModel, table=True):
     domain: str = Field(primary_key=True)
     trust_score: int = Field(default=50)

@@ -106,6 +106,32 @@ export interface StockItem {
   notes: string;
 }
 
+export interface FavoriteList {
+  id: number;
+  name: string;
+  color: string | null;
+  sortOrder: number;
+  count: number;
+}
+
+export interface Favorite {
+  id: number;
+  productId: string;
+  name: string;
+  price: number;
+  siteDomain: string;
+  sourceUrl: string;
+  imageUrl: string | null;
+  seller: string | null;
+  rating: number | null;
+  reviewCount: number | null;
+  deliveryDays: number | null;
+  notes: string;
+  targetPrice: number | null;
+  listIds: number[];
+  addedAt: string;
+}
+
 export interface Expense {
   id: number;
   label: string;

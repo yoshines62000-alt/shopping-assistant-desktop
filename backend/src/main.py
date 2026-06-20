@@ -29,6 +29,7 @@ from .routes.digest import router as digest_router
 from .routes.watch import router as watch_router
 from .routes.products import router as products_router
 from .routes.backup import router as backup_router
+from .routes.favorites import router as favorites_router
 from .intent.ollama import parse_intent_with_ollama
 from .scripts.seed_trust_lists import seed_trust_lists
 
@@ -92,6 +93,7 @@ app.include_router(digest_router, prefix="/api/v1", tags=["digest"])
 app.include_router(watch_router, prefix="/api/v1", tags=["watch"])
 app.include_router(products_router, prefix="/api/v1", tags=["products"])
 app.include_router(backup_router, prefix="/api/v1", tags=["backup"])
+app.include_router(favorites_router, prefix="/api/v1", tags=["favorites"])
 
 class PriceIngest(BaseModel):
     productId: str = Field(..., min_length=1, max_length=500)

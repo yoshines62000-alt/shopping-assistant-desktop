@@ -22,6 +22,9 @@ from ..models import (
     AppSetting,
     DealHit,
     Expense,
+    Favorite,
+    FavoriteList,
+    FavoriteTag,
     PriceHistory,
     ProductRef,
     Sale,
@@ -67,6 +70,9 @@ TABLES: list[tuple[str, type]] = [
     ("siteReputation", SiteReputation),
     ("savedSearches", SavedSearch),
     ("dealHits", DealHit),
+    ("favoriteLists", FavoriteList),
+    ("favorites", Favorite),
+    ("favoriteTags", FavoriteTag),
 ]
 
 BACKUP_VERSION = 1

@@ -1,170 +1,172 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useAppStore } from '@/lib/store';
-import { History, Trash2, ExternalLink, Download, Heart, Search, Coins, BarChart3, Copy } from 'lucide-react';
+import type { Favorite, FavoriteList } from '@shopping-assistant/types';
+import { Heart, Search, Plus, Pencil, Trash2, Tag } from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
 import EmptyState from '@/components/ui/EmptyState';
-import ProductThumb from '@/components/ui/ProductThumb';
-import ContextMenu, { type ContextMenuItem } from '@/components/ui/ContextMenu';
-import { toast } from '@/lib/toast';
-import { euro, dateFr } from '@/lib/format';
+import LoadingBlock from '@/components/ui/LoadingBlock';
+import ErrorBanner from '@/components/ui/ErrorBanner';
+import FavoriteCard from '@/components/FavoriteCard';
+import { apiFetch } from '@/lib/api';
+import { migrateLocalFavorites } from '@/lib/favorites';
+import { euro } from '@/lib/format';
 
-export default function ShoppingListPage() {
-  const { shoppingList, removeFromShoppingList, clearShoppingList } = useAppStore();
-  const router = useRouter();
-  // La liste vient du localStorage : on attend le montage pour éviter
-  // un mismatch d'hydratation entre le HTML serveur et le client.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+export default function FavoritesPage() {
+  const [lists, setLists] = useState<FavoriteList[]>([]);
+  const [favorites, setFavorites] = useState<Favorite[]>([]);
+  const [activeList, setActiveList] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const exportCSV = () => {
-    if (shoppingList.length === 0) return;
+  const load = useCallback(async () => {
+    try {
+      const [l, f] = await Promise.all([
+        apiFetch<{ lists: FavoriteList[] }>('/favorites/lists'),
+        apiFetch<{ favorites: Favorite[] }>('/favorites'),
+      ]);
+      setLists(l.lists);
+      setFavorites(f.favorites);
+      setError(null);
+    } catch {
+      setError('Impossible de charger les favoris. Vérifie que le service est démarré.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    const header = 'Nom,Prix (€),Site,Vendeur,Date ajout\n';
-    const rows = shoppingList
-      .map(
-        ({ product, addedAt }) =>
-          `"${product.name.replace(/"/g, '""')}",${product.totalPrice},${product.siteDomain},"${product.seller ?? ''}","${dateFr(addedAt)}"`
-      )
-      .join('\n');
+  useEffect(() => {
+    migrateLocalFavorites().then(load);
+  }, [load]);
 
-    const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `favoris-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const createList = async () => {
+    const name = window.prompt('Nom de la nouvelle liste ?')?.trim();
+    if (!name) return;
+    await apiFetch('/favorites/lists', { method: 'POST', json: { name } }).catch(() => null);
+    load();
   };
 
-  const total = shoppingList.reduce((sum, { product }) => sum + product.totalPrice, 0);
-  const isEmpty = !mounted || shoppingList.length === 0;
+  const renameList = async (l: FavoriteList) => {
+    const name = window.prompt('Renommer la liste :', l.name)?.trim();
+    if (!name || name === l.name) return;
+    await apiFetch(`/favorites/lists/${l.id}`, { method: 'PATCH', json: { name } }).catch(() => null);
+    load();
+  };
+
+  const deleteList = async (l: FavoriteList) => {
+    if (!window.confirm(`Supprimer la liste « ${l.name} » ? (les favoris sont conservés)`)) return;
+    if (activeList === l.id) setActiveList(null);
+    await apiFetch(`/favorites/lists/${l.id}`, { method: 'DELETE' }).catch(() => null);
+    load();
+  };
+
+  const onFavChanged = (updated: Favorite) =>
+    setFavorites((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
+  const onFavRemoved = (id: number) => setFavorites((prev) => prev.filter((f) => f.id !== id));
+
+  const shown =
+    activeList == null ? favorites : favorites.filter((f) => f.listIds.includes(activeList));
+  const total = shown.reduce((s, f) => s + f.price, 0);
+  const activeListObj = lists.find((l) => l.id === activeList);
+  // Compteurs calculés côté client -> réactifs quand on (dé)tague un favori.
+  const countFor = (listId: number) => favorites.filter((f) => f.listIds.includes(listId)).length;
 
   return (
     <PageShell
       title="Mes favoris"
       icon={<Heart className="h-6 w-6" />}
       subtitle={
-        isEmpty
-          ? undefined
-          : `${shoppingList.length} favori${shoppingList.length > 1 ? 's' : ''} · total ${euro(total)}`
-      }
-      actions={
-        isEmpty ? undefined : (
-          <>
-            <button onClick={exportCSV} className="btn-secondary text-sm">
-              <Download className="h-4 w-4" /> Export CSV
-            </button>
-            <button onClick={clearShoppingList} className="btn-danger text-sm">
-              Vider
-            </button>
-          </>
-        )
+        favorites.length > 0
+          ? `${shown.length} favori${shown.length > 1 ? 's' : ''}${activeListObj ? ` dans « ${activeListObj.name} »` : ''} · total ${euro(total)}`
+          : undefined
       }
     >
-      {isEmpty ? (
-        mounted && (
+      <div className="space-y-4">
+        {error && <ErrorBanner message={error} />}
+        {loading && <LoadingBlock label="Chargement des favoris..." />}
+
+        {!loading && favorites.length === 0 && !error && (
           <EmptyState
             icon={<Heart className="h-6 w-6" />}
             title="Aucun favori"
-            description="Appuie sur le ♥ d'un résultat de recherche pour l'ajouter à tes favoris."
+            description="Appuie sur le ♥ d'un résultat de recherche pour l'ajouter, puis range-le dans des listes ici."
             action={
               <Link href="/search" className="btn-primary text-sm">
                 <Search className="h-4 w-4" /> Rechercher
               </Link>
             }
           />
-        )
-      ) : (
-        <div className="space-y-3">
-          {shoppingList.map(({ product, addedAt }) => {
-            const menuItems: ContextMenuItem[] = [
-              {
-                label: 'Estimer la revente',
-                icon: <Coins className="h-4 w-4" />,
-                onClick: () =>
-                  router.push(`/estimate?q=${encodeURIComponent(product.name.slice(0, 80))}&price=${product.totalPrice}`),
-              },
-              {
-                label: 'Comparer les sites',
-                icon: <BarChart3 className="h-4 w-4" />,
-                onClick: () => router.push(`/compare?q=${encodeURIComponent(product.name.slice(0, 80))}`),
-              },
-              {
-                label: 'Historique & alertes',
-                icon: <History className="h-4 w-4" />,
-                onClick: () => router.push(`/products/${encodeURIComponent(product.id)}`),
-              },
-              {
-                label: "Ouvrir l'annonce",
-                icon: <ExternalLink className="h-4 w-4" />,
-                onClick: () => window.open(product.sourceUrl, '_blank', 'noopener'),
-                separatorBefore: true,
-              },
-              {
-                label: 'Copier le lien',
-                icon: <Copy className="h-4 w-4" />,
-                onClick: () =>
-                  navigator.clipboard?.writeText(product.sourceUrl).then(
-                    () => toast.success('Lien copié'),
-                    () => toast.error('Copie impossible')
-                  ),
-              },
-              {
-                label: 'Retirer des favoris',
-                icon: <Trash2 className="h-4 w-4" />,
-                onClick: () => removeFromShoppingList(product.id),
-                danger: true,
-                separatorBefore: true,
-              },
-            ];
-            return (
-            <ContextMenu key={product.id} items={menuItems}>
-            <div className="card-pad card-hover">
-              <div className="flex items-start justify-between gap-3">
-                <ProductThumb src={product.imageUrl} alt={product.name} />
-                <div className="min-w-0 flex-1">
-                  <h3 className="truncate font-semibold text-slate-100">{product.name}</h3>
-                  <p className="text-sm text-slate-400">
-                    {product.siteDomain} &middot; {euro(product.totalPrice)}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">Ajouté le {dateFr(addedAt)}</p>
-                </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <Link
-                    href={`/products/${encodeURIComponent(product.id)}`}
-                    className="btn-ghost"
-                    title="Historique de prix"
-                  >
-                    <History className="h-4 w-4" />
-                  </Link>
-                  <a
-                    href={product.sourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="btn-ghost"
-                    title="Voir l'offre"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                  </a>
+        )}
+
+        {!loading && favorites.length > 0 && (
+          <>
+            {/* Barre de listes (étiquettes) */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setActiveList(null)}
+                className={`${activeList == null ? 'btn-primary' : 'btn-secondary'} !px-3 !py-1 text-xs`}
+              >
+                Tous ({favorites.length})
+              </button>
+              {lists.map((l) => (
+                <button
+                  key={l.id}
+                  onClick={() => setActiveList(l.id)}
+                  className={`${activeList === l.id ? 'btn-primary' : 'btn-secondary'} inline-flex items-center gap-1.5 !px-3 !py-1 text-xs`}
+                >
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: l.color || 'rgb(var(--c-accent))' }}
+                  />
+                  {l.name} ({countFor(l.id)})
+                </button>
+              ))}
+              <button onClick={createList} className="btn-ghost !px-2.5 !py-1 text-xs" title="Nouvelle liste">
+                <Plus className="h-3.5 w-3.5" /> Liste
+              </button>
+              {activeListObj && (
+                <span className="ml-1 inline-flex items-center gap-1">
                   <button
-                    onClick={() => removeFromShoppingList(product.id)}
-                    className="btn-ghost hover:!text-rose-300"
-                    title="Retirer"
+                    onClick={() => renameList(activeListObj)}
+                    className="btn-ghost !p-1.5"
+                    title="Renommer la liste"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Pencil className="h-3.5 w-3.5" />
                   </button>
-                </div>
-              </div>
+                  <button
+                    onClick={() => deleteList(activeListObj)}
+                    className="btn-ghost !p-1.5 hover:!text-rose-300"
+                    title="Supprimer la liste"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </span>
+              )}
             </div>
-            </ContextMenu>
-            );
-          })}
-        </div>
-      )}
+
+            {shown.length === 0 ? (
+              <EmptyState
+                icon={<Tag className="h-6 w-6" />}
+                title="Liste vide"
+                description="Aucun favori dans cette liste. Range-en via le bouton « Listes » sur une carte."
+              />
+            ) : (
+              <div className="grid gap-3 lg:grid-cols-2">
+                {shown.map((f) => (
+                  <FavoriteCard
+                    key={f.id}
+                    fav={f}
+                    lists={lists}
+                    onChanged={onFavChanged}
+                    onRemoved={onFavRemoved}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </PageShell>
   );
 }

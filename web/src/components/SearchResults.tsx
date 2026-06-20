@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Product } from '@shopping-assistant/types';
@@ -18,6 +18,7 @@ import {
   Copy,
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
+import { useFavorites, migrateLocalFavorites } from '@/lib/favorites';
 import ScoreDetails from '@/components/ScoreDetails';
 import DealAnalysis from '@/components/DealAnalysis';
 import ProductThumb from '@/components/ui/ProductThumb';
@@ -80,9 +81,15 @@ function ProductSkeleton() {
 }
 
 export default function SearchResults({ products, isLoading }: Props) {
-  const { shoppingList, watchList, addToShoppingList, removeFromShoppingList, addToWatchList, removeFromWatchList } = useAppStore();
+  const { watchList, addToWatchList, removeFromWatchList } = useAppStore();
+  const { favoriteIds, loaded, load, toggle: toggleFavorite } = useFavorites();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const router = useRouter();
+
+  // Favoris persistés côté backend : migration des anciens favoris locaux + chargement.
+  useEffect(() => {
+    if (!loaded) migrateLocalFavorites().then(load);
+  }, [loaded, load]);
 
   const watchedIds = useMemo(() => new Set(watchList.map((w) => w.productId)), [watchList]);
 
@@ -134,14 +141,14 @@ export default function SearchResults({ products, isLoading }: Props) {
 
       {sorted.map((p) => {
         const badge = getBadge(p.scores?.final ?? 0);
-        const inList = shoppingList.some((item) => item.id === p.id);
+        const inList = favoriteIds.has(p.id);
         const isWatched = watchedIds.has(p.id);
         const expanded = expandedId === p.id;
         const menuItems: ContextMenuItem[] = [
           {
             label: inList ? 'Retirer des favoris' : 'Ajouter aux favoris',
             icon: <Heart className={`h-4 w-4 ${inList ? 'fill-rose-500 text-rose-500' : ''}`} />,
-            onClick: () => (inList ? removeFromShoppingList(p.id) : addToShoppingList(p)),
+            onClick: () => toggleFavorite(p),
           },
           {
             label: isWatched ? 'Retirer la surveillance' : 'Surveiller le prix',
@@ -219,7 +226,7 @@ export default function SearchResults({ products, isLoading }: Props) {
               <div className="flex items-center gap-1">
                 <button
                   type="button"
-                  onClick={() => (inList ? removeFromShoppingList(p.id) : addToShoppingList(p))}
+                  onClick={() => toggleFavorite(p)}
                   className="btn-ghost !px-1.5 !py-1 text-xs"
                   title={inList ? 'Retirer des favoris' : 'Ajouter aux favoris'}
                   aria-pressed={inList}

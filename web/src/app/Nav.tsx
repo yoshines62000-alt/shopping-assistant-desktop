@@ -17,7 +17,7 @@ import {
   Bell,
   Newspaper,
 } from 'lucide-react';
-import { useAppStore } from '@/lib/store';
+import { useFavorites, migrateLocalFavorites } from '@/lib/favorites';
 import ThemeToggle from '@/components/ThemeToggle';
 import clsx from 'clsx';
 
@@ -36,10 +36,14 @@ const navItems = [
 
 export default function Nav() {
   const pathname = usePathname();
-  const { shoppingList } = useAppStore();
+  const { favoriteIds, loaded, load } = useFavorites();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
-  const listCount = mounted ? shoppingList.length : 0;
+  // Favoris (backend) chargés une fois au niveau global -> badge + état du cœur.
+  useEffect(() => {
+    if (!loaded) migrateLocalFavorites().then(load);
+  }, [loaded, load]);
+  const listCount = mounted ? favoriteIds.size : 0;
 
   return (
     <nav className="sticky top-0 z-50 border-b border-line bg-ink/80 backdrop-blur-md">
