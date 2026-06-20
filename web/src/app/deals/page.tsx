@@ -2,13 +2,16 @@
 
 import { useState, FormEvent } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { Deal, DealsResponse } from '@shopping-assistant/types';
-import { Sparkles, ExternalLink, Coins, Loader2, SearchX } from 'lucide-react';
+import { Sparkles, ExternalLink, Coins, Loader2, SearchX, Copy, BarChart3 } from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
 import EmptyState from '@/components/ui/EmptyState';
 import ErrorBanner from '@/components/ui/ErrorBanner';
 import ProductThumb from '@/components/ui/ProductThumb';
+import ContextMenu, { type ContextMenuItem } from '@/components/ui/ContextMenu';
 import { apiFetch } from '@/lib/api';
+import { toast } from '@/lib/toast';
 import { euro } from '@/lib/format';
 
 const PLATFORMS = [
@@ -28,7 +31,37 @@ function verdict(pct: number | null): { label: string; cls: string } | null {
 function DealCard({ deal }: { deal: Deal }) {
   const r = deal.resale;
   const v = verdict(r?.marginPct ?? null);
+  const router = useRouter();
+  const menuItems: ContextMenuItem[] = [
+    {
+      label: 'Estimer la revente',
+      icon: <Coins className="h-4 w-4" />,
+      onClick: () =>
+        router.push(`/estimate?q=${encodeURIComponent(deal.name.slice(0, 80))}&price=${deal.totalPrice}`),
+    },
+    {
+      label: 'Comparer les sites',
+      icon: <BarChart3 className="h-4 w-4" />,
+      onClick: () => router.push(`/compare?q=${encodeURIComponent(deal.name.slice(0, 80))}`),
+    },
+    {
+      label: "Ouvrir l'annonce",
+      icon: <ExternalLink className="h-4 w-4" />,
+      onClick: () => window.open(deal.sourceUrl, '_blank', 'noopener'),
+      separatorBefore: true,
+    },
+    {
+      label: 'Copier le lien',
+      icon: <Copy className="h-4 w-4" />,
+      onClick: () =>
+        navigator.clipboard?.writeText(deal.sourceUrl).then(
+          () => toast.success('Lien copié'),
+          () => toast.error('Copie impossible')
+        ),
+    },
+  ];
   return (
+    <ContextMenu items={menuItems}>
     <article className="card-pad card-hover">
       <div className="flex items-start justify-between gap-4">
         <ProductThumb src={deal.imageUrl} alt={deal.name} />
@@ -95,6 +128,7 @@ function DealCard({ deal }: { deal: Deal }) {
         </Link>
       </div>
     </article>
+    </ContextMenu>
   );
 }
 

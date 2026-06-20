@@ -22,6 +22,7 @@ import {
 import CrossListingPanel from '@/components/CrossListingPanel';
 import StockPhotos from '@/components/StockPhotos';
 import ProductThumb from '@/components/ui/ProductThumb';
+import ContextMenu, { type ContextMenuItem } from '@/components/ui/ContextMenu';
 import { printStockLabel } from '@/lib/label';
 import PageShell from '@/components/ui/PageShell';
 import ErrorBanner from '@/components/ui/ErrorBanner';
@@ -449,8 +450,27 @@ export default function StockPage() {
             {filtered.map((item) => {
               const unitNet = item.estimatedResale ? item.estimatedResale * (1 - feeRate) : null;
               const unitProfit = unitNet !== null ? unitNet - item.purchasePrice : null;
+              const menuItems: ContextMenuItem[] = [
+                ...(item.remaining > 0
+                  ? [{ label: 'Vendre', icon: <TrendingUp className="h-4 w-4" />, onClick: () => setSellingId(item.id) } as ContextMenuItem]
+                  : []),
+                ...(item.remaining > 0 && item.status === 'in_stock'
+                  ? [{ label: 'Marquer en vente', icon: <Tag className="h-4 w-4" />, onClick: () => setStatus(item, 'listed') } as ContextMenuItem]
+                  : []),
+                ...(item.status === 'listed'
+                  ? [{ label: 'Remettre en stock', icon: <Tag className="h-4 w-4" />, onClick: () => setStatus(item, 'in_stock') } as ContextMenuItem]
+                  : []),
+                { label: 'Ré-estimer la revente', icon: <RefreshCw className="h-4 w-4" />, onClick: () => reestimate(item) },
+                { label: 'Générer une annonce', icon: <Megaphone className="h-4 w-4" />, onClick: () => setListingId(item.id) },
+                { label: 'Gérer les photos', icon: <ImageIcon className="h-4 w-4" />, onClick: () => setPhotosId(item.id) },
+                ...(item.sourceUrl
+                  ? [{ label: "Ouvrir l'annonce d'achat", icon: <ExternalLink className="h-4 w-4" />, onClick: () => window.open(item.sourceUrl, '_blank', 'noopener'), separatorBefore: true } as ContextMenuItem]
+                  : []),
+                { label: 'Supprimer', icon: <Trash2 className="h-4 w-4" />, onClick: () => remove(item), danger: true, separatorBefore: !item.sourceUrl },
+              ];
               return (
-                <article key={item.id} className="card-pad" aria-label={item.name}>
+                <ContextMenu key={item.id} items={menuItems}>
+                <article className="card-pad" aria-label={item.name}>
                   <div className="flex items-start justify-between gap-3">
                     <ProductThumb
                       src={item.photos?.[0]}
@@ -684,6 +704,7 @@ export default function StockPage() {
                     </form>
                   )}
                 </article>
+                </ContextMenu>
               );
             })}
           </>
