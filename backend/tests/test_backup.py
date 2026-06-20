@@ -78,3 +78,10 @@ def test_export_redacts_secrets_and_import_preserves_them(client):
 
     # Nettoyage
     client.put("/api/v1/settings", json={"smtpPassword": "", "smtpHost": ""})
+
+
+def test_snapshot_skips_on_postgres(client):
+    # Le snapshot fichier ne concerne que SQLite (app desktop). Sur la base de
+    # test Postgres, l'endpoint doit répondre sans erreur en signalant le skip.
+    res = client.post("/api/v1/backup/snapshot").json()
+    assert res.get("skipped") == "not sqlite"

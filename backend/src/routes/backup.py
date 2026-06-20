@@ -8,13 +8,15 @@ complète et de la réimporter (migration de machine, sécurité des données).
 
 import json
 import logging
+from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter
 from pydantic import BaseModel
 from sqlmodel import delete, select
 
-from ..db import get_session
+from ..db import engine, get_session
 from ..models import (
     Alert,
     AppSetting,
@@ -145,3 +147,53 @@ def import_backup(payload: ImportPayload) -> dict[str, Any]:
             restored[name] = ok
     logger.info("Import sauvegarde : %s (%d erreurs)", restored, len(errors))
     return {"restored": restored, "errors": errors[:20]}
+
+
+# Nombre de snapshots conservés (rotation) pour la sauvegarde auto de l'app desktop.
+SNAPSHOT_KEEP = 7
+
+
+@router.post("/backup/snapshot")
+def snapshot_db() -> dict[str, Any]:
+    """Sauvegarde automatique du fichier SQLite (app desktop) via `VACUUM INTO`
+    (copie cohérente même base ouverte), dans `<dossier db>/backups/`, avec
+    rotation. Sans effet hors SQLite (le projet principal tourne sur Postgres) :
+    déclenché par l'app Electron sur planning (démarrage + toutes les 24 h)."""
+    if engine.dialect.name != "sqlite":
+        return {"skipped": "not sqlite"}
+    db_path = engine.url.database
+    if not db_path or db_path == ":memory:":
+        return {"skipped": "no file"}
+
+    db_file = Path(db_path)
+    backups = db_file.parent / "backups"
+    backups.mkdir(parents=True, exist_ok=True)
+    # Un snapshot par jour (rafraîchi à chaque déclenchement) -> 7 jours d'historique.
+    target = backups / f"shopping-{datetime.now():%Y-%m-%d}.db"
+    if target.exists():
+        try:
+            target.unlink()  # VACUUM INTO refuse d'écraser : on remplace celui du jour
+        except OSError:
+            pass
+
+    # VACUUM INTO : chemin en littéral SQL (généré côté serveur, pas d'entrée
+    # utilisateur) ; on double les apostrophes par sécurité.
+    safe = str(target).replace("'", "''")
+    try:
+        with engine.begin() as conn:
+            conn.exec_driver_sql(f"VACUUM INTO '{safe}'")
+    except Exception as exc:
+        logger.error("Snapshot SQLite échoué : %s", exc)
+        return {"error": str(exc)}
+
+    # Rotation : ne garder que les SNAPSHOT_KEEP plus récents.
+    snaps = sorted(backups.glob("shopping-*.db"), key=lambda p: p.stat().st_mtime, reverse=True)
+    removed = 0
+    for old in snaps[SNAPSHOT_KEEP:]:
+        try:
+            old.unlink()
+            removed += 1
+        except OSError:
+            pass
+    logger.info("Snapshot SQLite -> %s (rotation: %d supprimés)", target.name, removed)
+    return {"path": str(target), "kept": min(len(snaps), SNAPSHOT_KEEP), "removed": removed}

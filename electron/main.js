@@ -16,6 +16,7 @@ const http = require('http');
 const fs = require('fs');
 const { initAutoUpdate, checkForUpdates } = require('./updater');
 const { initAlertNotifications } = require('./alerts');
+const { scheduleDbBackups } = require('./backup');
 
 const REPO_URL = 'https://github.com/yoshines62000-alt/shopping-assistant-desktop';
 
@@ -370,6 +371,7 @@ async function startup() {
   createTray();
   initAutoUpdate(() => mainWindow);
   initAlertNotifications(BACKEND_PORT);
+  scheduleDbBackups(BACKEND_PORT);
 }
 
 const gotLock = app.requestSingleInstanceLock();
