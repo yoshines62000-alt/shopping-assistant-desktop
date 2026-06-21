@@ -6,6 +6,15 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.12.0] — 2026-06-21
+### Refonte page par page
+- **Graphes plus spectaculaires** partout : dégradé + halo cyan suivant la couleur
+  d'accent, **apparition animée** (barres qui poussent, courbe qui se dessine).
+- **Comptes** : panneau en tête avec le **bénéfice net** en grand, mini-stats
+  (CA / ROI / rotation / ventes) et la tendance mensuelle animée.
+- **Stock** : bandeau de stats (exemplaires, valeur d'achat, potentiel net, dormants).
+- **Recherche** : résultats qui apparaissent en cascade.
+
 ## [0.11.0] — 2026-06-21
 ### Favoris intelligents
 - **Prix cible dès la recherche** : « Favori + prix cible… » (clic droit sur un
