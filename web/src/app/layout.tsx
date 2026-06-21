@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, Space_Grotesk, JetBrains_Mono } from 'next/font/google';
-import Nav from './Nav';
+import Sidebar from './Sidebar';
+import Topbar from '@/components/Topbar';
 import Footer from '@/components/Footer';
+import BackgroundFX from '@/components/BackgroundFX';
 import PwaRegister from '@/components/PwaRegister';
 import Toaster from '@/components/ui/Toaster';
 import CommandPalette from '@/components/CommandPalette';
@@ -42,11 +44,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           }}
         />
       </head>
-      <body className="flex min-h-screen flex-col">
+      <body className="min-h-screen">
+        <BackgroundFX />
+        <div className="flex min-h-screen">
+          <Sidebar />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <Topbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
+        </div>
         <PwaRegister />
-        <Nav />
-        <div className="flex-1">{children}</div>
-        <Footer />
         <Toaster />
         <CommandPalette />
         <AccentInit />

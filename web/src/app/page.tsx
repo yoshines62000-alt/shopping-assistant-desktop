@@ -116,44 +116,53 @@ export default function Home() {
   const netNow = thisMonth ? thisMonth.profitNet : (summary?.profitNet ?? 0);
 
   return (
-    <div className="page-container py-10">
-      {/* Hero */}
-      <section className="animate-rise relative mx-auto max-w-2xl text-center">
-        {/* Halo d'ambiance derrière le hero */}
+    <div className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+      {/* Hero « command center » : bandeau verre pleine largeur */}
+      <section className="animate-rise relative overflow-hidden rounded-2xl border border-line bg-surface/50 p-7 backdrop-blur-md sm:p-9">
+        {/* Halos décoratifs internes */}
         <div
           aria-hidden
-          className="pointer-events-none absolute left-1/2 top-0 -z-10 h-48 w-[34rem] max-w-full -translate-x-1/2 rounded-full opacity-60 blur-3xl"
-          style={{
-            background:
-              'radial-gradient(closest-side, rgb(var(--c-accent) / 0.18), transparent 70%)',
-          }}
+          className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full opacity-70 blur-3xl"
+          style={{ background: 'radial-gradient(closest-side, rgb(var(--c-accent) / 0.22), transparent 70%)' }}
         />
-        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-deep text-white shadow-glow ring-1 ring-accent/30">
-          <ShoppingBag className="h-8 w-8" />
-        </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-line-strong bg-surface/60 px-3 py-1 text-xs font-medium text-slate-400">
-          <Sparkles className="h-3 w-3 text-accent" /> Achat malin · Revente rentable
-        </span>
-        <h1 className="mt-3 text-4xl font-bold tracking-tight md:text-5xl">
-          <span className="brand-text">Shopping Assistant</span>
-        </h1>
-        <p className="mt-3 text-lg text-slate-400">
-          L&apos;assistant qui facilite vos achats / reventes.
-        </p>
-
-        <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
-          <Link href="/deals" className="btn-primary">
-            <Sparkles className="h-4 w-4" /> Bonnes affaires
-          </Link>
-          <Link href="/search" className="btn-secondary">
-            <Search className="h-4 w-4" /> Rechercher
-          </Link>
-          <Link href="/estimate" className="btn-secondary">
-            <Coins className="h-4 w-4" /> Estimer une revente
-          </Link>
-          <Link href="/scan" className="btn-secondary">
-            <ScanBarcode className="h-4 w-4" /> Scanner
-          </Link>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-px"
+          style={{ background: 'linear-gradient(90deg, transparent, rgb(var(--c-accent) / 0.8), transparent)' }}
+        />
+        <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div className="max-w-xl">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs font-medium text-accent">
+              <Sparkles className="h-3 w-3" /> Achat malin · Revente rentable
+            </span>
+            <h1 className="mt-4 text-4xl font-bold tracking-tight md:text-5xl">
+              <span className="brand-text">Shopping Assistant</span>
+            </h1>
+            <p className="mt-3 text-lg text-slate-400">
+              Votre poste de pilotage pour acheter malin et revendre rentable.
+            </p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <Link href="/deals" className="btn-primary">
+                <Sparkles className="h-4 w-4" /> Bonnes affaires
+              </Link>
+              <Link href="/search" className="btn-secondary">
+                <Search className="h-4 w-4" /> Rechercher
+              </Link>
+              <Link href="/estimate" className="btn-secondary">
+                <Coins className="h-4 w-4" /> Estimer une revente
+              </Link>
+              <Link href="/scan" className="btn-secondary">
+                <ScanBarcode className="h-4 w-4" /> Scanner
+              </Link>
+            </div>
+          </div>
+          {/* Emblème animé */}
+          <div className="relative hidden shrink-0 md:block">
+            <div className="absolute inset-0 animate-glow-pulse rounded-3xl bg-accent/20 blur-2xl" />
+            <div className="relative flex h-28 w-28 items-center justify-center rounded-3xl bg-gradient-to-br from-accent to-accent-deep text-white shadow-glow ring-1 ring-accent/30">
+              <ShoppingBag className="h-12 w-12" />
+            </div>
+          </div>
         </div>
       </section>
 

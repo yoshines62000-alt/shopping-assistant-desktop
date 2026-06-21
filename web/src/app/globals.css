@@ -308,4 +308,72 @@
   .table-base tbody tr {
     @apply border-b border-line last:border-0;
   }
+
+  /* ---------- Sidebar (shell futuriste) ---------- */
+  .side-link {
+    @apply relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-slate-400 transition-all duration-150;
+  }
+  .side-link:hover {
+    @apply bg-[rgb(var(--overlay)/0.05)] text-slate-100;
+  }
+  .side-link-active {
+    @apply bg-accent/10 text-accent ring-1 ring-inset ring-accent/25;
+    box-shadow: 0 0 22px -10px rgb(var(--c-accent) / 0.6);
+  }
+  /* Barre lumineuse à gauche du lien actif (bord du rail) */
+  .side-glow {
+    @apply absolute left-[-0.75rem] top-1/2 h-3/5 w-[3px] -translate-y-1/2 rounded-full;
+    background: rgb(var(--c-accent));
+    box-shadow: 0 0 10px 1px rgb(var(--c-accent) / 0.85);
+  }
+  .side-group-label {
+    @apply px-3 pb-1.5 pt-1 font-mono text-[0.62rem] uppercase tracking-[0.2em] text-slate-600;
+  }
+}
+
+/* ---------- Décor d'ambiance animé (orbes) ---------- */
+.orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(64px);
+  opacity: 0.55;
+}
+.orb-1 {
+  width: 34rem;
+  height: 34rem;
+  left: -9rem;
+  top: -7rem;
+  background: radial-gradient(closest-side, rgb(var(--c-accent) / 0.2), transparent 70%);
+  animation: orb-drift-1 26s ease-in-out infinite;
+}
+.orb-2 {
+  width: 28rem;
+  height: 28rem;
+  right: -7rem;
+  top: 18%;
+  background: radial-gradient(closest-side, rgb(var(--c-accent-deep) / 0.18), transparent 70%);
+  animation: orb-drift-2 32s ease-in-out infinite;
+}
+.orb-3 {
+  width: 30rem;
+  height: 30rem;
+  left: 28%;
+  bottom: -11rem;
+  background: radial-gradient(closest-side, rgb(var(--c-accent) / 0.12), transparent 70%);
+  animation: orb-drift-3 30s ease-in-out infinite;
+}
+@keyframes orb-drift-1 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(4rem, 3rem); }
+}
+@keyframes orb-drift-2 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-3rem, 4rem); }
+}
+@keyframes orb-drift-3 {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(3rem, -3rem); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .orb { animation: none; }
 }
