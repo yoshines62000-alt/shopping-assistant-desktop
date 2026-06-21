@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import type { Favorite, FavoriteList } from '@shopping-assistant/types';
-import { Heart, Search, Plus, Pencil, Trash2, Tag, RefreshCw, Download, Target } from 'lucide-react';
+import { Heart, Search, Plus, Pencil, Trash2, Tag, RefreshCw, Download, Target, CheckSquare } from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
 import EmptyState from '@/components/ui/EmptyState';
 import LoadingBlock from '@/components/ui/LoadingBlock';
@@ -25,6 +25,7 @@ export default function FavoritesPage() {
   const [sort, setSort] = useState<'recent' | 'priceAsc' | 'priceDesc' | 'gap'>('recent');
   const [onlyUnderTarget, setOnlyUnderTarget] = useState(false);
   const [refreshingAll, setRefreshingAll] = useState(false);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,7 +79,49 @@ export default function FavoritesPage() {
 
   const onFavChanged = (updated: Favorite) =>
     setFavorites((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
-  const onFavRemoved = (id: number) => setFavorites((prev) => prev.filter((f) => f.id !== id));
+  const onFavRemoved = (id: number) => {
+    setFavorites((prev) => prev.filter((f) => f.id !== id));
+    setSelected((prev) => {
+      if (!prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  };
+
+  // --- Sélection multiple (actions en lot) ---
+  const toggleSelect = (id: number) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  const clearSelect = () => setSelected(new Set());
+
+  const bulkAddToList = async (listId: number) => {
+    const picked = favorites.filter((f) => selected.has(f.id) && !f.listIds.includes(listId));
+    await Promise.all(
+      picked.map((f) =>
+        apiFetch<Favorite>(`/favorites/${f.id}`, {
+          method: 'PATCH',
+          json: { listIds: [...f.listIds, listId] },
+        })
+          .then(onFavChanged)
+          .catch(() => null)
+      )
+    );
+    const name = lists.find((l) => l.id === listId)?.name ?? 'la liste';
+    toast.success(`${picked.length || selected.size} favori(s) rangé(s) dans « ${name} »`);
+    clearSelect();
+  };
+
+  const bulkRemove = async () => {
+    const ids = [...selected];
+    if (!window.confirm(`Retirer ${ids.length} favori(s) ?`)) return;
+    ids.forEach(onFavRemoved);
+    await Promise.all(ids.map((id) => apiFetch(`/favorites/${id}`, { method: 'DELETE' }).catch(() => null)));
+    toast.info(`${ids.length} favori(s) retiré(s)`);
+  };
 
   const refreshAll = async () => {
     setRefreshingAll(true);
@@ -270,6 +313,34 @@ export default function FavoritesPage() {
               </button>
             </div>
 
+            {selected.size > 0 && (
+              <div className="flex flex-wrap items-center gap-2 rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-sm">
+                <CheckSquare className="h-4 w-4 text-accent" />
+                <span className="font-medium text-slate-100">{selected.size} sélectionné{selected.size > 1 ? 's' : ''}</span>
+                {lists.length > 0 && (
+                  <select
+                    value=""
+                    onChange={(e) => e.target.value && bulkAddToList(Number(e.target.value))}
+                    className="input !w-auto !py-1 text-sm"
+                    title="Ranger la sélection dans une liste"
+                  >
+                    <option value="">Ranger dans…</option>
+                    {lists.map((l) => (
+                      <option key={l.id} value={l.id}>
+                        {l.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                <button onClick={bulkRemove} className="btn-ghost text-sm hover:!text-rose-300">
+                  <Trash2 className="h-3.5 w-3.5" /> Retirer
+                </button>
+                <button onClick={clearSelect} className="btn-ghost text-sm ml-auto">
+                  Annuler
+                </button>
+              </div>
+            )}
+
             {shown.length === 0 ? (
               <EmptyState
                 icon={<Tag className="h-6 w-6" />}
@@ -291,6 +362,8 @@ export default function FavoritesPage() {
                     lists={lists}
                     onChanged={onFavChanged}
                     onRemoved={onFavRemoved}
+                    selected={selected.has(f.id)}
+                    onToggleSelect={toggleSelect}
                   />
                 ))}
               </div>

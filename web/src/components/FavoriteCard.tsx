@@ -17,6 +17,8 @@ import {
   RefreshCw,
   ArrowDownRight,
   ArrowUpRight,
+  CheckSquare,
+  Square,
 } from 'lucide-react';
 import ProductThumb from '@/components/ui/ProductThumb';
 import { apiFetch } from '@/lib/api';
@@ -28,11 +30,15 @@ export default function FavoriteCard({
   lists,
   onChanged,
   onRemoved,
+  selected = false,
+  onToggleSelect,
 }: {
   fav: Favorite;
   lists: FavoriteList[];
   onChanged: (updated: Favorite) => void;
   onRemoved: (id: number) => void;
+  selected?: boolean;
+  onToggleSelect?: (id: number) => void;
 }) {
   const [notes, setNotes] = useState(fav.notes);
   const [target, setTarget] = useState(fav.targetPrice != null ? String(fav.targetPrice) : '');
@@ -114,8 +120,25 @@ export default function FavoriteCard({
     .filter((l): l is FavoriteList => !!l);
 
   return (
-    <article className="card-pad card-hover" aria-label={fav.name}>
+    <article
+      className={`card-pad card-hover ${selected ? 'ring-2 ring-accent' : ''}`}
+      aria-label={fav.name}
+    >
       <div className="flex gap-3">
+        {onToggleSelect && (
+          <button
+            onClick={() => onToggleSelect(fav.id)}
+            className="mt-0.5 shrink-0 self-start text-slate-400 hover:text-accent"
+            title={selected ? 'Désélectionner' : 'Sélectionner'}
+            aria-pressed={selected}
+          >
+            {selected ? (
+              <CheckSquare className="h-4 w-4 text-accent" />
+            ) : (
+              <Square className="h-4 w-4" />
+            )}
+          </button>
+        )}
         <ProductThumb src={fav.imageUrl} alt={fav.name} size="lg" />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
