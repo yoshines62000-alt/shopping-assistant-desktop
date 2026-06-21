@@ -78,6 +78,29 @@ def test_upsert_par_produit_et_annotations(client):
     assert upd2["listIds"] == [l["id"]]
 
 
+def test_serialise_champs_suivi_prix(client):
+    fav = client.post(
+        "/api/v1/favorites",
+        json={"productId": PID + "p", "name": "Souris", "price": 25, "sourceUrl": "http://x/p"},
+    ).json()
+    # Champs de suivi présents (null tant qu'aucun rafraîchissement).
+    assert "previousPrice" in fav and fav["previousPrice"] is None
+    assert "priceCheckedAt" in fav and fav["priceCheckedAt"] is None
+
+
+def test_refresh_prix_site_non_supporte(client):
+    """Un favori dont l'URL n'est ni Amazon ni eBay renvoie 'unsupported' (pas de scrape)."""
+    fav = client.post(
+        "/api/v1/favorites",
+        json={"productId": PID + "ns", "name": "Truc", "price": 10, "sourceUrl": "http://vinted.fr/x"},
+    ).json()
+    res = client.post(f"/api/v1/favorites/{fav['id']}/refresh-price").json()
+    assert res["status"] == "unsupported"
+    # Lot : aucun favori éligible -> 0 vérifié (les favoris de test ne sont pas Amazon/eBay).
+    bulk = client.post("/api/v1/favorites/refresh-prices").json()
+    assert "checked" in bulk and "changed" in bulk
+
+
 def test_import_migration(client):
     res = client.post(
         "/api/v1/favorites/import",

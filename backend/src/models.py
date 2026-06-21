@@ -153,6 +153,8 @@ class Favorite(SQLModel, table=True):
     delivery_days: Optional[int] = None
     notes: str = Field(default="")  # note personnelle
     target_price: Optional[float] = None  # prix cible perso
+    previous_price: Optional[float] = None  # prix avant le dernier rafraîchissement
+    price_checked_at: Optional[datetime] = None  # dernier re-scrape du prix
     added_at: datetime = Field(default_factory=utcnow_naive)
 
 

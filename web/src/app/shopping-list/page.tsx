@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import type { Favorite, FavoriteList } from '@shopping-assistant/types';
-import { Heart, Search, Plus, Pencil, Trash2, Tag } from 'lucide-react';
+import { Heart, Search, Plus, Pencil, Trash2, Tag, RefreshCw, Download } from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
 import EmptyState from '@/components/ui/EmptyState';
 import LoadingBlock from '@/components/ui/LoadingBlock';
@@ -11,6 +11,8 @@ import ErrorBanner from '@/components/ui/ErrorBanner';
 import FavoriteCard from '@/components/FavoriteCard';
 import { apiFetch } from '@/lib/api';
 import { migrateLocalFavorites } from '@/lib/favorites';
+import { downloadCSV } from '@/lib/csv';
+import { toast } from '@/lib/toast';
 import { euro } from '@/lib/format';
 
 const LIST_COLORS = ['#22d3ee', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#3b82f6', '#ec4899', '#14b8a6'];
@@ -21,6 +23,7 @@ export default function FavoritesPage() {
   const [activeList, setActiveList] = useState<number | null>(null);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<'recent' | 'priceAsc' | 'priceDesc' | 'gap'>('recent');
+  const [refreshingAll, setRefreshingAll] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -75,6 +78,45 @@ export default function FavoritesPage() {
   const onFavChanged = (updated: Favorite) =>
     setFavorites((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
   const onFavRemoved = (id: number) => setFavorites((prev) => prev.filter((f) => f.id !== id));
+
+  const refreshAll = async () => {
+    setRefreshingAll(true);
+    try {
+      const res = await apiFetch<{ checked: number; changed: number }>('/favorites/refresh-prices', {
+        method: 'POST',
+      });
+      await load();
+      toast.success(
+        res.checked === 0
+          ? 'Aucun favori Amazon/eBay à rafraîchir'
+          : `${res.checked} prix vérifié${res.checked > 1 ? 's' : ''} · ${res.changed} modifié${res.changed > 1 ? 's' : ''}`
+      );
+    } catch {
+      toast.error('Rafraîchissement impossible');
+    } finally {
+      setRefreshingAll(false);
+    }
+  };
+
+  const exportCsv = () => {
+    if (shown.length === 0) return;
+    const nameById = new Map(lists.map((l) => [l.id, l.name]));
+    downloadCSV(
+      `favoris-${new Date().toISOString().slice(0, 10)}.csv`,
+      ['Nom', 'Prix', 'Prix cible', 'Site', 'Vendeur', 'Note', 'Listes', 'Note perso', 'Lien'],
+      shown.map((f) => [
+        f.name,
+        f.price,
+        f.targetPrice ?? '',
+        f.siteDomain,
+        f.seller ?? '',
+        f.rating ?? '',
+        f.listIds.map((id) => nameById.get(id) ?? '').filter(Boolean).join(', '),
+        f.notes,
+        f.sourceUrl,
+      ])
+    );
+  };
 
   const gapOf = (f: Favorite) =>
     f.targetPrice && f.targetPrice > 0 ? (f.price - f.targetPrice) / f.targetPrice : Infinity;
@@ -198,6 +240,19 @@ export default function FavoritesPage() {
                 <option value="priceDesc">Prix décroissant</option>
                 <option value="gap">Proche de ma cible</option>
               </select>
+              <button
+                onClick={refreshAll}
+                disabled={refreshingAll}
+                className="btn-ghost text-sm disabled:opacity-50"
+                title="Rafraîchir les prix Amazon/eBay"
+              >
+                <RefreshCw className={`h-4 w-4 ${refreshingAll ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Rafraîchir</span>
+              </button>
+              <button onClick={exportCsv} className="btn-ghost text-sm" title="Exporter en CSV">
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">CSV</span>
+              </button>
             </div>
 
             {shown.length === 0 ? (

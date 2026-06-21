@@ -11,9 +11,12 @@ from pydantic import BaseModel, Field
 from sqlmodel import delete, select
 
 from ..db import get_session
-from ..models import Favorite, FavoriteList, FavoriteTag
+from ..models import Favorite, FavoriteList, FavoriteTag, utcnow_naive
 
 router = APIRouter()
+
+# Sites dont on sait re-scraper le prix d'une fiche (cf. background.fetch_current_price).
+REFRESHABLE = ("amazon.", "ebay.")
 
 
 # --------------------------------------------------------------------------- #
@@ -44,6 +47,8 @@ def _fav_to_camel(f: Favorite, list_ids: list[int]) -> dict[str, Any]:
         "deliveryDays": f.delivery_days,
         "notes": f.notes,
         "targetPrice": f.target_price,
+        "previousPrice": f.previous_price,
+        "priceCheckedAt": f.price_checked_at.isoformat() if f.price_checked_at else None,
         "listIds": list_ids,
         "addedAt": f.added_at.isoformat(),
     }
@@ -239,6 +244,61 @@ def delete_favorite_by_product(product_id: str) -> dict[str, Any]:
             session.delete(fav)
             session.commit()
     return {"ok": True}
+
+
+# --------------------------------------------------------------------------- #
+# Rafraîchissement du prix (re-scrape la fiche -> écart vs cible à jour)
+# --------------------------------------------------------------------------- #
+def _can_refresh(fav: Favorite) -> bool:
+    url = (fav.source_url or "").lower()
+    return url.startswith("http") and any(s in url for s in REFRESHABLE)
+
+
+def _refresh_one(session, fav: Favorite) -> dict[str, Any]:
+    """Re-scrape le prix d'un favori et met à jour le suivi. Renvoie l'issue."""
+    if not _can_refresh(fav):
+        return {"id": fav.id, "status": "unsupported"}
+    from ..background import fetch_current_price  # import paresseux (playwright lourd)
+
+    new_price = fetch_current_price(fav.source_url)
+    if new_price is None:
+        return {"id": fav.id, "status": "unavailable"}
+    old_price = fav.price
+    fav.previous_price = old_price
+    fav.price = float(new_price)
+    fav.price_checked_at = utcnow_naive()
+    session.add(fav)
+    changed = abs(new_price - old_price) >= 0.01
+    return {"id": fav.id, "status": "changed" if changed else "same", "oldPrice": old_price, "price": new_price}
+
+
+@router.post("/favorites/{favorite_id}/refresh-price")
+def refresh_favorite_price(favorite_id: int) -> dict[str, Any]:
+    with get_session() as session:
+        fav = session.get(Favorite, favorite_id)
+        if not fav:
+            raise HTTPException(status_code=404, detail="Favori introuvable")
+        result = _refresh_one(session, fav)
+        session.commit()
+        session.refresh(fav)
+        tags = _tags_for(session, [fav.id])
+        return {**result, "favorite": _fav_to_camel(fav, tags.get(fav.id, []))}
+
+
+@router.post("/favorites/refresh-prices")
+def refresh_all_prices(limit: int = 15) -> dict[str, Any]:
+    """Rafraîchit en lot les favoris dont on sait lire le prix (Amazon/eBay).
+    Plafonné car chaque fiche coûte ~20 s de navigateur."""
+    limit = max(1, min(limit, 40))
+    results: list[dict[str, Any]] = []
+    with get_session() as session:
+        favs = session.exec(select(Favorite).order_by(Favorite.added_at.desc())).all()
+        eligible = [f for f in favs if _can_refresh(f)][:limit]
+        for fav in eligible:
+            results.append(_refresh_one(session, fav))
+        session.commit()
+    changed = sum(1 for r in results if r["status"] == "changed")
+    return {"checked": len(results), "changed": changed, "results": results}
 
 
 class ImportPayload(BaseModel):

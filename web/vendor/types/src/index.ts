@@ -128,6 +128,8 @@ export interface Favorite {
   deliveryDays: number | null;
   notes: string;
   targetPrice: number | null;
+  previousPrice: number | null;
+  priceCheckedAt: string | null;
   listIds: number[];
   addedAt: string;
 }

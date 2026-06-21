@@ -14,11 +14,14 @@ import {
   Tag as TagIcon,
   Check,
   Target,
+  RefreshCw,
+  ArrowDownRight,
+  ArrowUpRight,
 } from 'lucide-react';
 import ProductThumb from '@/components/ui/ProductThumb';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
-import { euro } from '@/lib/format';
+import { euro, relativeTime } from '@/lib/format';
 
 export default function FavoriteCard({
   fav,
@@ -34,6 +37,32 @@ export default function FavoriteCard({
   const [notes, setNotes] = useState(fav.notes);
   const [target, setTarget] = useState(fav.targetPrice != null ? String(fav.targetPrice) : '');
   const [tagsOpen, setTagsOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const canRefresh = /amazon\.|ebay\./i.test(fav.sourceUrl);
+
+  const refreshPrice = async () => {
+    setRefreshing(true);
+    try {
+      const res = await apiFetch<{ status: string; oldPrice?: number; favorite: Favorite }>(
+        `/favorites/${fav.id}/refresh-price`,
+        { method: 'POST' }
+      );
+      onChanged(res.favorite);
+      if (res.status === 'changed' && res.oldPrice != null) {
+        const diff = res.favorite.price - res.oldPrice;
+        toast.success(`Prix mis à jour : ${euro(res.oldPrice)} → ${euro(res.favorite.price)} (${diff < 0 ? '' : '+'}${euro(diff)})`);
+      } else if (res.status === 'same') {
+        toast.info('Prix inchangé');
+      } else {
+        toast.info('Prix indisponible pour ce site');
+      }
+    } catch {
+      toast.error('Rafraîchissement impossible');
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const patch = async (body: Record<string, unknown>) => {
     try {
@@ -69,6 +98,11 @@ export default function FavoriteCard({
     }
   };
 
+  // Évolution depuis le dernier rafraîchissement.
+  const priceDelta =
+    fav.previousPrice != null ? Math.round((fav.price - fav.previousPrice) * 100) / 100 : null;
+  const checkedAgo = fav.priceCheckedAt ? relativeTime(fav.priceCheckedAt) : null;
+
   // Écart prix actuel vs prix cible perso.
   const gap =
     fav.targetPrice && fav.targetPrice > 0
@@ -86,7 +120,18 @@ export default function FavoriteCard({
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <h3 className="font-semibold text-slate-100">{fav.name}</h3>
-            <span className="shrink-0 text-lg font-bold tracking-tight text-slate-50">{euro(fav.price)}</span>
+            <div className="shrink-0 text-right">
+              <span className="text-lg font-bold tracking-tight text-slate-50">{euro(fav.price)}</span>
+              {priceDelta != null && priceDelta !== 0 && (
+                <span
+                  className={`mt-0.5 flex items-center justify-end gap-0.5 text-xs ${priceDelta < 0 ? 'text-emerald-400' : 'text-rose-400'}`}
+                  title={`Avant : ${euro(fav.previousPrice!)}`}
+                >
+                  {priceDelta < 0 ? <ArrowDownRight className="h-3 w-3" /> : <ArrowUpRight className="h-3 w-3" />}
+                  {priceDelta < 0 ? '' : '+'}{euro(priceDelta)}
+                </span>
+              )}
+            </div>
           </div>
           <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-500">
             <span>{fav.siteDomain}</span>
@@ -211,6 +256,17 @@ export default function FavoriteCard({
         <button onClick={watch} className="btn-ghost text-xs" title="Surveiller le prix (alerte)">
           <Bell className="h-3.5 w-3.5" />
         </button>
+        {canRefresh && (
+          <button
+            onClick={refreshPrice}
+            disabled={refreshing}
+            className="btn-ghost text-xs disabled:opacity-50"
+            title="Rafraîchir le prix actuel"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+          </button>
+        )}
+        {checkedAgo && <span className="text-[11px] text-slate-600">Prix {checkedAgo}</span>}
         <button onClick={remove} className="btn-ghost text-xs hover:!text-rose-300 ml-auto" title="Retirer des favoris">
           <Trash2 className="h-3.5 w-3.5" />
         </button>
