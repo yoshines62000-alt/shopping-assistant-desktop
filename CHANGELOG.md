@@ -6,6 +6,12 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.13.0] — 2026-06-21
+### Refonte page par page (suite)
+- **Affaires** et **favoris** : les cartes apparaissent en cascade.
+- **Alertes & surveillances** : bandeau de stats (actives / déclenchées / total).
+- **Estimation** : le résultat s'affiche avec une animation d'entrée.
+
 ## [0.12.0] — 2026-06-21
 ### Refonte page par page
 - **Graphes plus spectaculaires** partout : dégradé + halo cyan suivant la couleur
