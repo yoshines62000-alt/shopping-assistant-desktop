@@ -83,9 +83,10 @@ def test_serialise_champs_suivi_prix(client):
         "/api/v1/favorites",
         json={"productId": PID + "p", "name": "Souris", "price": 25, "sourceUrl": "http://x/p"},
     ).json()
-    # Champs de suivi présents (null tant qu'aucun rafraîchissement).
+    # Champs de suivi présents (null/vide tant qu'aucun rafraîchissement).
     assert "previousPrice" in fav and fav["previousPrice"] is None
     assert "priceCheckedAt" in fav and fav["priceCheckedAt"] is None
+    assert fav["priceHistory"] == []
 
 
 def test_refresh_prix_site_non_supporte(client):

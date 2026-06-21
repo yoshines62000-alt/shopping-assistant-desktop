@@ -25,6 +25,31 @@ import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { euro, relativeTime } from '@/lib/format';
 
+/** Mini-graphe du prix au fil des rafraîchissements (le plus ancien à gauche). */
+function Sparkline({ prices }: { prices: number[] }) {
+  if (prices.length < 2) return null;
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const range = max - min || 1;
+  const w = 64;
+  const h = 18;
+  const pts = prices
+    .map((p, i) => `${(i / (prices.length - 1)) * w},${h - ((p - min) / range) * h}`)
+    .join(' ');
+  const down = prices[prices.length - 1] <= prices[0];
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} role="img" aria-label="Historique du prix">
+      <polyline
+        fill="none"
+        stroke={down ? '#34d399' : '#fb7185'}
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+        points={pts}
+      />
+    </svg>
+  );
+}
+
 export default function FavoriteCard({
   fav,
   lists,
@@ -243,6 +268,11 @@ export default function FavoriteCard({
         {gap != null && (
           <span className={`badge ${gap <= 0 ? 'badge-success' : 'bg-amber-500/15 text-amber-300'}`}>
             {gap <= 0 ? `${Math.abs(gap)}% sous ta cible` : `+${gap}% au-dessus`}
+          </span>
+        )}
+        {fav.priceHistory.length >= 2 && (
+          <span className="ml-auto flex items-center gap-1.5" title={`Historique : ${fav.priceHistory.map((p) => euro(p)).join(' → ')}`}>
+            <Sparkline prices={fav.priceHistory} />
           </span>
         )}
       </div>

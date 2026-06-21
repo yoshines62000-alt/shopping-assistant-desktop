@@ -130,6 +130,7 @@ export interface Favorite {
   targetPrice: number | null;
   previousPrice: number | null;
   priceCheckedAt: string | null;
+  priceHistory: number[];
   listIds: number[];
   addedAt: string;
 }

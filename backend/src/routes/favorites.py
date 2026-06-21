@@ -4,6 +4,7 @@
 Backend persistant -> inclus dans la sauvegarde, conservé entre machines.
 """
 
+import json
 from typing import Any, Optional
 
 from fastapi import APIRouter, HTTPException
@@ -49,9 +50,18 @@ def _fav_to_camel(f: Favorite, list_ids: list[int]) -> dict[str, Any]:
         "targetPrice": f.target_price,
         "previousPrice": f.previous_price,
         "priceCheckedAt": f.price_checked_at.isoformat() if f.price_checked_at else None,
+        "priceHistory": _history_prices(f),
         "listIds": list_ids,
         "addedAt": f.added_at.isoformat(),
     }
+
+
+def _history_prices(f: Favorite) -> list[float]:
+    """Liste des prix de l'historique (pour un mini-graphe), le plus ancien d'abord."""
+    try:
+        return [float(p["price"]) for p in json.loads(f.price_history or "[]") if "price" in p]
+    except (ValueError, TypeError):
+        return []
 
 
 # --------------------------------------------------------------------------- #
@@ -264,9 +274,21 @@ def _refresh_one(session, fav: Favorite) -> dict[str, Any]:
     if new_price is None:
         return {"id": fav.id, "status": "unavailable"}
     old_price = fav.price
+    now = utcnow_naive()
+    # Historique : on amorce avec le prix d'origine au 1er refresh, puis on empile.
+    try:
+        hist = json.loads(fav.price_history or "[]")
+        if not isinstance(hist, list):
+            hist = []
+    except ValueError:
+        hist = []
+    if not hist:
+        hist.append({"price": old_price, "at": fav.added_at.isoformat()})
+    hist.append({"price": float(new_price), "at": now.isoformat()})
+    fav.price_history = json.dumps(hist[-30:])  # plafonné
     fav.previous_price = old_price
     fav.price = float(new_price)
-    fav.price_checked_at = utcnow_naive()
+    fav.price_checked_at = now
     session.add(fav)
     changed = abs(new_price - old_price) >= 0.01
     return {"id": fav.id, "status": "changed" if changed else "same", "oldPrice": old_price, "price": new_price}
