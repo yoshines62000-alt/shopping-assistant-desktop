@@ -102,6 +102,29 @@ def test_refresh_prix_site_non_supporte(client):
     assert "checked" in bulk and "changed" in bulk
 
 
+def test_prix_cible_des_ajout(client):
+    """Le prix cible peut être défini dès l'ajout (favori intelligent)."""
+    fav = client.post(
+        "/api/v1/favorites",
+        json={"productId": PID + "tc", "name": "Montre", "price": 120, "targetPrice": 100},
+    ).json()
+    assert fav["targetPrice"] == 100
+
+
+def test_alerte_sous_cible_logique():
+    """Helper de franchissement : notifie une fois sous la cible, réarme au-dessus."""
+    from src.routes.favorites import _target_alert
+
+    # Pas de cible -> jamais de notif.
+    assert _target_alert(50, None, False) == (False, False)
+    # Passe sous la cible, pas encore notifié -> notifie + arme le flag.
+    assert _target_alert(90, 100, False) == (True, True)
+    # Toujours sous la cible mais déjà notifié -> silence.
+    assert _target_alert(85, 100, True) == (False, True)
+    # Repasse au-dessus -> réarme (plus de flag).
+    assert _target_alert(110, 100, True) == (False, False)
+
+
 def test_import_migration(client):
     res = client.post(
         "/api/v1/favorites/import",

@@ -18,7 +18,7 @@ from sqlmodel import select
 from .connectors.browser import fetch_page_html
 from .db import get_session
 from .estimation.engine import estimate_resale
-from .models import Alert, DealHit, PriceHistory, ProductRef, SavedSearch, StockItem
+from .models import Alert, DealHit, Favorite, PriceHistory, ProductRef, SavedSearch, StockItem
 from .normalization.engine import NormalizationEngine
 from .notifications import notify_all
 from .settings_store import get_app_settings
@@ -304,6 +304,31 @@ def maybe_send_weekly_digest() -> bool:
     return True
 
 
+def refresh_favorites_due(max_items: int = 8, min_age_hours: int = 20) -> int:
+    """Rafraîchit en fond le prix des favoris Amazon/eBay dont le dernier contrôle
+    date de plus de `min_age_hours` (≈ 1×/jour). `_refresh_one` gère l'alerte
+    « passé sous la cible ». Plafonné par cycle (chaque fiche ≈ 20 s)."""
+    from .routes.favorites import _can_refresh, _refresh_one
+
+    cutoff = _utcnow_naive() - timedelta(hours=min_age_hours)
+    refreshed = 0
+    with get_session() as session:
+        favs = session.exec(select(Favorite).order_by(Favorite.price_checked_at)).all()
+        due = [
+            f
+            for f in favs
+            if _can_refresh(f) and (f.price_checked_at is None or f.price_checked_at < cutoff)
+        ][:max_items]
+        for fav in due:
+            try:
+                _refresh_one(session, fav)
+                refreshed += 1
+            except Exception as exc:
+                logger.warning("refresh favorite %s failed: %s", fav.id, exc)
+        session.commit()
+    return refreshed
+
+
 async def background_loop(stop_event: asyncio.Event) -> None:
     # Premier passage différé : laisse l'app démarrer (et les tests se terminer)
     try:
@@ -325,6 +350,10 @@ async def background_loop(stop_event: asyncio.Event) -> None:
             await scan_saved_searches()
         except Exception as exc:
             logger.error("scan_saved_searches crashed: %s", exc)
+        try:
+            await asyncio.to_thread(refresh_favorites_due)
+        except Exception as exc:
+            logger.error("refresh_favorites_due crashed: %s", exc)
         try:
             await asyncio.to_thread(maybe_send_weekly_digest)
         except Exception as exc:

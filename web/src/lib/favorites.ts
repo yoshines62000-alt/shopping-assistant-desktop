@@ -12,6 +12,8 @@ interface FavoritesState {
   load: () => Promise<void>;
   isFavorite: (productId: string) => boolean;
   toggle: (product: Product) => Promise<void>;
+  /** Ajoute aux favoris avec un prix cible défini d'emblée (favori intelligent). */
+  addWithTarget: (product: Product, targetPrice: number) => Promise<void>;
 }
 
 function productPayload(p: Product) {
@@ -58,6 +60,19 @@ export const useFavorites = create<FavoritesState>((set, get) => ({
         set({ favoriteIds: rb });
       });
     }
+  },
+  addWithTarget: async (product, targetPrice) => {
+    const next = new Set(get().favoriteIds);
+    next.add(product.id);
+    set({ favoriteIds: next });
+    await apiFetch('/favorites', {
+      method: 'POST',
+      json: { ...productPayload(product), targetPrice },
+    }).catch(() => {
+      const rb = new Set(get().favoriteIds);
+      rb.delete(product.id);
+      set({ favoriteIds: rb });
+    });
   },
 }));
 

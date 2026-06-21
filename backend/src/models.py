@@ -156,6 +156,7 @@ class Favorite(SQLModel, table=True):
     previous_price: Optional[float] = None  # prix avant le dernier rafraîchissement
     price_checked_at: Optional[datetime] = None  # dernier re-scrape du prix
     price_history: str = Field(default="[]")  # JSON: points [{price, at}] (rafraîchissements)
+    notified_below_target: bool = Field(default=False)  # déjà notifié pour ce passage sous cible
     added_at: datetime = Field(default_factory=utcnow_naive)
 
 

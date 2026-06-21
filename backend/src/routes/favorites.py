@@ -5,6 +5,7 @@ Backend persistant -> inclus dans la sauvegarde, conservé entre machines.
 """
 
 import json
+import logging
 from typing import Any, Optional
 
 from fastapi import APIRouter, HTTPException
@@ -14,6 +15,7 @@ from sqlmodel import delete, select
 from ..db import get_session
 from ..models import Favorite, FavoriteList, FavoriteTag, utcnow_naive
 
+logger = logging.getLogger("favorites")
 router = APIRouter()
 
 # Sites dont on sait re-scraper le prix d'une fiche (cf. background.fetch_current_price).
@@ -141,6 +143,7 @@ class FavoritePayload(BaseModel):
     rating: Optional[float] = None
     reviewCount: Optional[int] = None
     deliveryDays: Optional[int] = None
+    targetPrice: Optional[float] = Field(default=None, ge=0)  # prix cible défini dès l'ajout
     listIds: list[int] = Field(default_factory=list)
 
 
@@ -194,10 +197,16 @@ def add_favorite(payload: FavoritePayload) -> dict[str, Any]:
                 rating=payload.rating,
                 review_count=payload.reviewCount,
                 delivery_days=payload.deliveryDays,
+                target_price=payload.targetPrice,
             )
             session.add(fav)
             session.commit()
             session.refresh(fav)
+        elif payload.targetPrice is not None and fav.target_price is None:
+            # Favori déjà présent sans cible : on accepte la cible fournie à l'ajout.
+            fav.target_price = payload.targetPrice
+            session.add(fav)
+            session.commit()
         if payload.listIds:
             existing = {t.list_id for t in session.exec(select(FavoriteTag).where(FavoriteTag.favorite_id == fav.id)).all()}
             valid = {row for row in session.exec(select(FavoriteList.id)).all()}
@@ -264,6 +273,20 @@ def _can_refresh(fav: Favorite) -> bool:
     return url.startswith("http") and any(s in url for s in REFRESHABLE)
 
 
+def _target_alert(price: float, target: Optional[float], already_notified: bool) -> tuple[bool, bool]:
+    """Décide, à partir du nouveau prix, s'il faut notifier (passage sous la cible)
+    et quel doit être le nouveau drapeau de déduplication.
+    Renvoie (notifier, nouveau_flag). Au-dessus de la cible -> on réarme le flag."""
+    if target is None or target <= 0:
+        return (False, already_notified)
+    below = price <= target
+    if below and not already_notified:
+        return (True, True)  # franchit la cible : on notifie une fois
+    if not below:
+        return (False, False)  # repassé au-dessus : on réarme
+    return (False, already_notified)
+
+
 def _refresh_one(session, fav: Favorite) -> dict[str, Any]:
     """Re-scrape le prix d'un favori et met à jour le suivi. Renvoie l'issue."""
     if not _can_refresh(fav):
@@ -289,9 +312,34 @@ def _refresh_one(session, fav: Favorite) -> dict[str, Any]:
     fav.previous_price = old_price
     fav.price = float(new_price)
     fav.price_checked_at = now
+    # Alerte « passé sous la cible » (une notification par franchissement).
+    notify, fav.notified_below_target = _target_alert(
+        float(new_price), fav.target_price, fav.notified_below_target
+    )
     session.add(fav)
+    if notify:
+        _notify_target_reached(fav)
     changed = abs(new_price - old_price) >= 0.01
-    return {"id": fav.id, "status": "changed" if changed else "same", "oldPrice": old_price, "price": new_price}
+    return {
+        "id": fav.id,
+        "status": "changed" if changed else "same",
+        "oldPrice": old_price,
+        "price": new_price,
+        "belowTarget": notify,
+    }
+
+
+def _notify_target_reached(fav: Favorite) -> None:
+    """Diffuse une notification (Discord/Telegram/e-mail/native) sans bloquer."""
+    try:
+        from ..background import notify_discord
+
+        notify_discord(
+            f"🎯 Favori sous ta cible : « {fav.name} » à {fav.price:.2f} € "
+            f"(cible {fav.target_price:.2f} €) — {fav.source_url}"
+        )
+    except Exception as exc:  # notification best-effort
+        logger.warning("notify target failed: %s", exc)
 
 
 @router.post("/favorites/{favorite_id}/refresh-price")
@@ -347,6 +395,7 @@ def import_favorites(payload: ImportPayload) -> dict[str, Any]:
                     rating=item.rating,
                     review_count=item.reviewCount,
                     delivery_days=item.deliveryDays,
+                    target_price=item.targetPrice,
                 )
             )
             imported += 1

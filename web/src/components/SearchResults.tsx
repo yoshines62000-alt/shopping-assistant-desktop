@@ -16,6 +16,7 @@ import {
   Heart,
   Bell,
   Copy,
+  Target,
 } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import { useFavorites, migrateLocalFavorites } from '@/lib/favorites';
@@ -82,9 +83,26 @@ function ProductSkeleton() {
 
 export default function SearchResults({ products, isLoading }: Props) {
   const { watchList, addToWatchList, removeFromWatchList } = useAppStore();
-  const { favoriteIds, loaded, load, toggle: toggleFavorite } = useFavorites();
+  const { favoriteIds, loaded, load, toggle: toggleFavorite, addWithTarget } = useFavorites();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const router = useRouter();
+
+  // « Favori + prix cible » : on suggère -10 % et on alerte si le prix repasse dessous.
+  const favoriteWithTarget = (p: Product) => {
+    const suggested = Math.round(p.totalPrice * 0.9 * 100) / 100;
+    const raw = window.prompt(
+      `Prix cible pour « ${p.name.slice(0, 60)} » ?\nTu seras notifié si le prix passe sous ce seuil.`,
+      String(suggested)
+    );
+    if (raw == null) return;
+    const target = Number(raw.replace(',', '.'));
+    if (!Number.isFinite(target) || target <= 0) {
+      toast.error('Prix cible invalide');
+      return;
+    }
+    addWithTarget(p, target);
+    toast.success(`Favori ajouté · cible ${euro(target)}`);
+  };
 
   // Favoris persistés côté backend : migration des anciens favoris locaux + chargement.
   useEffect(() => {
@@ -150,6 +168,15 @@ export default function SearchResults({ products, isLoading }: Props) {
             icon: <Heart className={`h-4 w-4 ${inList ? 'fill-rose-500 text-rose-500' : ''}`} />,
             onClick: () => toggleFavorite(p),
           },
+          ...(inList
+            ? []
+            : [
+                {
+                  label: 'Favori + prix cible…',
+                  icon: <Target className="h-4 w-4" />,
+                  onClick: () => favoriteWithTarget(p),
+                },
+              ]),
           {
             label: isWatched ? 'Retirer la surveillance' : 'Surveiller le prix',
             icon: <Bell className="h-4 w-4" />,
