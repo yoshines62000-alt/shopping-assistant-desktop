@@ -13,10 +13,14 @@ import { apiFetch } from '@/lib/api';
 import { migrateLocalFavorites } from '@/lib/favorites';
 import { euro } from '@/lib/format';
 
+const LIST_COLORS = ['#22d3ee', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#3b82f6', '#ec4899', '#14b8a6'];
+
 export default function FavoritesPage() {
   const [lists, setLists] = useState<FavoriteList[]>([]);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [activeList, setActiveList] = useState<number | null>(null);
+  const [query, setQuery] = useState('');
+  const [sort, setSort] = useState<'recent' | 'priceAsc' | 'priceDesc' | 'gap'>('recent');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -43,7 +47,9 @@ export default function FavoritesPage() {
   const createList = async () => {
     const name = window.prompt('Nom de la nouvelle liste ?')?.trim();
     if (!name) return;
-    await apiFetch('/favorites/lists', { method: 'POST', json: { name } }).catch(() => null);
+    // Couleur auto distincte (rotation de la palette).
+    const color = LIST_COLORS[lists.length % LIST_COLORS.length];
+    await apiFetch('/favorites/lists', { method: 'POST', json: { name, color } }).catch(() => null);
     load();
   };
 
@@ -51,6 +57,11 @@ export default function FavoritesPage() {
     const name = window.prompt('Renommer la liste :', l.name)?.trim();
     if (!name || name === l.name) return;
     await apiFetch(`/favorites/lists/${l.id}`, { method: 'PATCH', json: { name } }).catch(() => null);
+    load();
+  };
+
+  const setListColor = async (l: FavoriteList, color: string) => {
+    await apiFetch(`/favorites/lists/${l.id}`, { method: 'PATCH', json: { color } }).catch(() => null);
     load();
   };
 
@@ -65,8 +76,16 @@ export default function FavoritesPage() {
     setFavorites((prev) => prev.map((f) => (f.id === updated.id ? updated : f)));
   const onFavRemoved = (id: number) => setFavorites((prev) => prev.filter((f) => f.id !== id));
 
-  const shown =
-    activeList == null ? favorites : favorites.filter((f) => f.listIds.includes(activeList));
+  const gapOf = (f: Favorite) =>
+    f.targetPrice && f.targetPrice > 0 ? (f.price - f.targetPrice) / f.targetPrice : Infinity;
+  const shown = (activeList == null ? favorites : favorites.filter((f) => f.listIds.includes(activeList)))
+    .filter((f) => !query.trim() || f.name.toLowerCase().includes(query.trim().toLowerCase()))
+    .sort((a, b) => {
+      if (sort === 'priceAsc') return a.price - b.price;
+      if (sort === 'priceDesc') return b.price - a.price;
+      if (sort === 'gap') return gapOf(a) - gapOf(b); // les plus proches/sous la cible d'abord
+      return b.addedAt.localeCompare(a.addedAt); // récents
+    });
   const total = shown.reduce((s, f) => s + f.price, 0);
   const activeListObj = lists.find((l) => l.id === activeList);
   // Compteurs calculés côté client -> réactifs quand on (dé)tague un favori.
@@ -141,15 +160,55 @@ export default function FavoritesPage() {
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
+                  <span className="ml-1 flex items-center gap-1">
+                    {LIST_COLORS.map((c) => (
+                      <button
+                        key={c}
+                        onClick={() => setListColor(activeListObj, c)}
+                        className={`h-4 w-4 rounded-full ring-1 ring-offset-1 ring-offset-surface ${activeListObj.color === c ? 'ring-slate-300' : 'ring-transparent'}`}
+                        style={{ backgroundColor: c }}
+                        title="Couleur de la liste"
+                        aria-label={`Couleur ${c}`}
+                      />
+                    ))}
+                  </span>
                 </span>
               )}
+            </div>
+
+            {/* Recherche + tri */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative min-w-[200px] flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Filtrer mes favoris…"
+                  className="input !pl-9"
+                />
+              </div>
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as typeof sort)}
+                className="input !w-auto"
+                title="Trier"
+              >
+                <option value="recent">Plus récents</option>
+                <option value="priceAsc">Prix croissant</option>
+                <option value="priceDesc">Prix décroissant</option>
+                <option value="gap">Proche de ma cible</option>
+              </select>
             </div>
 
             {shown.length === 0 ? (
               <EmptyState
                 icon={<Tag className="h-6 w-6" />}
-                title="Liste vide"
-                description="Aucun favori dans cette liste. Range-en via le bouton « Listes » sur une carte."
+                title={query.trim() ? 'Aucun résultat' : 'Liste vide'}
+                description={
+                  query.trim()
+                    ? 'Aucun favori ne correspond à ta recherche.'
+                    : 'Aucun favori dans cette liste. Range-en via le bouton « Listes » sur une carte.'
+                }
               />
             ) : (
               <div className="grid gap-3 lg:grid-cols-2">
