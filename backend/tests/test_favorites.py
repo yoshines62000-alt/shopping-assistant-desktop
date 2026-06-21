@@ -143,6 +143,26 @@ def test_reglage_frequence_favoris(client):
     client.put("/api/v1/settings", json={"favoritesRefreshHours": 24})  # remet le défaut
 
 
+def test_purge_historique_par_age():
+    """L'historique de prix purge les points > 180 j et plafonne à 30."""
+    from datetime import datetime, timedelta
+    from src.routes.favorites import _prune_history, HISTORY_MAX_POINTS
+
+    now = datetime(2026, 6, 21, 12, 0, 0)
+    old = (now - timedelta(days=300)).isoformat()
+    recent = (now - timedelta(days=10)).isoformat()
+    pruned = _prune_history(
+        [{"price": 100, "at": old}, {"price": 90, "at": recent}], now
+    )
+    assert [p["price"] for p in pruned] == [90]  # le vieux point est retiré
+    # Plafond : 40 points récents -> 30 conservés.
+    many = [{"price": i, "at": recent} for i in range(40)]
+    assert len(_prune_history(many, now)) == HISTORY_MAX_POINTS
+    # Tout vieux : on garde au moins le dernier.
+    allold = [{"price": 1, "at": old}, {"price": 2, "at": old}]
+    assert _prune_history(allold, now) == [{"price": 2, "at": old}]
+
+
 def test_import_migration(client):
     res = client.post(
         "/api/v1/favorites/import",

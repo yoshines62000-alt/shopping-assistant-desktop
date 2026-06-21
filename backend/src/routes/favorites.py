@@ -6,6 +6,7 @@ Backend persistant -> inclus dans la sauvegarde, conservé entre machines.
 
 import json
 import logging
+from datetime import datetime, timedelta
 from typing import Any, Optional
 
 from fastapi import APIRouter, HTTPException
@@ -20,6 +21,26 @@ router = APIRouter()
 
 # Sites dont on sait re-scraper le prix d'une fiche (cf. background.fetch_current_price).
 REFRESHABLE = ("amazon.", "ebay.")
+# Historique de prix des favoris : on purge les points trop vieux puis on plafonne.
+HISTORY_MAX_DAYS = 180
+HISTORY_MAX_POINTS = 30
+
+
+def _prune_history(hist: list[dict[str, Any]], now: datetime) -> list[dict[str, Any]]:
+    """Retire les points plus vieux que HISTORY_MAX_DAYS (en gardant toujours le
+    dernier), puis plafonne à HISTORY_MAX_POINTS."""
+    cutoff = now - timedelta(days=HISTORY_MAX_DAYS)
+    kept: list[dict[str, Any]] = []
+    for p in hist:
+        try:
+            at = datetime.fromisoformat(str(p.get("at", "")))
+        except ValueError:
+            at = now  # date illisible : on garde par prudence
+        if at >= cutoff:
+            kept.append(p)
+    if not kept and hist:
+        kept = [hist[-1]]  # ne jamais vider complètement
+    return kept[-HISTORY_MAX_POINTS:]
 
 
 # --------------------------------------------------------------------------- #
@@ -308,7 +329,7 @@ def _refresh_one(session, fav: Favorite) -> dict[str, Any]:
     if not hist:
         hist.append({"price": old_price, "at": fav.added_at.isoformat()})
     hist.append({"price": float(new_price), "at": now.isoformat()})
-    fav.price_history = json.dumps(hist[-30:])  # plafonné
+    fav.price_history = json.dumps(_prune_history(hist, now))
     fav.previous_price = old_price
     fav.price = float(new_price)
     fav.price_checked_at = now

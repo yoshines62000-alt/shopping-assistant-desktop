@@ -52,6 +52,7 @@ export default function Home() {
   const [recentDeals, setRecentDeals] = useState(0);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [refreshingFavs, setRefreshingFavs] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   const refreshFavoritePrices = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -79,7 +80,8 @@ export default function Home() {
   useEffect(() => {
     apiFetch<AccountingSummary>('/accounting/summary')
       .then(setSummary)
-      .catch(() => setSummary(null));
+      .catch(() => setSummary(null))
+      .finally(() => setLoaded(true));
     apiFetch<{ sales?: Sale[] }>('/sales')
       .then((d) => setSales((d.sales ?? []).slice(0, 5)))
       .catch(() => setSales([]));
@@ -166,8 +168,28 @@ export default function Home() {
         </div>
       </header>
 
+      {/* Squelettes pendant le chargement initial (évite le flash de zéros) */}
+      {!loaded && (
+        <div className="mt-6 space-y-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="skeleton h-24" />
+            ))}
+          </div>
+          <div className="grid gap-3 lg:grid-cols-5">
+            <div className="skeleton h-44 lg:col-span-3" />
+            <div className="skeleton h-44 lg:col-span-2" />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="skeleton h-24" />
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* À suivre — bandeau actionnable */}
-      {followUps.length > 0 && (
+      {loaded && followUps.length > 0 && (
         <section className="animate-fade-in mt-6">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             {followUps.map((f) => (
@@ -191,7 +213,7 @@ export default function Home() {
       )}
 
       {/* Nouvel utilisateur : on guide plutôt que d'afficher des zéros */}
-      {!hasActivity && (
+      {loaded && !hasActivity && (
         <OnboardingChecklist
           hasStock={!!summary && summary.itemsTotal > 0}
           hasSale={!!summary && summary.salesCount > 0}
@@ -288,6 +310,7 @@ export default function Home() {
       )}
 
       {/* Raccourcis « état » : favoris + stock + comptes (toujours utiles) */}
+      {loaded && (
       <section className="mt-6 grid gap-3 sm:grid-cols-3">
         <Link href="/shopping-list" className="card-pad card-hover">
           <div className="flex items-center gap-3">
@@ -352,6 +375,7 @@ export default function Home() {
           </div>
         </Link>
       </section>
+      )}
     </div>
   );
 }

@@ -46,6 +46,7 @@ export default function AccountingPage() {
   const [expenseAmount, setExpenseAmount] = useState('');
   const [expenseCategory, setExpenseCategory] = useState('emballage');
   const [salesPlatform, setSalesPlatform] = useState('all');
+  const [salesQuery, setSalesQuery] = useState('');
 
   const load = useCallback(async () => {
     try {
@@ -149,8 +150,9 @@ export default function AccountingPage() {
   };
 
   const salePlatforms = Array.from(new Set(sales.map((s) => s.platform).filter(Boolean)));
-  const filteredSales =
-    salesPlatform === 'all' ? sales : sales.filter((s) => s.platform === salesPlatform);
+  const filteredSales = sales
+    .filter((s) => salesPlatform === 'all' || s.platform === salesPlatform)
+    .filter((s) => !salesQuery.trim() || s.itemName.toLowerCase().includes(salesQuery.trim().toLowerCase()));
   const filteredTotal = filteredSales.reduce((sum, s) => sum + s.total, 0);
 
   return (
@@ -494,21 +496,30 @@ export default function AccountingPage() {
                     </span>
                   )}
                 </h2>
-                {salePlatforms.length > 1 && (
-                  <div className="flex items-center gap-2 text-xs">
-                    <select
-                      value={salesPlatform}
-                      onChange={(e) => setSalesPlatform(e.target.value)}
-                      className="input !py-1 !text-xs"
-                      aria-label="Filtrer par plateforme"
-                    >
-                      <option value="all">Toutes les plateformes</option>
-                      {salePlatforms.map((p) => (
-                        <option key={p} value={p}>
-                          {p}
-                        </option>
-                      ))}
-                    </select>
+                {sales.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    <input
+                      value={salesQuery}
+                      onChange={(e) => setSalesQuery(e.target.value)}
+                      placeholder="Rechercher une vente…"
+                      className="input !w-44 !py-1 !text-xs"
+                      aria-label="Rechercher dans les ventes"
+                    />
+                    {salePlatforms.length > 1 && (
+                      <select
+                        value={salesPlatform}
+                        onChange={(e) => setSalesPlatform(e.target.value)}
+                        className="input !w-auto !py-1 !text-xs"
+                        aria-label="Filtrer par plateforme"
+                      >
+                        <option value="all">Toutes les plateformes</option>
+                        {salePlatforms.map((p) => (
+                          <option key={p} value={p}>
+                            {p}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                     <span className="whitespace-nowrap text-slate-500">
                       {filteredSales.length} vente(s) ·{' '}
                       <span className="font-semibold text-accent">{euro(filteredTotal)}</span>
