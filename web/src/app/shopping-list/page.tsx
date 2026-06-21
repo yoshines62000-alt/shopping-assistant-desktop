@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import type { Favorite, FavoriteList } from '@shopping-assistant/types';
-import { Heart, Search, Plus, Pencil, Trash2, Tag, RefreshCw, Download } from 'lucide-react';
+import { Heart, Search, Plus, Pencil, Trash2, Tag, RefreshCw, Download, Target } from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
 import EmptyState from '@/components/ui/EmptyState';
 import LoadingBlock from '@/components/ui/LoadingBlock';
@@ -23,6 +23,7 @@ export default function FavoritesPage() {
   const [activeList, setActiveList] = useState<number | null>(null);
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState<'recent' | 'priceAsc' | 'priceDesc' | 'gap'>('recent');
+  const [onlyUnderTarget, setOnlyUnderTarget] = useState(false);
   const [refreshingAll, setRefreshingAll] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -120,7 +121,12 @@ export default function FavoritesPage() {
 
   const gapOf = (f: Favorite) =>
     f.targetPrice && f.targetPrice > 0 ? (f.price - f.targetPrice) / f.targetPrice : Infinity;
-  const shown = (activeList == null ? favorites : favorites.filter((f) => f.listIds.includes(activeList)))
+  const isUnderTarget = (f: Favorite) =>
+    f.targetPrice != null && f.targetPrice > 0 && f.price <= f.targetPrice;
+  const scoped = activeList == null ? favorites : favorites.filter((f) => f.listIds.includes(activeList));
+  const underCount = scoped.filter(isUnderTarget).length;
+  const shown = scoped
+    .filter((f) => !onlyUnderTarget || isUnderTarget(f))
     .filter((f) => !query.trim() || f.name.toLowerCase().includes(query.trim().toLowerCase()))
     .sort((a, b) => {
       if (sort === 'priceAsc') return a.price - b.price;
@@ -240,6 +246,15 @@ export default function FavoritesPage() {
                 <option value="priceDesc">Prix décroissant</option>
                 <option value="gap">Proche de ma cible</option>
               </select>
+              {underCount > 0 && (
+                <button
+                  onClick={() => setOnlyUnderTarget((v) => !v)}
+                  className={`badge ${onlyUnderTarget ? 'badge-success' : 'badge-muted'} cursor-pointer`}
+                  title="N'afficher que les favoris au prix cible ou en dessous"
+                >
+                  <Target className="h-3.5 w-3.5" /> Sous ma cible ({underCount})
+                </button>
+              )}
               <button
                 onClick={refreshAll}
                 disabled={refreshingAll}
@@ -258,11 +273,13 @@ export default function FavoritesPage() {
             {shown.length === 0 ? (
               <EmptyState
                 icon={<Tag className="h-6 w-6" />}
-                title={query.trim() ? 'Aucun résultat' : 'Liste vide'}
+                title={query.trim() || onlyUnderTarget ? 'Aucun résultat' : 'Liste vide'}
                 description={
-                  query.trim()
-                    ? 'Aucun favori ne correspond à ta recherche.'
-                    : 'Aucun favori dans cette liste. Range-en via le bouton « Listes » sur une carte.'
+                  onlyUnderTarget
+                    ? 'Aucun favori au prix cible ou en dessous pour le moment.'
+                    : query.trim()
+                      ? 'Aucun favori ne correspond à ta recherche.'
+                      : 'Aucun favori dans cette liste. Range-en via le bouton « Listes » sur une carte.'
                 }
               />
             ) : (
