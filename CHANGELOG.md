@@ -6,6 +6,18 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.11.0] — 2026-06-21
+### Favoris intelligents
+- **Prix cible dès la recherche** : « Favori + prix cible… » (clic droit sur un
+  résultat) enregistre le favori avec ton seuil (suggéré à −10 %).
+- **Alerte « passé sous la cible »** : quand le prix d'un favori repasse sous ta
+  cible, tu reçois une notification (une seule par franchissement).
+- **Rafraîchissement automatique** des prix des favoris Amazon/eBay en fond
+  (≈ 1×/jour), sans action de ta part.
+### Interface
+- En-têtes de page retravaillés (icône lumineuse, liseré néon, animation
+  d'entrée), dans la continuité de la refonte futuriste.
+
 ## [0.10.0] — 2026-06-21
 ### Refonte graphique complète — interface futuriste
 - **Nouvelle navigation** : sidebar verticale repliable (groupes Explorer / Gérer),
