@@ -66,7 +66,7 @@ limiter = Limiter(key_func=get_remote_address)
 app = FastAPI(
     title="Shopping Assistant Scraper",
     description="Multi-site e-commerce scraping and normalization service",
-    version="0.1.0",
+    version="0.9.0",
     lifespan=lifespan,
 )
 app.state.limiter = limiter
@@ -245,7 +245,10 @@ def root():
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    # On journalise le détail côté serveur mais on ne le divulgue pas au client
+    # (le message brut peut contenir des chemins, du SQL, etc.).
+    logger.exception("Unhandled error on %s %s", request.method, request.url.path)
     return JSONResponse(
         status_code=500,
-        content={"error": "internal_error", "message": str(exc) if str(exc) else "Unknown error"}
+        content={"error": "internal_error", "message": "Une erreur interne est survenue."},
     )

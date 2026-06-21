@@ -38,12 +38,14 @@ module.exports = {
         },
       },
       boxShadow: {
-        card: '0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 30px -16px rgba(0, 0, 0, 0.55)',
-        'card-hover': '0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px -18px rgba(0, 0, 0, 0.7)',
-        glow: '0 0 0 1px rgba(34, 211, 238, 0.25), 0 8px 30px -10px rgba(34, 211, 238, 0.25)',
+        card: '0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -18px rgba(0, 0, 0, 0.7)',
+        'card-hover': '0 1px 2px rgba(0, 0, 0, 0.45), 0 20px 44px -18px rgba(0, 0, 0, 0.8)',
+        glow: '0 0 0 1px rgba(34, 211, 238, 0.3), 0 0 24px -4px rgba(34, 211, 238, 0.45)',
       },
       fontFamily: {
         sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'var(--font-sans)', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-mono)', 'ui-monospace', 'SFMono-Regular', 'monospace'],
       },
       keyframes: {
         'fade-in': {
@@ -58,11 +60,16 @@ module.exports = {
           '0%': { opacity: '0', transform: 'translateY(10px) scale(0.98)' },
           '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
         },
+        'glow-pulse': {
+          '0%, 100%': { opacity: '0.55' },
+          '50%': { opacity: '1' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 0.4s ease-out both',
         rise: 'rise 0.45s cubic-bezier(0.22, 1, 0.36, 1) both',
         'toast-in': 'toast-in 0.25s cubic-bezier(0.22, 1, 0.36, 1) both',
+        'glow-pulse': 'glow-pulse 3s ease-in-out infinite',
       },
     },
   },

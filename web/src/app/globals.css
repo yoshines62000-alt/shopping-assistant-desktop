@@ -3,29 +3,32 @@
 @tailwind utilities;
 
 /* ============================================================
-   SHOPPING ASSISTANT — DESIGN SYSTEM
-   Thème sombre épuré : navy profond, accent cyan→violet réservé
-   à la marque, sémantique emerald/rose pour gains/pertes.
+   SHOPPING ASSISTANT — DESIGN SYSTEM « FUTURISTE »
+   Carbone quasi-noir (noir avec modération) + cyan néon + gris.
+   Surfaces en verre sur grille discrète, halos cyan, glow d'accent.
+   Sémantique emerald/rose conservée pour gains/pertes.
 ============================================================ */
 
 /* ---------- Thème (variables CSS) ----------
    Sombre par défaut. Le thème clair (F23) inverse l'échelle de gris et éclaircit
    fonds/bordures. data-theme="light" est posé sur <html> par ThemeToggle. */
 :root {
-  --c-ink: 10 14 23;
-  --c-surface: 16 23 41;
-  --c-surface-raised: 22 32 58;
+  --c-ink: 7 9 13;            /* fond : carbone quasi-noir, pas du #000 pur */
+  --c-surface: 14 18 25;      /* carte : gris ardoise sombre */
+  --c-surface-raised: 20 26 36;
   --c-line: rgba(148, 163, 184, 0.1);
-  --c-line-strong: rgba(148, 163, 184, 0.22);
+  --c-line-strong: rgba(148, 163, 184, 0.2);
   --c-accent: 34 211 238;
   --c-accent-deep: 8 145 178;
   --c-brand-violet: 139 92 246;
-  --halo-cyan: rgba(34, 211, 238, 0.1);
-  --halo-violet: rgba(139, 92, 246, 0.07);
+  --halo-cyan: rgba(34, 211, 238, 0.12);
+  --halo-violet: rgba(8, 145, 178, 0.08); /* 2e halo : cyan profond (pas de violet) */
+  --grid-line: rgba(148, 163, 184, 0.035); /* trame de fond façon blueprint */
   --overlay: 255 255 255; /* survols/skeletons : blanc en sombre */
   /* Ombres des cartes (thémées) : profondes sur fond sombre */
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 30px -16px rgba(0, 0, 0, 0.55);
-  --shadow-card-hover: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px -18px rgba(0, 0, 0, 0.7);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -18px rgba(0, 0, 0, 0.7);
+  --shadow-card-hover: 0 1px 2px rgba(0, 0, 0, 0.45), 0 20px 44px -18px rgba(0, 0, 0, 0.8);
+  --glow-accent: 0 0 0 1px rgb(var(--c-accent) / 0.3), 0 0 24px -4px rgb(var(--c-accent) / 0.45);
 
   --s-50: 248 250 252;
   --s-100: 241 245 249;
@@ -41,7 +44,7 @@
 }
 
 :root[data-theme='light'] {
-  --c-ink: 238 241 247;
+  --c-ink: 236 239 244;
   --c-surface: 255 255 255;
   --c-surface-raised: 246 248 252;
   --c-line: rgba(15, 23, 42, 0.1);
@@ -49,12 +52,14 @@
   --c-accent: 8 145 178;
   --c-accent-deep: 14 116 144;
   --c-brand-violet: 124 58 237;
-  --halo-cyan: rgba(34, 211, 238, 0.12);
-  --halo-violet: rgba(139, 92, 246, 0.08);
+  --halo-cyan: rgba(34, 211, 238, 0.14);
+  --halo-violet: rgba(8, 145, 178, 0.08);
+  --grid-line: rgba(15, 23, 42, 0.03);
   --overlay: 15 23 42; /* survols/skeletons : sombre en clair */
   /* Ombres douces et froides sur fond clair (le noir profond ferait sale) */
   --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px -14px rgba(15, 23, 42, 0.18);
   --shadow-card-hover: 0 1px 2px rgba(15, 23, 42, 0.08), 0 16px 36px -16px rgba(15, 23, 42, 0.26);
+  --glow-accent: 0 0 0 1px rgb(var(--c-accent) / 0.25), 0 0 20px -6px rgb(var(--c-accent) / 0.3);
 
   /* Échelle de gris inversée : le texte "clair" (100-300) devient sombre. */
   --s-50: 15 23 42;
@@ -73,12 +78,16 @@
 @layer base {
   body {
     @apply bg-ink font-sans text-slate-300 antialiased;
-    /* Deux halos d'ambiance (cyan en haut, violet diffus) : profondeur sans bruit */
+    /* Halos d'ambiance cyan + trame « blueprint » fine pour la profondeur futuriste */
     background-image:
       radial-gradient(58rem 22rem at 50% -10rem, var(--halo-cyan), transparent 70%),
-      radial-gradient(46rem 30rem at 110% 0%, var(--halo-violet), transparent 65%);
+      radial-gradient(46rem 30rem at 110% 0%, var(--halo-violet), transparent 65%),
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 100% 100%, 100% 100%, 46px 46px, 46px 46px;
+    background-position: 0 0, 0 0, -1px -1px, -1px -1px;
     background-attachment: fixed;
-    background-repeat: no-repeat;
+    background-repeat: no-repeat, no-repeat, repeat, repeat;
   }
 
   ::selection {
@@ -88,13 +97,13 @@
   h1,
   h2,
   h3 {
-    @apply text-slate-100;
+    @apply font-display text-slate-100;
   }
 
-  /* Barre de défilement discrète, accordée au thème */
+  /* Barre de défilement discrète, teintée cyan */
   * {
     scrollbar-width: thin;
-    scrollbar-color: rgba(148, 163, 184, 0.25) transparent;
+    scrollbar-color: rgb(var(--c-accent) / 0.3) transparent;
   }
   *::-webkit-scrollbar {
     width: 10px;
@@ -102,10 +111,10 @@
   }
   *::-webkit-scrollbar-thumb {
     @apply rounded-full;
-    background-color: rgba(148, 163, 184, 0.22);
+    background-color: rgb(var(--c-accent) / 0.25);
   }
   *::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(148, 163, 184, 0.4);
+    background-color: rgb(var(--c-accent) / 0.45);
   }
 }
 
@@ -115,8 +124,9 @@
     @apply mx-auto w-full max-w-5xl px-4;
   }
 
+  /* Carte « verre » : surface translucide posée sur la trame de fond */
   .card {
-    @apply rounded-xl border border-line bg-surface;
+    @apply rounded-xl border border-line bg-surface/80 backdrop-blur-md;
     box-shadow: var(--shadow-card);
   }
 
@@ -124,12 +134,15 @@
     @apply card p-5;
   }
 
-  /* Carte interactive : se soulève légèrement et s'éclaire au survol */
+  /* Carte interactive : se soulève, bord cyan + halo néon au survol */
   .card-hover {
-    @apply transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/30;
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/40;
   }
   .card-hover:hover {
-    box-shadow: var(--shadow-card-hover);
+    box-shadow:
+      var(--shadow-card-hover),
+      0 0 0 1px rgb(var(--c-accent) / 0.15),
+      0 0 28px -10px rgb(var(--c-accent) / 0.35);
   }
 
   /* Carte chiffre-clé avec liseré dégradé en haut */
@@ -139,12 +152,11 @@
   .kpi::before,
   .stat-card::before {
     content: '';
-    @apply absolute inset-x-0 top-0 h-px opacity-70;
+    @apply absolute inset-x-0 top-0 h-px opacity-80;
     background: linear-gradient(
       90deg,
       transparent,
-      theme('colors.accent.DEFAULT'),
-      theme('colors.brand.violet'),
+      rgb(var(--c-accent) / 0.9),
       transparent
     );
   }
@@ -164,7 +176,12 @@
 
   /* ---------- Marque ---------- */
   .brand-text {
-    background: linear-gradient(90deg, theme('colors.accent.DEFAULT'), theme('colors.brand.violet'));
+    @apply font-display;
+    background: linear-gradient(
+      90deg,
+      rgb(var(--c-accent)),
+      color-mix(in srgb, rgb(var(--c-accent)) 55%, white)
+    );
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -179,17 +196,21 @@
     @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-ink;
   }
 
-  /* Bouton primaire : dégradé suivant la couleur d'accent + halo au survol */
+  /* Bouton primaire : dégradé d'accent + halo néon cyan au survol */
   .btn-primary {
-    @apply btn text-white shadow-sm hover:shadow-glow;
+    @apply btn text-white shadow-sm;
     background-image: linear-gradient(135deg, rgb(var(--c-accent)), rgb(var(--c-accent-deep)));
   }
   .btn-primary:hover {
-    filter: brightness(1.06);
+    filter: brightness(1.08);
+    box-shadow: var(--glow-accent);
   }
 
   .btn-secondary {
-    @apply btn border border-line-strong bg-surface-raised text-slate-200 hover:border-accent/40 hover:text-slate-100;
+    @apply btn border border-line-strong bg-surface-raised/70 text-slate-200 backdrop-blur-sm hover:border-accent/50 hover:text-slate-100;
+  }
+  .btn-secondary:hover {
+    box-shadow: 0 0 18px -8px rgb(var(--c-accent) / 0.4);
   }
 
   .btn-ghost {
@@ -202,11 +223,12 @@
 
   /* ---------- Champs ---------- */
   .input {
-    @apply w-full rounded-lg border border-line-strong bg-ink/60 px-3 py-2 text-sm text-slate-200 placeholder:text-slate-500;
+    @apply w-full rounded-lg border border-line-strong bg-ink/60 px-3 py-2 text-sm text-slate-200 transition-shadow placeholder:text-slate-500;
   }
 
   .input:focus {
-    @apply border-accent/60 outline-none ring-2 ring-accent/20;
+    @apply border-accent/70 outline-none ring-2 ring-accent/20;
+    box-shadow: 0 0 16px -6px rgb(var(--c-accent) / 0.45);
   }
 
   /* ---------- Badges ---------- */
@@ -230,9 +252,14 @@
     @apply badge bg-slate-500/15 text-slate-400;
   }
 
-  /* ---------- Libellé de section ---------- */
+  /* ---------- Libellé de section (mono technique) ---------- */
   .section-title {
-    @apply text-xs font-semibold uppercase tracking-wide text-slate-500;
+    @apply font-mono text-[0.7rem] font-medium uppercase tracking-[0.18em] text-slate-500;
+  }
+
+  /* Valeur numérique : chiffres alignés, allure « données » */
+  .numeric {
+    @apply font-mono tabular-nums;
   }
 
   /* ---------- Navigation ---------- */
@@ -241,7 +268,8 @@
   }
 
   .nav-link-active {
-    @apply bg-accent/10 font-semibold text-accent ring-1 ring-inset ring-accent/20;
+    @apply bg-accent/10 font-semibold text-accent ring-1 ring-inset ring-accent/30;
+    box-shadow: 0 0 16px -8px rgb(var(--c-accent) / 0.5);
   }
 
   /* ---------- Barre de score ---------- */
@@ -250,8 +278,9 @@
   }
 
   .score-fill {
-    background: linear-gradient(90deg, theme('colors.accent.DEFAULT'), theme('colors.brand.violet'));
+    background: linear-gradient(90deg, rgb(var(--c-accent-deep)), rgb(var(--c-accent)));
     @apply h-full rounded-full transition-[width] duration-500;
+    box-shadow: 0 0 12px -2px rgb(var(--c-accent) / 0.6);
   }
 
   /* ---------- Squelettes de chargement ---------- */

@@ -128,7 +128,7 @@ export default function Home() {
               'radial-gradient(closest-side, rgb(var(--c-accent) / 0.18), transparent 70%)',
           }}
         />
-        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-brand-violet text-white shadow-glow ring-1 ring-white/10">
+        <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-deep text-white shadow-glow ring-1 ring-accent/30">
           <ShoppingBag className="h-8 w-8" />
         </div>
         <span className="inline-flex items-center gap-1.5 rounded-full border border-line-strong bg-surface/60 px-3 py-1 text-xs font-medium text-slate-400">
