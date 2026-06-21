@@ -6,6 +6,20 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.10.0] — 2026-06-21
+### Refonte graphique complète — interface futuriste
+- **Nouvelle navigation** : sidebar verticale repliable (groupes Explorer / Gérer),
+  état actif à halo cyan, badge favoris ; barre du haut avec **palette ⌘K**,
+  statut et thème ; nav horizontale de repli sur petits écrans.
+- **Identité visuelle** : fond carbone quasi-noir + **cyan néon** + gris, **orbes
+  lumineux** animés, trame « blueprint », **surfaces en verre**, glow au survol.
+- **Polices** Space Grotesk (titres) + JetBrains Mono (données).
+- **Accueil = vrai tableau de bord** : KPIs (bénéfice, stock, ROI, potentiel),
+  graphe bénéfice/mois, « à suivre » (dormants/alertes/affaires), dernières
+  ventes, état favoris/stock/compta. Fini les accès rapides redondants.
+### Sécurité / interne
+- Le service ne divulgue plus le détail des erreurs internes au client.
+
 ## [0.9.0] — 2026-06-21
 ### Favoris — gestion avancée
 - **Sélection multiple** : coche plusieurs favoris pour les **ranger en lot**
