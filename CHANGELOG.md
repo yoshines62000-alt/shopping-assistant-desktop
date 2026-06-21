@@ -6,6 +6,14 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.16.0] — 2026-06-21
+### Confort page par page
+- **Stock** : champ de **recherche** (nom / SKU) + **tri** (récents / valeur /
+  plus anciens / nom).
+- **Recherche** : **tri des résultats** (pertinence / prix / livraison / notes).
+- **Affaires · Estimation · Arbitrage** : la dernière recherche est **mémorisée**
+  d'une session à l'autre.
+
 ## [0.15.0] — 2026-06-21
 ### Favoris
 - **Fréquence du rafraîchissement automatique** des prix réglable
