@@ -85,6 +85,7 @@ export default function SearchResults({ products, isLoading }: Props) {
   const { watchList, addToWatchList, removeFromWatchList } = useAppStore();
   const { favoriteIds, loaded, load, toggle: toggleFavorite, addWithTarget } = useFavorites();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [sortKey, setSortKey] = useState<'score' | 'priceAsc' | 'priceDesc' | 'delivery' | 'rating'>('score');
   const router = useRouter();
 
   // « Favori + prix cible » : on suggère -10 % et on alerte si le prix repasse dessous.
@@ -147,15 +148,36 @@ export default function SearchResults({ products, isLoading }: Props) {
     );
   }
 
-  const sorted = [...products].sort((a, b) => (b.scores?.final ?? 0) - (a.scores?.final ?? 0));
+  const sorted = [...products].sort((a, b) => {
+    if (sortKey === 'priceAsc') return a.totalPrice - b.totalPrice;
+    if (sortKey === 'priceDesc') return b.totalPrice - a.totalPrice;
+    if (sortKey === 'delivery') return (a.deliveryDays ?? 9999) - (b.deliveryDays ?? 9999);
+    if (sortKey === 'rating') return (b.rating ?? 0) - (a.rating ?? 0);
+    return (b.scores?.final ?? 0) - (a.scores?.final ?? 0);
+  });
   const avgScore = sorted.length > 0 ? sorted.reduce((sum, p) => sum + (p.scores?.final ?? 0), 0) / sorted.length : 0;
 
   return (
     <div className="space-y-4" aria-label={`${sorted.length} résultats de recherche`}>
-      <p className="text-sm text-slate-400">
-        {sorted.length} résultat{sorted.length > 1 ? 's' : ''} &middot; score moyen{' '}
-        {avgScore.toFixed(0)}/100
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-slate-400">
+          {sorted.length} résultat{sorted.length > 1 ? 's' : ''} &middot; score moyen{' '}
+          {avgScore.toFixed(0)}/100
+        </p>
+        <select
+          value={sortKey}
+          onChange={(e) => setSortKey(e.target.value as typeof sortKey)}
+          className="input !w-auto !py-1 text-xs"
+          title="Trier les résultats"
+          aria-label="Trier les résultats"
+        >
+          <option value="score">Pertinence</option>
+          <option value="priceAsc">Prix croissant</option>
+          <option value="priceDesc">Prix décroissant</option>
+          <option value="delivery">Livraison rapide</option>
+          <option value="rating">Mieux notés</option>
+        </select>
+      </div>
 
       {sorted.map((p, idx) => {
         const badge = getBadge(p.scores?.final ?? 0);

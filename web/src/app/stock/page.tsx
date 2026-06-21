@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, FormEvent } from 'react';
 import Link from 'next/link';
 import type { StockItem, StockStatus, ResaleEstimate, AppSettings } from '@shopping-assistant/types';
-import { Package, Plus, Coins, Clock, Download, Upload } from 'lucide-react';
+import { Package, Plus, Coins, Clock, Download, Upload, Search } from 'lucide-react';
 import StockItemCard, { STATUS_LABELS, type SellForm } from '@/components/StockItemCard';
 import PageShell from '@/components/ui/PageShell';
 import StatCard from '@/components/ui/StatCard';
@@ -22,6 +22,8 @@ export default function StockPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | StockStatus>('all');
+  const [query, setQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'recent' | 'value' | 'name' | 'dormant'>('recent');
   const [showForm, setShowForm] = useState(false);
   const [settings, setSettings] = useState<AppSettings | null>(null);
 
@@ -203,7 +205,19 @@ export default function StockPage() {
     }
   };
 
-  const filtered = filter === 'all' ? items : items.filter((i) => i.status === filter);
+  const ageDays = (i: StockItem) => (Date.now() - new Date(i.purchaseDate).getTime()) / 86_400_000;
+  const filtered = (filter === 'all' ? items : items.filter((i) => i.status === filter))
+    .filter((i) => {
+      const q = query.trim().toLowerCase();
+      return !q || i.name.toLowerCase().includes(q) || (i.sku ?? '').toLowerCase().includes(q);
+    })
+    .slice()
+    .sort((a, b) => {
+      if (sortBy === 'value') return b.remaining * b.purchasePrice - a.remaining * a.purchasePrice;
+      if (sortBy === 'name') return a.name.localeCompare(b.name);
+      if (sortBy === 'dormant') return ageDays(b) - ageDays(a); // plus anciens d'abord
+      return b.id - a.id; // récents (id croissant ≈ ordre d'ajout)
+    });
   const totalRemaining = items.reduce((s, i) => s + i.remaining, 0);
   const stockValue = items.reduce((s, i) => s + i.remaining * i.purchasePrice, 0);
   const dormantItems = items.filter((i) => isDormant(i)); // pas (isDormant) : filter passerait l'index comme 2e arg (days)
@@ -343,6 +357,31 @@ export default function StockPage() {
             }}
           />
         </div>
+
+        {items.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative min-w-[200px] flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Rechercher un objet (nom, SKU)…"
+                className="input !pl-9"
+              />
+            </div>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className="input !w-auto"
+              title="Trier"
+            >
+              <option value="recent">Plus récents</option>
+              <option value="value">Valeur (achat)</option>
+              <option value="dormant">Plus anciens</option>
+              <option value="name">Nom (A→Z)</option>
+            </select>
+          </div>
+        )}
 
         {!loading && items.length > 0 && (
           <div className="animate-fade-in grid grid-cols-2 gap-3 lg:grid-cols-4">
