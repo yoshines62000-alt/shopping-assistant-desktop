@@ -6,6 +6,13 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.15.0] — 2026-06-21
+### Favoris
+- **Fréquence du rafraîchissement automatique** des prix réglable
+  (Réglages → Tâches automatiques) : désactivé / 12 h / 1×/jour / 2 j / hebdo.
+- **Rafraîchir les prix depuis l'accueil** : un bouton sur la carte « favoris »
+  du tableau de bord relance la vérification des prix Amazon/eBay.
+
 ## [0.14.0] — 2026-06-21
 ### Refonte page par page (fin)
 - **Arbitrage** : les opportunités apparaissent en cascade.
