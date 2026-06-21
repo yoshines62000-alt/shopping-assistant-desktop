@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { BarChart3, TrendingDown, RefreshCw, Bell } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import PageShell from '@/components/ui/PageShell';
+import EmptyState from '@/components/ui/EmptyState';
+import LoadingBlock from '@/components/ui/LoadingBlock';
 import { euro } from '@/lib/format';
 
 interface PriceDrop {
@@ -81,9 +83,13 @@ export default function DigestPage() {
       </div>
 
       {loading ? (
-        <p className="text-slate-400">Chargement...</p>
+        <LoadingBlock label="Chargement du digest..." />
       ) : drops.length === 0 ? (
-        <p className="text-slate-400">Aucune baisse récente.</p>
+        <EmptyState
+          icon={<TrendingDown className="h-6 w-6" />}
+          title="Aucune baisse récente"
+          description="Lance « Vérifier les prix » pour re-scanner tes produits surveillés."
+        />
       ) : (
         <div className="space-y-3">
           {drops.map((d, i) => (
@@ -92,7 +98,8 @@ export default function DigestPage() {
               href={d.url}
               target="_blank"
               rel="noreferrer"
-              className="card-pad block hover:bg-slate-800/50 transition-colors"
+              className="card-pad card-hover animate-rise block"
+              style={{ animationDelay: `${Math.min(i, 8) * 50}ms` }}
             >
               <div className="flex items-center justify-between">
                 <span className="font-medium text-slate-200">{d.product}</span>
@@ -100,9 +107,9 @@ export default function DigestPage() {
               </div>
               <div className="mt-2 flex items-center gap-2 text-sm">
                 <span className="text-slate-500 line-through">{euro(d.oldPrice)}</span>
-                <span className="text-green-400 font-semibold">{euro(d.newPrice)}</span>
-                <TrendingDown className="h-3 w-3 text-green-400" />
-                <span className="text-green-400">- {euro(d.diff)}</span>
+                <span className="numeric font-semibold text-emerald-400">{euro(d.newPrice)}</span>
+                <TrendingDown className="h-3 w-3 text-emerald-400" />
+                <span className="text-emerald-400">− {euro(d.diff)}</span>
               </div>
             </a>
           ))}

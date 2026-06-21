@@ -92,7 +92,7 @@ export default function ArbitragePage() {
             {result.sources_queried.join(', ') || '—'}
           </p>
           {result.pairs.map((p, i) => (
-            <ArbitrageCard key={i} pair={p} />
+            <ArbitrageCard key={i} pair={p} index={i} />
           ))}
         </div>
       )}
@@ -100,9 +100,12 @@ export default function ArbitragePage() {
   );
 }
 
-function ArbitrageCard({ pair }: { pair: ArbitragePair }) {
+function ArbitrageCard({ pair, index = 0 }: { pair: ArbitragePair; index?: number }) {
   return (
-    <article className="card-pad">
+    <article
+      className="card-pad card-hover animate-rise"
+      style={{ animationDelay: `${Math.min(index, 8) * 60}ms` }}
+    >
       <div className="mb-3 flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <ProductThumb src={pair.buy.imageUrl ?? pair.sell.imageUrl} alt={pair.name} size="sm" />
