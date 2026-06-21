@@ -6,6 +6,15 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.8.0] — 2026-06-21
+### Ajouté — Favoris, un vrai gestionnaire
+- **Listes** pour ranger tes favoris (un favori peut être dans plusieurs listes) :
+  créer / renommer / supprimer, filtre par liste, compteurs.
+- **Cartes riches** : grande photo, **prix cible** perso avec écart vs prix actuel,
+  note/avis + délai + vendeur, **note personnelle**, surveillance du prix.
+- Favoris **persistés en base** (inclus dans la sauvegarde, conservés entre
+  machines) ; tes favoris locaux existants sont **migrés automatiquement**.
+
 ## [0.7.2] — 2026-06-20
 ### Sécurité
 - La **sauvegarde** n'exporte plus en clair les identifiants (webhook Discord,
