@@ -5,6 +5,8 @@ Versions notables de l'application desktop. Format inspiré de
 À mettre à jour à chaque release (avant `npm version` + publication).
 
 ## [Non publié]
+
+## [0.8.1] — 2026-06-21
 ### Favoris — encore plus pratiques
 - **Recherche** dans les favoris + **tri** (récents / prix ↑ / prix ↓ /
   proche de ma cible).
@@ -12,6 +14,9 @@ Versions notables de l'application desktop. Format inspiré de
 - **Rafraîchir le prix** d'un favori Amazon/eBay (ou tous d'un coup) : le prix
   actuel est re-vérifié, l'évolution s'affiche et l'écart vs ta cible reste juste.
 - **Export CSV** de tes favoris (filtre/tri courant inclus).
+### Corrigé
+- Affichage des durées (« il y a 3 h ») fondé sur l'heure UTC réelle (plus de
+  décalage dû au fuseau).
 
 ## [0.8.0] — 2026-06-21
 ### Ajouté — Favoris, un vrai gestionnaire
