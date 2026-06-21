@@ -6,6 +6,13 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.14.0] — 2026-06-21
+### Refonte page par page (fin)
+- **Arbitrage** : les opportunités apparaissent en cascade.
+- **Digest** : états vides/chargement soignés, cartes de baisse animées.
+- **Réglages** : harmonisé avec la nouvelle interface.
+- La refonte futuriste couvre désormais **toutes les pages**.
+
 ## [0.13.0] — 2026-06-21
 ### Refonte page par page (suite)
 - **Affaires** et **favoris** : les cartes apparaissent en cascade.
