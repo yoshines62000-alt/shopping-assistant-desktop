@@ -453,10 +453,11 @@ export default function FavoritesPage() {
               />
             ) : (
               <div className={`grid gap-3 ${compact ? 'sm:grid-cols-2 xl:grid-cols-3' : 'lg:grid-cols-2'}`}>
-                {shown.map((f) => (
+                {shown.map((f, i) => (
                   <FavoriteCard
                     key={f.id}
                     fav={f}
+                    index={i}
                     lists={lists}
                     onChanged={onFavChanged}
                     onRemoved={onFavRemoved}

@@ -61,6 +61,7 @@ export default function FavoriteCard({
   compact = false,
   onDragStartFav,
   onDragEndFav,
+  index = 0,
 }: {
   fav: Favorite;
   lists: FavoriteList[];
@@ -71,6 +72,7 @@ export default function FavoriteCard({
   compact?: boolean;
   onDragStartFav?: (id: number) => void;
   onDragEndFav?: () => void;
+  index?: number;
 }) {
   const [notes, setNotes] = useState(fav.notes);
   const [target, setTarget] = useState(fav.targetPrice != null ? String(fav.targetPrice) : '');
@@ -153,7 +155,8 @@ export default function FavoriteCard({
 
   return (
     <article
-      className={`card-pad card-hover ${selected ? 'ring-2 ring-accent' : ''}`}
+      className={`card-pad card-hover animate-rise ${selected ? 'ring-2 ring-accent' : ''}`}
+      style={{ animationDelay: `${Math.min(index, 10) * 35}ms` }}
       aria-label={fav.name}
     >
       <div className="flex gap-3">

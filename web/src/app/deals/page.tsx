@@ -28,7 +28,7 @@ function verdict(pct: number | null): { label: string; cls: string } | null {
   return { label: 'Perte probable', cls: 'badge bg-rose-500/15 text-rose-300' };
 }
 
-function DealCard({ deal }: { deal: Deal }) {
+function DealCard({ deal, index = 0 }: { deal: Deal; index?: number }) {
   const r = deal.resale;
   const v = verdict(r?.marginPct ?? null);
   const router = useRouter();
@@ -62,7 +62,10 @@ function DealCard({ deal }: { deal: Deal }) {
   ];
   return (
     <ContextMenu items={menuItems}>
-    <article className="card-pad card-hover">
+    <article
+      className="card-pad card-hover animate-rise"
+      style={{ animationDelay: `${Math.min(index, 8) * 60}ms` }}
+    >
       <div className="flex items-start justify-between gap-4">
         <ProductThumb src={deal.imageUrl} alt={deal.name} />
         <div className="min-w-0 flex-1">
@@ -223,8 +226,8 @@ export default function DealsPage() {
             {result.deals.length} offre{result.deals.length > 1 ? 's' : ''} analysée
             {result.deals.length > 1 ? 's' : ''} · classées par marge nette de revente
           </p>
-          {result.deals.map((d) => (
-            <DealCard key={d.id} deal={d} />
+          {result.deals.map((d, i) => (
+            <DealCard key={d.id} deal={d} index={i} />
           ))}
           <p className="text-center text-xs text-slate-600">
             Marge = revente nette estimée (médiane des ventes eBay réussies, frais déduits) − prix

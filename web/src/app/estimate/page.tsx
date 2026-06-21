@@ -155,7 +155,7 @@ function EstimateContent() {
       )}
 
       {!loading && result && result.sampleCount > 0 && result.median != null && (
-        <div className="space-y-4">
+        <div className="animate-rise space-y-4">
           <div className="grid gap-3 sm:grid-cols-3">
             <StatCard
               label="Prix de vente médian"

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { PriceAlert } from '@shopping-assistant/types';
 import { Bell, BellOff, BellRing, Trash2, Settings } from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
+import StatCard from '@/components/ui/StatCard';
 import EmptyState from '@/components/ui/EmptyState';
 import SavedSearches from '@/components/SavedSearches';
 import { apiFetch } from '@/lib/api';
@@ -66,6 +67,14 @@ export default function AlertsPage() {
       }
     >
       <div className="space-y-4">
+        {alerts.length > 0 && (
+          <div className="animate-fade-in grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <StatCard label="Alertes actives" value={String(active.length)} tone="accent" />
+            <StatCard label="Déclenchées" value={String(triggered.length)} tone={triggered.length > 0 ? 'positive' : 'default'} />
+            <StatCard label="Total suivies" value={String(alerts.length)} />
+          </div>
+        )}
+
         <SavedSearches />
 
         <div className="card-pad">
