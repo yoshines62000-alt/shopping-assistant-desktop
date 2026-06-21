@@ -3,7 +3,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import type { Favorite, FavoriteList } from '@shopping-assistant/types';
-import { Heart, Search, Plus, Pencil, Trash2, Tag, RefreshCw, Download, Target, CheckSquare } from 'lucide-react';
+import {
+  Heart,
+  Search,
+  Plus,
+  Pencil,
+  Trash2,
+  Tag,
+  RefreshCw,
+  Download,
+  Target,
+  CheckSquare,
+  ChevronLeft,
+  ChevronRight,
+  LayoutList,
+  Rows3,
+} from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
 import EmptyState from '@/components/ui/EmptyState';
 import LoadingBlock from '@/components/ui/LoadingBlock';
@@ -26,6 +41,9 @@ export default function FavoritesPage() {
   const [onlyUnderTarget, setOnlyUnderTarget] = useState(false);
   const [refreshingAll, setRefreshingAll] = useState(false);
   const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [compact, setCompact] = useState(false);
+  const [dragOverList, setDragOverList] = useState<number | null>(null);
+  const [draggingFav, setDraggingFav] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,6 +66,16 @@ export default function FavoritesPage() {
   useEffect(() => {
     migrateLocalFavorites().then(load);
   }, [load]);
+
+  // Densité d'affichage mémorisée.
+  useEffect(() => {
+    setCompact(localStorage.getItem('fav-compact') === '1');
+  }, []);
+  const toggleCompact = () =>
+    setCompact((v) => {
+      localStorage.setItem('fav-compact', v ? '0' : '1');
+      return !v;
+    });
 
   const createList = async () => {
     const name = window.prompt('Nom de la nouvelle liste ?')?.trim();
@@ -75,6 +103,39 @@ export default function FavoritesPage() {
     if (activeList === l.id) setActiveList(null);
     await apiFetch(`/favorites/lists/${l.id}`, { method: 'DELETE' }).catch(() => null);
     load();
+  };
+
+  // Déplace une liste d'un cran (échange les sortOrder avec le voisin).
+  const moveList = async (l: FavoriteList, dir: -1 | 1) => {
+    const idx = lists.findIndex((x) => x.id === l.id);
+    const other = lists[idx + dir];
+    if (!other) return;
+    // Réordonne localement tout de suite (réactif), puis persiste les 2 sortOrder.
+    setLists((prev) => {
+      const next = [...prev];
+      [next[idx], next[idx + dir]] = [next[idx + dir], next[idx]];
+      return next;
+    });
+    await Promise.all([
+      apiFetch(`/favorites/lists/${l.id}`, { method: 'PATCH', json: { sortOrder: other.sortOrder } }).catch(() => null),
+      apiFetch(`/favorites/lists/${other.id}`, { method: 'PATCH', json: { sortOrder: l.sortOrder } }).catch(() => null),
+    ]);
+  };
+
+  // Glisser-déposer un favori sur l'onglet d'une liste -> l'y range.
+  const dropFavOnList = async (favId: number, listId: number) => {
+    const fav = favorites.find((f) => f.id === favId);
+    if (!fav || fav.listIds.includes(listId)) return;
+    setDragOverList(null);
+    const updated = await apiFetch<Favorite>(`/favorites/${favId}`, {
+      method: 'PATCH',
+      json: { listIds: [...fav.listIds, listId] },
+    }).catch(() => null);
+    if (updated) {
+      onFavChanged(updated);
+      const name = lists.find((l) => l.id === listId)?.name ?? 'la liste';
+      toast.success(`Rangé dans « ${name} »`);
+    }
   };
 
   const onFavChanged = (updated: Favorite) =>
@@ -223,7 +284,18 @@ export default function FavoritesPage() {
                 <button
                   key={l.id}
                   onClick={() => setActiveList(l.id)}
-                  className={`${activeList === l.id ? 'btn-primary' : 'btn-secondary'} inline-flex items-center gap-1.5 !px-3 !py-1 text-xs`}
+                  onDragOver={(e) => {
+                    if (draggingFav != null) {
+                      e.preventDefault();
+                      setDragOverList(l.id);
+                    }
+                  }}
+                  onDragLeave={() => setDragOverList((cur) => (cur === l.id ? null : cur))}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (draggingFav != null) dropFavOnList(draggingFav, l.id);
+                  }}
+                  className={`${activeList === l.id ? 'btn-primary' : 'btn-secondary'} inline-flex items-center gap-1.5 !px-3 !py-1 text-xs ${dragOverList === l.id ? 'ring-2 ring-accent' : ''}`}
                 >
                   <span
                     className="h-2 w-2 rounded-full"
@@ -237,6 +309,22 @@ export default function FavoritesPage() {
               </button>
               {activeListObj && (
                 <span className="ml-1 inline-flex items-center gap-1">
+                  <button
+                    onClick={() => moveList(activeListObj, -1)}
+                    disabled={lists.findIndex((x) => x.id === activeListObj.id) === 0}
+                    className="btn-ghost !p-1.5 disabled:opacity-30"
+                    title="Déplacer la liste à gauche"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={() => moveList(activeListObj, 1)}
+                    disabled={lists.findIndex((x) => x.id === activeListObj.id) === lists.length - 1}
+                    className="btn-ghost !p-1.5 disabled:opacity-30"
+                    title="Déplacer la liste à droite"
+                  >
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
                   <button
                     onClick={() => renameList(activeListObj)}
                     className="btn-ghost !p-1.5"
@@ -311,6 +399,13 @@ export default function FavoritesPage() {
                 <Download className="h-4 w-4" />
                 <span className="hidden sm:inline">CSV</span>
               </button>
+              <button
+                onClick={toggleCompact}
+                className="btn-ghost text-sm"
+                title={compact ? 'Vue détaillée' : 'Vue compacte'}
+              >
+                {compact ? <Rows3 className="h-4 w-4" /> : <LayoutList className="h-4 w-4" />}
+              </button>
             </div>
 
             {selected.size > 0 && (
@@ -354,7 +449,7 @@ export default function FavoritesPage() {
                 }
               />
             ) : (
-              <div className="grid gap-3 lg:grid-cols-2">
+              <div className={`grid gap-3 ${compact ? 'sm:grid-cols-2 xl:grid-cols-3' : 'lg:grid-cols-2'}`}>
                 {shown.map((f) => (
                   <FavoriteCard
                     key={f.id}
@@ -364,6 +459,12 @@ export default function FavoritesPage() {
                     onRemoved={onFavRemoved}
                     selected={selected.has(f.id)}
                     onToggleSelect={toggleSelect}
+                    compact={compact}
+                    onDragStartFav={lists.length > 0 ? setDraggingFav : undefined}
+                    onDragEndFav={() => {
+                      setDraggingFav(null);
+                      setDragOverList(null);
+                    }}
                   />
                 ))}
               </div>

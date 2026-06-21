@@ -19,6 +19,7 @@ import {
   ArrowUpRight,
   CheckSquare,
   Square,
+  GripVertical,
 } from 'lucide-react';
 import ProductThumb from '@/components/ui/ProductThumb';
 import { apiFetch } from '@/lib/api';
@@ -57,6 +58,9 @@ export default function FavoriteCard({
   onRemoved,
   selected = false,
   onToggleSelect,
+  compact = false,
+  onDragStartFav,
+  onDragEndFav,
 }: {
   fav: Favorite;
   lists: FavoriteList[];
@@ -64,6 +68,9 @@ export default function FavoriteCard({
   onRemoved: (id: number) => void;
   selected?: boolean;
   onToggleSelect?: (id: number) => void;
+  compact?: boolean;
+  onDragStartFav?: (id: number) => void;
+  onDragEndFav?: () => void;
 }) {
   const [notes, setNotes] = useState(fav.notes);
   const [target, setTarget] = useState(fav.targetPrice != null ? String(fav.targetPrice) : '');
@@ -150,21 +157,39 @@ export default function FavoriteCard({
       aria-label={fav.name}
     >
       <div className="flex gap-3">
-        {onToggleSelect && (
-          <button
-            onClick={() => onToggleSelect(fav.id)}
-            className="mt-0.5 shrink-0 self-start text-slate-400 hover:text-accent"
-            title={selected ? 'Désélectionner' : 'Sélectionner'}
-            aria-pressed={selected}
-          >
-            {selected ? (
-              <CheckSquare className="h-4 w-4 text-accent" />
-            ) : (
-              <Square className="h-4 w-4" />
-            )}
-          </button>
-        )}
-        <ProductThumb src={fav.imageUrl} alt={fav.name} size="lg" />
+        <div className="flex shrink-0 flex-col items-center gap-1">
+          {onToggleSelect && (
+            <button
+              onClick={() => onToggleSelect(fav.id)}
+              className="mt-0.5 text-slate-400 hover:text-accent"
+              title={selected ? 'Désélectionner' : 'Sélectionner'}
+              aria-pressed={selected}
+            >
+              {selected ? (
+                <CheckSquare className="h-4 w-4 text-accent" />
+              ) : (
+                <Square className="h-4 w-4" />
+              )}
+            </button>
+          )}
+          {onDragStartFav && (
+            <span
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', String(fav.id));
+                onDragStartFav(fav.id);
+              }}
+              onDragEnd={() => onDragEndFav?.()}
+              className="cursor-grab text-slate-600 hover:text-slate-300 active:cursor-grabbing"
+              title="Glisser vers une liste"
+              aria-label="Glisser ce favori vers une liste"
+            >
+              <GripVertical className="h-4 w-4" />
+            </span>
+          )}
+        </div>
+        <ProductThumb src={fav.imageUrl} alt={fav.name} size={compact ? 'md' : 'lg'} />
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <h3 className="font-semibold text-slate-100">{fav.name}</h3>
@@ -251,53 +276,59 @@ export default function FavoriteCard({
       </div>
 
       {/* Prix cible perso + écart */}
-      <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-line pt-3">
-        <label className="flex items-center gap-1.5 text-xs text-slate-400">
-          <Target className="h-3.5 w-3.5 text-accent" /> Prix cible
-          <input
-            type="number"
-            value={target}
-            onChange={(e) => setTarget(e.target.value)}
-            onBlur={() => patch({ targetPrice: target === '' ? null : Number(target) })}
-            placeholder="—"
-            className="input !w-24 !py-1 text-sm"
-            min="0"
-            step="0.01"
-          />
-        </label>
-        {gap != null && (
-          <span className={`badge ${gap <= 0 ? 'badge-success' : 'bg-amber-500/15 text-amber-300'}`}>
-            {gap <= 0 ? `${Math.abs(gap)}% sous ta cible` : `+${gap}% au-dessus`}
-          </span>
-        )}
-        {fav.priceHistory.length >= 2 && (
-          <span className="ml-auto flex items-center gap-1.5" title={`Historique : ${fav.priceHistory.map((p) => euro(p)).join(' → ')}`}>
-            <Sparkline prices={fav.priceHistory} />
-          </span>
-        )}
-      </div>
+      {(!compact || gap != null || fav.priceHistory.length >= 2) && (
+        <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-line pt-3">
+          {!compact && (
+            <label className="flex items-center gap-1.5 text-xs text-slate-400">
+              <Target className="h-3.5 w-3.5 text-accent" /> Prix cible
+              <input
+                type="number"
+                value={target}
+                onChange={(e) => setTarget(e.target.value)}
+                onBlur={() => patch({ targetPrice: target === '' ? null : Number(target) })}
+                placeholder="—"
+                className="input !w-24 !py-1 text-sm"
+                min="0"
+                step="0.01"
+              />
+            </label>
+          )}
+          {gap != null && (
+            <span className={`badge ${gap <= 0 ? 'badge-success' : 'bg-amber-500/15 text-amber-300'}`}>
+              {gap <= 0 ? `${Math.abs(gap)}% sous ta cible` : `+${gap}% au-dessus`}
+            </span>
+          )}
+          {fav.priceHistory.length >= 2 && (
+            <span className="ml-auto flex items-center gap-1.5" title={`Historique : ${fav.priceHistory.map((p) => euro(p)).join(' → ')}`}>
+              <Sparkline prices={fav.priceHistory} />
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Note personnelle */}
-      <input
-        value={notes}
-        onChange={(e) => setNotes(e.target.value)}
-        onBlur={() => notes !== fav.notes && patch({ notes })}
-        placeholder="Note perso (taille, état recherché, rappel…)"
-        className="input mt-2 text-sm"
-        maxLength={2000}
-      />
+      {!compact && (
+        <input
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          onBlur={() => notes !== fav.notes && patch({ notes })}
+          placeholder="Note perso (taille, état recherché, rappel…)"
+          className="input mt-2 text-sm"
+          maxLength={2000}
+        />
+      )}
 
       {/* Actions */}
       <div className="mt-3 flex flex-wrap items-center gap-1">
         <a href={fav.sourceUrl} target="_blank" rel="noreferrer" className="btn-ghost text-xs" title="Voir l'offre">
-          <ExternalLink className="h-3.5 w-3.5" /> Voir l&apos;offre
+          <ExternalLink className="h-3.5 w-3.5" /> {!compact && <>Voir l&apos;offre</>}
         </a>
         <Link
           href={`/estimate?q=${encodeURIComponent(fav.name.slice(0, 80))}&price=${fav.price}`}
           className="btn-ghost text-xs text-amber-300/90 hover:text-amber-200"
           title="Estimer la revente"
         >
-          <Coins className="h-3.5 w-3.5" /> Estimer
+          <Coins className="h-3.5 w-3.5" /> {!compact && <>Estimer</>}
         </Link>
         <Link
           href={`/compare?q=${encodeURIComponent(fav.name.slice(0, 80))}`}
@@ -319,7 +350,7 @@ export default function FavoriteCard({
             <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
           </button>
         )}
-        {checkedAgo && <span className="text-[11px] text-slate-600">Prix {checkedAgo}</span>}
+        {checkedAgo && !compact && <span className="text-[11px] text-slate-600">Prix {checkedAgo}</span>}
         <button onClick={remove} className="btn-ghost text-xs hover:!text-rose-300 ml-auto" title="Retirer des favoris">
           <Trash2 className="h-3.5 w-3.5" />
         </button>
