@@ -6,6 +6,13 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.17.0] — 2026-06-21
+### Confort page par page (suite)
+- **Accueil** : squelettes de chargement (plus de « flash » de zéros au démarrage).
+- **Comptes** : **recherche** dans l'historique des ventes.
+- **Favoris** : l'historique de prix se **purge** au-delà de 180 jours
+  (le dernier point est toujours conservé).
+
 ## [0.16.0] — 2026-06-21
 ### Confort page par page
 - **Stock** : champ de **recherche** (nom / SKU) + **tri** (récents / valeur /
