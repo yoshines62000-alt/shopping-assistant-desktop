@@ -5,6 +5,9 @@ Versions notables de l'application desktop. Format inspiré de
 À mettre à jour à chaque release (avant `npm version` + publication).
 
 ## [Non publié]
+### Favoris
+- **Filtre « sous ma cible »** : un bouton compte les favoris au prix cible ou en
+  dessous et permet de n'afficher qu'eux (idéal après un rafraîchissement des prix).
 
 ## [0.8.1] — 2026-06-21
 ### Favoris — encore plus pratiques
