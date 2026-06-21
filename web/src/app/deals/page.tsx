@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { Deal, DealsResponse } from '@shopping-assistant/types';
@@ -143,9 +143,27 @@ export default function DealsPage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<DealsResponse | null>(null);
 
+  // Mémorise la dernière requête / plateforme (confort entre sessions).
+  useEffect(() => {
+    try {
+      const q = localStorage.getItem('deals-query');
+      const p = localStorage.getItem('deals-platform');
+      if (q) setQuery(q);
+      if (p) setPlatform(p);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
+    try {
+      localStorage.setItem('deals-query', query.trim());
+      localStorage.setItem('deals-platform', platform);
+    } catch {
+      /* ignore */
+    }
     setLoading(true);
     setError(null);
     setResult(null);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { ArrowLeftRight, ExternalLink, Loader2, SearchX } from 'lucide-react';
 import type { ArbitrageResponse, ArbitragePair } from '@shopping-assistant/types';
 import PageShell from '@/components/ui/PageShell';
@@ -17,9 +17,23 @@ export default function ArbitragePage() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ArbitrageResponse | null>(null);
 
+  useEffect(() => {
+    try {
+      const q = localStorage.getItem('arbitrage-query');
+      if (q) setQuery(q);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   const run = async (e: FormEvent) => {
     e.preventDefault();
     if (!query.trim()) return;
+    try {
+      localStorage.setItem('arbitrage-query', query.trim());
+    } catch {
+      /* ignore */
+    }
     setLoading(true);
     setError(null);
     setResult(null);

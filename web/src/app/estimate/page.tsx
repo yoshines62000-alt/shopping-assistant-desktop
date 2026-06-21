@@ -62,11 +62,24 @@ function EstimateContent() {
     if (q && !autoRan.current) {
       autoRan.current = true;
       run(q, searchParams.get('price') ?? '', 'ebay');
+    } else if (!q && !autoRan.current) {
+      // Pas de deep-link : on restaure la dernière requête saisie.
+      try {
+        const saved = localStorage.getItem('estimate-query');
+        if (saved) setQuery(saved);
+      } catch {
+        /* ignore */
+      }
     }
   }, [searchParams, run]);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
+    try {
+      localStorage.setItem('estimate-query', query.trim());
+    } catch {
+      /* ignore */
+    }
     run(query, price, platform);
   };
 
