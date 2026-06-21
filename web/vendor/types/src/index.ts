@@ -156,6 +156,7 @@ export interface AppSettings {
   emailTo: string;
   alertCheckMinutes: number;
   reestimateDays: number;
+  favoritesRefreshHours: number;
   weeklyDigestEnabled: boolean;
 }
 

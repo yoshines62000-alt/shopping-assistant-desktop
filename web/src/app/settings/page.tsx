@@ -34,6 +34,7 @@ export default function SettingsPage() {
   const [emailTo, setEmailTo] = useState('');
   const [alertMinutes, setAlertMinutes] = useState('60');
   const [reestimateDays, setReestimateDays] = useState('7');
+  const [favRefreshHours, setFavRefreshHours] = useState('24');
   const [weeklyDigest, setWeeklyDigest] = useState(false);
   const [testing, setTesting] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -58,6 +59,7 @@ export default function SettingsPage() {
         setEmailTo(s.emailTo ?? '');
         setAlertMinutes(String(s.alertCheckMinutes));
         setReestimateDays(String(s.reestimateDays));
+        setFavRefreshHours(String(s.favoritesRefreshHours ?? 24));
         setWeeklyDigest(!!s.weeklyDigestEnabled);
       })
       .catch(() => setError('Impossible de charger les réglages.'));
@@ -85,6 +87,7 @@ export default function SettingsPage() {
           emailTo: emailTo.trim(),
           alertCheckMinutes: Number(alertMinutes) || 60,
           reestimateDays: Number(reestimateDays) || 7,
+          favoritesRefreshHours: Number(favRefreshHours),
           weeklyDigestEnabled: weeklyDigest,
         },
       });
@@ -351,6 +354,22 @@ export default function SettingsPage() {
                     min="1"
                     max="90"
                   />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-xs text-slate-400">
+                    Rafraîchissement des prix de favoris
+                  </span>
+                  <select
+                    value={favRefreshHours}
+                    onChange={(e) => setFavRefreshHours(e.target.value)}
+                    className="input"
+                  >
+                    <option value="0">Désactivé</option>
+                    <option value="12">Toutes les 12 h</option>
+                    <option value="24">Une fois par jour</option>
+                    <option value="48">Tous les 2 jours</option>
+                    <option value="168">Une fois par semaine</option>
+                  </select>
                 </label>
               </div>
               <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm text-slate-300">

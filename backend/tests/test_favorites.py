@@ -125,6 +125,24 @@ def test_alerte_sous_cible_logique():
     assert _target_alert(110, 100, True) == (False, False)
 
 
+def test_refresh_auto_desactive_si_zero():
+    """fréquence 0 -> le rafraîchissement auto en fond ne fait rien (pas de scrape)."""
+    from src.background import refresh_favorites_due
+
+    assert refresh_favorites_due(min_age_hours=0) == 0
+
+
+def test_reglage_frequence_favoris(client):
+    """Le réglage favoritesRefreshHours est accepté et relu."""
+    client.put("/api/v1/settings", json={"favoritesRefreshHours": 12})
+    assert client.get("/api/v1/settings").json()["favoritesRefreshHours"] == 12
+    # bornes : 0 (désactivé) accepté ; >168 rejeté (422)
+    client.put("/api/v1/settings", json={"favoritesRefreshHours": 0})
+    assert client.get("/api/v1/settings").json()["favoritesRefreshHours"] == 0
+    assert client.put("/api/v1/settings", json={"favoritesRefreshHours": 999}).status_code == 422
+    client.put("/api/v1/settings", json={"favoritesRefreshHours": 24})  # remet le défaut
+
+
 def test_import_migration(client):
     res = client.post(
         "/api/v1/favorites/import",

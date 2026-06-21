@@ -15,12 +15,14 @@ import {
   Target,
   Package,
   Wallet,
+  RefreshCw,
 } from 'lucide-react';
 import StatCard from '@/components/ui/StatCard';
 import Sparkline from '@/components/ui/Sparkline';
 import BarChart from '@/components/ui/BarChart';
 import OnboardingChecklist from '@/components/OnboardingChecklist';
 import { apiFetch } from '@/lib/api';
+import { toast } from '@/lib/toast';
 import { euro, dateFr } from '@/lib/format';
 
 const MONTHS = ['janv', 'févr', 'mars', 'avr', 'mai', 'juin', 'juil', 'août', 'sept', 'oct', 'nov', 'déc'];
@@ -49,6 +51,30 @@ export default function Home() {
   const [activeAlerts, setActiveAlerts] = useState(0);
   const [recentDeals, setRecentDeals] = useState(0);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
+  const [refreshingFavs, setRefreshingFavs] = useState(false);
+
+  const refreshFavoritePrices = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (refreshingFavs) return;
+    setRefreshingFavs(true);
+    try {
+      const res = await apiFetch<{ checked: number; changed: number }>('/favorites/refresh-prices', {
+        method: 'POST',
+      });
+      const d = await apiFetch<{ favorites?: Favorite[] }>('/favorites');
+      setFavorites(d.favorites ?? []);
+      toast.success(
+        res.checked === 0
+          ? 'Aucun favori Amazon/eBay à rafraîchir'
+          : `${res.checked} prix vérifié${res.checked > 1 ? 's' : ''} · ${res.changed} modifié${res.changed > 1 ? 's' : ''}`
+      );
+    } catch {
+      toast.error('Rafraîchissement impossible');
+    } finally {
+      setRefreshingFavs(false);
+    }
+  };
 
   useEffect(() => {
     apiFetch<AccountingSummary>('/accounting/summary')
@@ -272,6 +298,17 @@ export default function Home() {
               <p className="numeric text-2xl font-bold text-slate-100">{favorites.length}</p>
               <p className="text-xs text-slate-500">favori(s) enregistré(s)</p>
             </div>
+            {favorites.length > 0 && (
+              <button
+                onClick={refreshFavoritePrices}
+                disabled={refreshingFavs}
+                className="btn-ghost ml-auto !p-1.5 disabled:opacity-50"
+                title="Rafraîchir les prix des favoris (Amazon/eBay)"
+                aria-label="Rafraîchir les prix des favoris"
+              >
+                <RefreshCw className={`h-4 w-4 ${refreshingFavs ? 'animate-spin' : ''}`} />
+              </button>
+            )}
           </div>
           {favUnderTarget > 0 && (
             <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">

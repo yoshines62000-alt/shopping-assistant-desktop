@@ -304,11 +304,19 @@ def maybe_send_weekly_digest() -> bool:
     return True
 
 
-def refresh_favorites_due(max_items: int = 8, min_age_hours: int = 20) -> int:
+def refresh_favorites_due(max_items: int = 8, min_age_hours: int | None = None) -> int:
     """Rafraîchit en fond le prix des favoris Amazon/eBay dont le dernier contrôle
-    date de plus de `min_age_hours` (≈ 1×/jour). `_refresh_one` gère l'alerte
-    « passé sous la cible ». Plafonné par cycle (chaque fiche ≈ 20 s)."""
+    date de plus de `favoritesRefreshHours` (réglable ; 0 = désactivé). `_refresh_one`
+    gère l'alerte « passé sous la cible ». Plafonné par cycle (chaque fiche ≈ 20 s)."""
     from .routes.favorites import _can_refresh, _refresh_one
+
+    if min_age_hours is None:
+        try:
+            min_age_hours = int(get_app_settings().get("favoritesRefreshHours", 24))
+        except (TypeError, ValueError):
+            min_age_hours = 24
+    if min_age_hours <= 0:
+        return 0  # rafraîchissement automatique désactivé
 
     cutoff = _utcnow_naive() - timedelta(hours=min_age_hours)
     refreshed = 0

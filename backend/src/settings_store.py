@@ -36,6 +36,8 @@ DEFAULTS: dict[str, Any] = {
     "alertCheckMinutes": 60,
     # Âge (jours) au-delà duquel un objet du stock est ré-estimé automatiquement
     "reestimateDays": 7,
+    # Fréquence du rafraîchissement auto des prix de favoris (heures ; 0 = désactivé)
+    "favoritesRefreshHours": 24,
     # F17 : digest hebdomadaire envoyé aux canaux de notification (+ horodatage interne)
     "weeklyDigestEnabled": False,
     "weeklyDigestLast": "",
