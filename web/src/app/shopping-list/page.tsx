@@ -111,9 +111,12 @@ export default function FavoritesPage() {
     const other = lists[idx + dir];
     if (!other) return;
     // Réordonne localement tout de suite (réactif), puis persiste les 2 sortOrder.
+    // On échange aussi les valeurs sortOrder pour rester cohérent avec le backend
+    // (sinon un 2e déplacement réutiliserait des sortOrder périmés).
     setLists((prev) => {
       const next = [...prev];
-      [next[idx], next[idx + dir]] = [next[idx + dir], next[idx]];
+      next[idx] = { ...other, sortOrder: l.sortOrder };
+      next[idx + dir] = { ...l, sortOrder: other.sortOrder };
       return next;
     });
     await Promise.all([

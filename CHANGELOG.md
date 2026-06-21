@@ -5,9 +5,15 @@ Versions notables de l'application desktop. Format inspiré de
 À mettre à jour à chaque release (avant `npm version` + publication).
 
 ## [Non publié]
-### Favoris
+
+## [0.9.0] — 2026-06-21
+### Favoris — gestion avancée
 - **Sélection multiple** : coche plusieurs favoris pour les **ranger en lot**
   dans une liste ou les **retirer** d'un coup.
+- **Glisser-déposer** un favori sur l'onglet d'une liste pour l'y ranger.
+- **Réordonner les listes** (flèches sur la liste active).
+- **Vue compacte** : bascule de densité (mémorisée) pour parcourir beaucoup de
+  favoris d'un coup d'œil.
 - **Historique de prix** par favori : à chaque rafraîchissement, un mini-graphe
   (vert si le prix baisse, rouge s'il monte) montre la tendance.
 
