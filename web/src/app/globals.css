@@ -377,3 +377,17 @@
 @media (prefers-reduced-motion: reduce) {
   .orb { animation: none; }
 }
+
+/* ---------- Animations de graphes ---------- */
+@keyframes bar-grow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+@keyframes spark-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  [style*='bar-grow'],
+  [style*='spark-draw'] { animation: none !important; }
+}

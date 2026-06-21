@@ -157,7 +157,7 @@ export default function SearchResults({ products, isLoading }: Props) {
         {avgScore.toFixed(0)}/100
       </p>
 
-      {sorted.map((p) => {
+      {sorted.map((p, idx) => {
         const badge = getBadge(p.scores?.final ?? 0);
         const inList = favoriteIds.has(p.id);
         const isWatched = watchedIds.has(p.id);
@@ -217,7 +217,11 @@ export default function SearchResults({ products, isLoading }: Props) {
         ];
         return (
           <ContextMenu key={p.id} items={menuItems}>
-          <article className="card-pad card-hover" aria-label={p.name}>
+          <article
+            className="card-pad card-hover animate-rise"
+            style={{ animationDelay: `${Math.min(idx, 8) * 55}ms` }}
+            aria-label={p.name}
+          >
             <div className="flex items-start justify-between gap-4">
               <ProductThumb src={p.imageUrl} alt={p.name} />
               <div className="min-w-0 flex-1">

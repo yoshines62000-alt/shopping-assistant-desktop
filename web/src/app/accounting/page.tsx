@@ -177,6 +177,64 @@ export default function AccountingPage() {
 
         {summary && (
           <>
+            {/* Panneau héros : bénéfice net + tendance animée */}
+            <section className="animate-fade-in card-pad relative overflow-hidden">
+              <span
+                aria-hidden
+                className="absolute inset-x-0 top-0 h-px"
+                style={{ background: 'linear-gradient(90deg, transparent, rgb(var(--c-accent) / 0.8), transparent)' }}
+              />
+              <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_1.5fr] lg:items-center">
+                <div>
+                  <p className="section-title">Bénéfice net · total</p>
+                  <p
+                    className={`numeric mt-1 text-4xl font-bold tracking-tight ${summary.profitNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}
+                  >
+                    {summary.profitNet >= 0 ? '+' : ''}
+                    {euro(summary.profitNet)}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                    <span>
+                      <span className="block text-xs text-slate-500">Chiffre d&apos;affaires</span>
+                      <span className="numeric font-semibold text-slate-100">{euro(summary.revenueGross)}</span>
+                    </span>
+                    <span>
+                      <span className="block text-xs text-slate-500">ROI</span>
+                      <span className="numeric font-semibold text-accent">
+                        {summary.roiPct != null ? `${summary.roiPct} %` : '—'}
+                      </span>
+                    </span>
+                    <span>
+                      <span className="block text-xs text-slate-500">Rotation</span>
+                      <span className="numeric font-semibold text-slate-100">
+                        {summary.avgDaysToSell != null ? `${summary.avgDaysToSell} j` : '—'}
+                      </span>
+                    </span>
+                    <span>
+                      <span className="block text-xs text-slate-500">Ventes</span>
+                      <span className="numeric font-semibold text-slate-100">{summary.salesCount}</span>
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <p className="section-title mb-2">Bénéfice net par mois</p>
+                  {summary.monthly.length >= 2 ? (
+                    <BarChart
+                      values={[...summary.monthly].reverse().map((m) => m.profitNet)}
+                      labels={[...summary.monthly]
+                        .reverse()
+                        .map((m) => MONTH_NAMES[Number(m.month.split('-')[1]) - 1] ?? m.month)}
+                      height={150}
+                    />
+                  ) : (
+                    <p className="py-10 text-center text-sm text-slate-500">
+                      La tendance apparaîtra dès deux mois d&apos;activité.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </section>
+
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <StatCard label="Investi (total achats)" value={euro(summary.investedTotal)} />
               <StatCard
@@ -310,19 +368,6 @@ export default function AccountingPage() {
                     </tbody>
                   </table>
                 </div>
-              </div>
-            )}
-
-            {summary.monthly.length >= 2 && (
-              <div className="card-pad">
-                <h2 className="section-title mb-3">Bénéfice net par mois</h2>
-                <BarChart
-                  values={[...summary.monthly].reverse().map((m) => m.profitNet)}
-                  labels={[...summary.monthly]
-                    .reverse()
-                    .map((m) => MONTH_NAMES[Number(m.month.split('-')[1]) - 1] ?? m.month)}
-                  height={140}
-                />
               </div>
             )}
 

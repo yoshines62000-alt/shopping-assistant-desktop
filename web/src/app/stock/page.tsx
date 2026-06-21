@@ -6,6 +6,7 @@ import type { StockItem, StockStatus, ResaleEstimate, AppSettings } from '@shopp
 import { Package, Plus, Coins, Clock, Download, Upload } from 'lucide-react';
 import StockItemCard, { STATUS_LABELS, type SellForm } from '@/components/StockItemCard';
 import PageShell from '@/components/ui/PageShell';
+import StatCard from '@/components/ui/StatCard';
 import ErrorBanner from '@/components/ui/ErrorBanner';
 import EmptyState from '@/components/ui/EmptyState';
 import LoadingBlock from '@/components/ui/LoadingBlock';
@@ -342,6 +343,24 @@ export default function StockPage() {
             }}
           />
         </div>
+
+        {!loading && items.length > 0 && (
+          <div className="animate-fade-in grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <StatCard label="Exemplaires" value={String(totalRemaining)} />
+            <StatCard label="Valeur d'achat" value={euro(stockValue)} />
+            <StatCard
+              label="Potentiel net"
+              value={potentialNet > 0 ? `~${euro(potentialNet)}` : '—'}
+              tone="accent"
+            />
+            <StatCard
+              label="Dormants"
+              value={String(dormantItems.length)}
+              sub={dormantValue > 0 ? `${euro(dormantValue)} immobilisé(s)` : 'aucun'}
+              tone={dormantItems.length > 0 ? 'negative' : 'default'}
+            />
+          </div>
+        )}
 
         {!loading && dormantItems.length > 0 && (
           <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">

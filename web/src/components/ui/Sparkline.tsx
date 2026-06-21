@@ -4,7 +4,7 @@ interface SparklineProps {
   height?: number;
 }
 
-/** Courbe SVG minimaliste (historique de prix) — aucune dépendance. */
+/** Courbe SVG minimaliste (historique / tendance) — glow + tracé animé, suit l'accent. */
 export default function Sparkline({ values, width = 560, height = 120 }: SparklineProps) {
   if (values.length < 2) return null;
 
@@ -21,15 +21,22 @@ export default function Sparkline({ values, width = 560, height = 120 }: Sparkli
   return (
     <svg
       viewBox={`0 0 ${width} ${height}`}
-      className="w-full"
+      className="w-full text-accent"
       role="img"
-      aria-label={`Évolution du prix, de ${min.toFixed(2)} à ${max.toFixed(2)} euros`}
+      aria-label={`Évolution, de ${min.toFixed(2)} à ${max.toFixed(2)} euros`}
     >
       <defs>
         <linearGradient id="spark-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#22d3ee" stopOpacity="0" />
+          <stop offset="0%" stopColor="currentColor" stopOpacity="0.28" />
+          <stop offset="100%" stopColor="currentColor" stopOpacity="0" />
         </linearGradient>
+        <filter id="spark-glow" x="-20%" y="-50%" width="140%" height="200%">
+          <feGaussianBlur stdDeviation="2.2" result="b" />
+          <feMerge>
+            <feMergeNode in="b" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
       </defs>
       <polygon
         points={`${pad},${height - pad} ${points} ${width - pad},${height - pad}`}
@@ -38,12 +45,15 @@ export default function Sparkline({ values, width = 560, height = 120 }: Sparkli
       <polyline
         points={points}
         fill="none"
-        stroke="#22d3ee"
+        stroke="currentColor"
         strokeWidth="2"
         strokeLinejoin="round"
         strokeLinecap="round"
+        filter="url(#spark-glow)"
+        pathLength={1}
+        style={{ strokeDasharray: 1, animation: 'spark-draw 1.1s ease-out both' }}
       />
-      <circle cx={x(values.length - 1)} cy={y(last)} r="3.5" fill="#22d3ee" />
+      <circle cx={x(values.length - 1)} cy={y(last)} r="3.5" fill="currentColor" filter="url(#spark-glow)" />
     </svg>
   );
 }
