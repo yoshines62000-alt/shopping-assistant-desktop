@@ -8,6 +8,8 @@ Versions notables de l'application desktop. Format inspiré de
 ### Favoris
 - **Sélection multiple** : coche plusieurs favoris pour les **ranger en lot**
   dans une liste ou les **retirer** d'un coup.
+- **Historique de prix** par favori : à chaque rafraîchissement, un mini-graphe
+  (vert si le prix baisse, rouge s'il monte) montre la tendance.
 
 ## [0.8.2] — 2026-06-21
 ### Favoris
