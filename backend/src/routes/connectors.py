@@ -11,6 +11,8 @@ _NEUTRAL = {
     "secondsSinceSuccess": None,
     "secondsSinceAttempt": None,
     "circuitOpen": False,
+    "parserSuspect": False,
+    "emptyFullPage": 0,
 }
 
 @router.get("/")
