@@ -26,7 +26,13 @@ def parse_search_page(html: str, max_results: int) -> list[ProductRaw]:
     soup = BeautifulSoup(html, "html.parser")
     results: list[ProductRaw] = []
 
-    for item in soup.select('div[data-component-type="s-search-result"]'):
+    # Conteneurs de résultats : sélecteur principal puis repli structurel
+    # (si Amazon renomme l'attribut data-component-type, on rattrape via data-asin).
+    items = soup.select('div[data-component-type="s-search-result"]')
+    if not items:
+        items = soup.select("div.s-result-item[data-asin]")
+
+    for item in items:
         asin = (item.get("data-asin") or "").strip()
         if not ASIN_RE.match(asin):
             continue
@@ -66,7 +72,11 @@ def parse_search_page(html: str, max_results: int) -> list[ProductRaw]:
         delivery_el = item.select_one('[data-cy="delivery-recipe"]')
         delivery_raw = delivery_el.get_text(" ", strip=True) if delivery_el else ""
 
-        img_el = item.select_one("img.s-image")
+        img_el = (
+            item.select_one("img.s-image")
+            or item.select_one("[data-component-type='s-product-image'] img")
+            or item.select_one("img[src*='/images/']")
+        )
         image_url = img_el.get("src", "") if img_el else ""
 
         results.append(

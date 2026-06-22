@@ -37,6 +37,24 @@ def test_amazon_fixture_reelle():
     assert any(p.extra.get("rating_raw") for p in results)
 
 
+def test_amazon_repli_structurel_si_conteneur_renomme():
+    """Durcissement : si Amazon abandonne data-component-type='s-search-result',
+    on rattrape les résultats via le repli structurel div.s-result-item[data-asin]."""
+    html = """
+    <div class="s-result-item" data-asin="B0ABCDEFGH">
+      <h2><a><span>Casque Bluetooth Test</span></a></h2>
+      <span class="a-price"><span class="a-offscreen">49,99 €</span></span>
+      <span class="a-icon-alt">4,5 sur 5 étoiles</span>
+      <img class="s-image" src="https://m.media-amazon.com/images/x.jpg"/>
+    </div>
+    """
+    results = parse_amazon(html, 10)
+    assert len(results) == 1
+    assert results[0].title == "Casque Bluetooth Test"
+    assert "/dp/B0ABCDEFGH" in results[0].url
+    assert "49" in results[0].price_raw
+
+
 def test_ebay_fixture_reelle():
     results = parse_ebay(_load("ebay_search.html"), 30)
     assert len(results) >= 10, "selecteurs eBay casses ? (page reelle -> trop peu d'annonces)"
