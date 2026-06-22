@@ -6,6 +6,15 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.19.0] — 2026-06-22
+### Ajouté
+- **Alertes** : modifie le **seuil d'une alerte en ligne** (crayon → valeur →
+  Enregistrer), sans la recréer.
+- **Favoris** : messages de confirmation/erreur lors de la création, du renommage
+  ou de la suppression d'une liste (plus d'échec silencieux).
+- **Accessibilité** : les notifications sont désormais annoncées aux lecteurs
+  d'écran.
+
 ## [0.18.0] — 2026-06-22
 ### Corrigé — important
 - **Fenêtre qui se figeait / boutons réduire-fermer peu réactifs** : la refonte
