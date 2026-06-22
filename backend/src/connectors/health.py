@@ -18,6 +18,11 @@ import time
 
 FAIL_THRESHOLD = 3       # echecs consecutifs avant ouverture du circuit
 COOLDOWN_SECONDS = 600   # pause (10 min) quand le circuit est ouvert
+# Pages recues correctement (ni blocage ni erreur) mais 0 resultat extrait,
+# consecutives, avant de suspecter un parser casse (le site a change sa mise en
+# page). Plus haut que FAIL_THRESHOLD pour eviter les faux positifs (recherches
+# legitimement vides).
+PARSER_SUSPECT_THRESHOLD = 4
 
 _lock = threading.Lock()
 _stats: dict[str, dict] = {}
@@ -33,6 +38,9 @@ def _entry(site_key: str) -> dict:
             "consecutive_failures": 0,
             "last_issue": None,
             "notified": False,  # une seule notif par episode de panne (#4)
+            "empty_full_page": 0,  # pages OK mais 0 resultat extrait, consecutives
+            "parser_suspect": False,  # parser probablement casse (selecteurs changes)
+            "parser_notified": False,  # une seule notif par episode de parser casse
         },
     )
 
@@ -53,6 +61,14 @@ def _notify_async(kind: str, site_key: str, issue: str | None, count: int) -> No
                 f"Le site a peut-être changé ou bloque (anti-bot).",
                 subject=f"Connecteur dégradé : {site_key}",
             )
+        elif kind == "parser":
+            notify_all(
+                f"🔧 Connecteur {site_key} : page reçue mais plus aucun résultat "
+                f"extrait sur {count} recherches. Le site a probablement changé sa "
+                f"mise en page — le parser (sélecteurs) est sans doute à mettre à jour. "
+                f"Les prix/estimations de cette source ne sont plus fiables en attendant.",
+                subject=f"Parser à vérifier : {site_key}",
+            )
         else:
             notify_all(
                 f"✅ Connecteur {site_key} rétabli ({count} résultats).",
@@ -62,12 +78,14 @@ def _notify_async(kind: str, site_key: str, issue: str | None, count: int) -> No
     threading.Thread(target=_send, daemon=True).start()
 
 
-def record(site_key: str, count: int, issue: str | None = None) -> None:
+def record(site_key: str, count: int, issue: str | None = None, parser_suspect: bool = False) -> None:
     """Enregistre le resultat d'une tentative.
 
-    `issue` non vide = echec (blocage anti-bot, erreur reseau...). `count > 0`
-    sans issue = succes (remet les echecs a zero). Notifie au passage si le
-    connecteur vient de tomber (circuit ouvert) ou de se retablir.
+    `issue` non vide = echec dur (blocage anti-bot, erreur reseau...). `count > 0`
+    sans issue = succes (remet tout a zero). `parser_suspect=True` (page recue
+    correctement mais 0 resultat extrait, sans blocage) = panne SILENCIEUSE
+    probable du parser : on la suit a part (pas de circuit breaker, le site ne
+    bloque pas) et on notifie au seuil. Notifie aussi tombee/retablissement.
     """
     transition: tuple[str, str, str | None, int] | None = None
     with _lock:
@@ -77,6 +95,7 @@ def record(site_key: str, count: int, issue: str | None = None) -> None:
         if issue:
             e["last_issue"] = issue
             e["consecutive_failures"] += 1
+            e["empty_full_page"] = 0  # un blocage n'est pas un parser casse
             if e["consecutive_failures"] == FAIL_THRESHOLD and not e["notified"]:
                 e["notified"] = True
                 transition = ("down", site_key, issue, e["consecutive_failures"])
@@ -85,8 +104,18 @@ def record(site_key: str, count: int, issue: str | None = None) -> None:
             e["last_success"] = time.time()
             e["consecutive_failures"] = 0
             e["notified"] = False
+            e["empty_full_page"] = 0
+            e["parser_suspect"] = False
+            e["parser_notified"] = False
             if was_down:
                 transition = ("up", site_key, None, count)
+        elif parser_suspect:
+            e["empty_full_page"] += 1
+            if e["empty_full_page"] >= PARSER_SUSPECT_THRESHOLD:
+                e["parser_suspect"] = True
+                if not e["parser_notified"]:
+                    e["parser_notified"] = True
+                    transition = ("parser", site_key, None, e["empty_full_page"])
     if transition:
         _notify_async(*transition)
 
@@ -116,6 +145,8 @@ def snapshot() -> dict[str, dict]:
                     e["consecutive_failures"] >= FAIL_THRESHOLD
                     and (now - e["last_attempt"]) < COOLDOWN_SECONDS
                 ),
+                "parserSuspect": e["parser_suspect"],
+                "emptyFullPage": e["empty_full_page"],
             }
         return out
 

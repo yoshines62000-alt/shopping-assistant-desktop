@@ -110,6 +110,7 @@ class AmazonConnector(BaseConnector):
 
         results = parse_search_page(html, max_results)
         issue = None
+        parser_suspect = False
         if not results:
             issue = detect_block(html)
             if issue:
@@ -119,6 +120,7 @@ class AmazonConnector(BaseConnector):
                     "Amazon: page reçue (%d Ko) mais 0 produit extrait — sélecteurs cassés ?",
                     len(html) // 1024,
                 )
-        health.record(self.site_key, len(results), issue)
+                parser_suspect = True
+        health.record(self.site_key, len(results), issue, parser_suspect=parser_suspect)
         logger.info("Amazon: %d real products for '%s'", len(results), query)
         return results

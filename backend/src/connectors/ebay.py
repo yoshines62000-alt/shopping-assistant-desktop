@@ -132,6 +132,7 @@ class EbayConnector(BaseConnector):
 
         results = parse_search_page(html, max_results)
         issue = None
+        parser_suspect = False
         if not results:
             issue = detect_block(html)
             if issue:
@@ -141,6 +142,7 @@ class EbayConnector(BaseConnector):
                     "eBay: page reçue (%d Ko) mais 0 annonce extraite — sélecteurs cassés ?",
                     len(html) // 1024,
                 )
-        health.record(self.site_key, len(results), issue)
+                parser_suspect = True
+        health.record(self.site_key, len(results), issue, parser_suspect=parser_suspect)
         logger.info("eBay: %d real listings for '%s'", len(results), query)
         return results

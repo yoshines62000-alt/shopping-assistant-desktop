@@ -59,6 +59,29 @@ def test_snapshot_structure():
     assert s["circuitOpen"] is False
 
 
+def test_parser_suspect_apres_pages_vides_repetees():
+    """Pages reçues mais 0 résultat (sans blocage) à répétition -> parser suspect,
+    sans ouvrir le circuit (le site ne bloque pas)."""
+    for _ in range(health.PARSER_SUSPECT_THRESHOLD):
+        health.record("ebay", 0, parser_suspect=True)
+    s = health.snapshot()["ebay"]
+    assert s["parserSuspect"] is True
+    assert s["circuitOpen"] is False  # pas un blocage -> pas de circuit breaker
+    assert health.should_skip("ebay") is False
+    # Un succès efface le soupçon.
+    health.record("ebay", 7)
+    assert health.snapshot()["ebay"]["parserSuspect"] is False
+
+
+def test_parser_suspect_notifie_une_seule_fois(monkeypatch):
+    calls = []
+    monkeypatch.setattr(health, "_notify_async", lambda *a: calls.append(a))
+    for _ in range(health.PARSER_SUSPECT_THRESHOLD + 2):
+        health.record("amazon", 0, parser_suspect=True)
+    parser_calls = [c for c in calls if c[0] == "parser"]
+    assert len(parser_calls) == 1 and parser_calls[0][1] == "amazon"
+
+
 def test_notifie_une_fois_a_l_ouverture_puis_au_retablissement(monkeypatch):
     """Une seule notif 'down' à l'ouverture du circuit, une 'up' au rétablissement."""
     calls = []

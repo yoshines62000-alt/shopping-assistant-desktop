@@ -11,10 +11,13 @@ interface ConnHealth {
   secondsSinceSuccess: number | null;
   secondsSinceAttempt: number | null;
   circuitOpen: boolean;
+  parserSuspect?: boolean;
+  emptyFullPage?: number;
 }
 
 function statusOf(h: ConnHealth): { label: string; cls: string } {
   if (h.circuitOpen) return { label: 'Circuit ouvert', cls: 'text-rose-400' };
+  if (h.parserSuspect) return { label: 'Parser à vérifier', cls: 'text-orange-400' };
   if (h.secondsSinceAttempt == null) return { label: 'Jamais sollicité', cls: 'text-slate-500' };
   if (h.consecutiveFailures > 0 || h.lastIssue) return { label: 'Anomalie', cls: 'text-amber-400' };
   return { label: 'OK', cls: 'text-emerald-400' };
@@ -77,6 +80,13 @@ export default function ScrapingHealth() {
                   succès il y a {ago(h.secondsSinceSuccess)}
                   {h.lastIssue && <span className="ml-1.5 text-amber-400/80">· {h.lastIssue}</span>}
                 </div>
+                {h.parserSuspect && (
+                  <p className="w-full text-xs text-orange-300/90">
+                    🔧 Page reçue mais 0 résultat extrait à répétition — le site a sans doute changé sa
+                    mise en page. Les prix de cette source ne sont plus fiables tant que le parser n&apos;est
+                    pas mis à jour.
+                  </p>
+                )}
               </div>
             );
           })}
