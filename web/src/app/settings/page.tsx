@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import type { AppSettings } from '@shopping-assistant/types';
-import { Settings, Save, Download, Check, Upload, Send, Bell } from 'lucide-react';
+import { Settings, Save, Download, Check, Upload, Send, Bell, RotateCcw } from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
+import SecretInput from '@/components/ui/SecretInput';
 import ErrorBanner from '@/components/ui/ErrorBanner';
 import LoadingBlock from '@/components/ui/LoadingBlock';
 import { apiFetch } from '@/lib/api';
@@ -39,31 +40,43 @@ export default function SettingsPage() {
   const [testing, setTesting] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
+  // Remplit le formulaire depuis un objet réglages (réutilisé pour « annuler »).
+  const hydrate = (s: AppSettings) => {
+    setFees(
+      Object.fromEntries(
+        Object.entries(s.platformFees).map(([k, v]) => [k, String(Math.round(v * 1000) / 10)])
+      )
+    );
+    setWebhook(s.discordWebhookUrl);
+    setTgToken(s.telegramBotToken ?? '');
+    setTgChat(s.telegramChatId ?? '');
+    setSmtpHost(s.smtpHost ?? '');
+    setSmtpPort(String(s.smtpPort ?? 587));
+    setSmtpUser(s.smtpUser ?? '');
+    setSmtpPassword(s.smtpPassword ?? '');
+    setEmailFrom(s.emailFrom ?? '');
+    setEmailTo(s.emailTo ?? '');
+    setAlertMinutes(String(s.alertCheckMinutes));
+    setReestimateDays(String(s.reestimateDays));
+    setFavRefreshHours(String(s.favoritesRefreshHours ?? 24));
+    setWeeklyDigest(!!s.weeklyDigestEnabled);
+  };
+
   useEffect(() => {
     apiFetch<AppSettings>('/settings')
       .then((s) => {
         setSettings(s);
-        setFees(
-          Object.fromEntries(
-            Object.entries(s.platformFees).map(([k, v]) => [k, String(Math.round(v * 1000) / 10)])
-          )
-        );
-        setWebhook(s.discordWebhookUrl);
-        setTgToken(s.telegramBotToken ?? '');
-        setTgChat(s.telegramChatId ?? '');
-        setSmtpHost(s.smtpHost ?? '');
-        setSmtpPort(String(s.smtpPort ?? 587));
-        setSmtpUser(s.smtpUser ?? '');
-        setSmtpPassword(s.smtpPassword ?? '');
-        setEmailFrom(s.emailFrom ?? '');
-        setEmailTo(s.emailTo ?? '');
-        setAlertMinutes(String(s.alertCheckMinutes));
-        setReestimateDays(String(s.reestimateDays));
-        setFavRefreshHours(String(s.favoritesRefreshHours ?? 24));
-        setWeeklyDigest(!!s.weeklyDigestEnabled);
+        hydrate(s);
       })
       .catch(() => setError('Impossible de charger les réglages.'));
   }, []);
+
+  const discardChanges = () => {
+    if (settings) {
+      hydrate(settings);
+      toast.info('Modifications annulées');
+    }
+  };
 
   const save = async (e: FormEvent) => {
     e.preventDefault();
@@ -227,23 +240,20 @@ export default function SettingsPage() {
 
               <label className="mb-3 block">
                 <span className="mb-1 block text-xs text-slate-400">Webhook Discord</span>
-                <input
+                <SecretInput
                   value={webhook}
-                  onChange={(e) => setWebhook(e.target.value)}
+                  onChange={setWebhook}
                   placeholder="https://discord.com/api/webhooks/..."
-                  className="input"
-                  type="url"
                 />
               </label>
 
               <div className="mb-3 grid gap-3 sm:grid-cols-2">
                 <label className="block">
                   <span className="mb-1 block text-xs text-slate-400">Telegram — Bot token</span>
-                  <input
+                  <SecretInput
                     value={tgToken}
-                    onChange={(e) => setTgToken(e.target.value)}
+                    onChange={setTgToken}
                     placeholder="123456:ABC-DEF..."
-                    className="input"
                   />
                 </label>
                 <label className="block">
@@ -303,12 +313,10 @@ export default function SettingsPage() {
                   </label>
                   <label className="block">
                     <span className="mb-1 block text-xs text-slate-400">Mot de passe</span>
-                    <input
-                      type="password"
+                    <SecretInput
                       value={smtpPassword}
-                      onChange={(e) => setSmtpPassword(e.target.value)}
+                      onChange={setSmtpPassword}
                       placeholder="mot de passe d’application"
-                      className="input"
                     />
                   </label>
                   <label className="block sm:col-span-2">
@@ -416,11 +424,17 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="sticky bottom-3 z-10 flex flex-wrap items-center gap-2 rounded-xl border border-line bg-surface/80 p-2 backdrop-blur-md">
               <button type="submit" className="btn-primary">
                 {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
                 {saved ? 'Enregistré' : 'Enregistrer'}
               </button>
+              <button type="button" onClick={discardChanges} className="btn-secondary">
+                <RotateCcw className="h-4 w-4" /> Annuler les modifications
+              </button>
+              <span className="ml-auto pr-1 text-xs text-slate-500">
+                Les réglages sont enregistrés localement (inclus dans la sauvegarde).
+              </span>
             </div>
           </form>
         )}
