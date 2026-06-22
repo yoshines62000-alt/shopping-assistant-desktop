@@ -6,6 +6,12 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.20.1] — 2026-06-22
+### Fiabilité du scraping
+- **Parser Amazon durci** : sélecteurs de repli (conteneur + image) pour continuer
+  à extraire les produits même si Amazon modifie une partie de sa mise en page —
+  l'app casse moins souvent.
+
 ## [0.20.0] — 2026-06-22
 ### Fiabilité du scraping
 - **Détection des « parsers cassés »** : si une source (Amazon/eBay/Leboncoin)
