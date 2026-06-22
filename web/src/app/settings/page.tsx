@@ -424,7 +424,7 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <div className="sticky bottom-3 z-10 flex flex-wrap items-center gap-2 rounded-xl border border-line bg-surface/80 p-2 backdrop-blur-md">
+            <div className="sticky bottom-3 z-10 flex flex-wrap items-center gap-2 rounded-xl border border-line bg-surface/95 p-2">
               <button type="submit" className="btn-primary">
                 {saved ? <Check className="h-4 w-4" /> : <Save className="h-4 w-4" />}
                 {saved ? 'Enregistré' : 'Enregistrer'}

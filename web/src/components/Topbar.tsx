@@ -36,7 +36,7 @@ function openPalette() {
 export default function Topbar() {
   const pathname = usePathname();
   return (
-    <header className="sticky top-0 z-30 border-b border-line bg-ink/70 backdrop-blur-xl">
+    <header className="sticky top-0 z-30 border-b border-line bg-ink/90">
       <div className="flex h-14 items-center gap-3 px-4 sm:px-6">
         {/* Marque (mobile uniquement, la sidebar la porte sur desktop) */}
         <Link href="/" className="flex items-center gap-2 md:hidden">

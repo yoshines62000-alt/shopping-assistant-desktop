@@ -124,9 +124,10 @@
     @apply mx-auto w-full max-w-5xl px-4;
   }
 
-  /* Carte « verre » : surface translucide posée sur la trame de fond */
+  /* Carte : surface quasi-opaque (pas de backdrop-filter -> léger pour le GPU,
+     la trame de fond transparaît à peine via l'opacité). */
   .card {
-    @apply rounded-xl border border-line bg-surface/80 backdrop-blur-md;
+    @apply rounded-xl border border-line bg-surface/95;
     box-shadow: var(--shadow-card);
   }
 
@@ -207,7 +208,7 @@
   }
 
   .btn-secondary {
-    @apply btn border border-line-strong bg-surface-raised/70 text-slate-200 backdrop-blur-sm hover:border-accent/50 hover:text-slate-100;
+    @apply btn border border-line-strong bg-surface-raised/90 text-slate-200 hover:border-accent/50 hover:text-slate-100;
   }
   .btn-secondary:hover {
     box-shadow: 0 0 18px -8px rgb(var(--c-accent) / 0.4);
@@ -332,50 +333,35 @@
 }
 
 /* ---------- Décor d'ambiance animé (orbes) ---------- */
+/* Orbes statiques (lueur d'ambiance). Pas d'animation continue ni de
+   backdrop-filter au-dessus -> coût GPU négligeable (évite le figement de la
+   fenêtre sur GPU intégré). */
 .orb {
   position: absolute;
   border-radius: 9999px;
-  filter: blur(64px);
-  opacity: 0.55;
+  filter: blur(56px);
+  opacity: 0.5;
 }
 .orb-1 {
-  width: 34rem;
-  height: 34rem;
+  width: 32rem;
+  height: 32rem;
   left: -9rem;
   top: -7rem;
-  background: radial-gradient(closest-side, rgb(var(--c-accent) / 0.2), transparent 70%);
-  animation: orb-drift-1 26s ease-in-out infinite;
+  background: radial-gradient(closest-side, rgb(var(--c-accent) / 0.18), transparent 70%);
 }
 .orb-2 {
-  width: 28rem;
-  height: 28rem;
+  width: 26rem;
+  height: 26rem;
   right: -7rem;
   top: 18%;
-  background: radial-gradient(closest-side, rgb(var(--c-accent-deep) / 0.18), transparent 70%);
-  animation: orb-drift-2 32s ease-in-out infinite;
+  background: radial-gradient(closest-side, rgb(var(--c-accent-deep) / 0.16), transparent 70%);
 }
 .orb-3 {
-  width: 30rem;
-  height: 30rem;
+  width: 28rem;
+  height: 28rem;
   left: 28%;
   bottom: -11rem;
-  background: radial-gradient(closest-side, rgb(var(--c-accent) / 0.12), transparent 70%);
-  animation: orb-drift-3 30s ease-in-out infinite;
-}
-@keyframes orb-drift-1 {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(4rem, 3rem); }
-}
-@keyframes orb-drift-2 {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(-3rem, 4rem); }
-}
-@keyframes orb-drift-3 {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(3rem, -3rem); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .orb { animation: none; }
+  background: radial-gradient(closest-side, rgb(var(--c-accent) / 0.1), transparent 70%);
 }
 
 /* ---------- Animations de graphes ---------- */

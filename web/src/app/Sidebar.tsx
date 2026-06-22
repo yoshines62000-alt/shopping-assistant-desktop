@@ -116,7 +116,7 @@ export default function Sidebar() {
   return (
     <aside
       className={clsx(
-        'sticky top-0 z-40 hidden h-screen shrink-0 flex-col border-r border-line bg-surface/60 backdrop-blur-xl transition-[width] duration-200 md:flex',
+        'sticky top-0 z-40 hidden h-screen shrink-0 flex-col border-r border-line bg-surface/95 transition-[width] duration-200 md:flex',
         collapsed ? 'w-[72px]' : 'w-60'
       )}
     >
