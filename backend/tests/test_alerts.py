@@ -38,3 +38,13 @@ def test_create_alert_accepts_product_url():
         assert re.fullmatch(r"[0-9a-f]{64}", alert["productId"])
         assert alert["channels"] == ["discord"]
         assert alert["thresholdPrice"] == 12.5
+
+        # PATCH : édition en ligne du seuil (+ réactivation).
+        assert client.patch(f"/api/v1/alerts/{alert_id}", json={"thresholdPrice": 9.9}).json()["ok"] is True
+        alerts = client.get("/api/v1/alerts").json()["alerts"]
+        assert next(a for a in alerts if a["alertId"] == alert_id)["thresholdPrice"] == 9.9
+        # Seuil invalide rejeté (422), introuvable -> 404.
+        assert client.patch(f"/api/v1/alerts/{alert_id}", json={"thresholdPrice": -1}).status_code == 422
+        assert client.patch("/api/v1/alerts/999999999", json={"thresholdPrice": 5}).status_code == 404
+
+        client.delete(f"/api/v1/alerts/{alert_id}")

@@ -213,6 +213,27 @@ def list_alerts(request: Request):
         }
 
 
+class AlertUpdate(BaseModel):
+    thresholdPrice: Optional[float] = Field(default=None, gt=0)
+    active: Optional[bool] = None
+
+
+@app.patch("/api/v1/alerts/{alert_id}")
+@limiter.limit("30/minute")
+def update_alert(request: Request, alert_id: int, body: AlertUpdate):
+    with get_session() as session:
+        alert = session.get(Alert, alert_id)
+        if not alert:
+            raise HTTPException(status_code=404, detail="Alerte introuvable")
+        if body.thresholdPrice is not None:
+            alert.threshold_price = body.thresholdPrice
+        if body.active is not None:
+            alert.active = body.active
+        session.add(alert)
+        session.commit()
+        return {"ok": True}
+
+
 @app.delete("/api/v1/alerts/{alert_id}")
 @limiter.limit("30/minute")
 def delete_alert(request: Request, alert_id: int):

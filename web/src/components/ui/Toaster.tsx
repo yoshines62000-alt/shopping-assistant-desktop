@@ -21,14 +21,17 @@ const STYLES: Record<ToastType, { icon: React.ReactNode; ring: string; text: str
   },
 };
 
-/** Pile de notifications en bas à droite. Monté une fois dans le layout. */
+/** Pile de notifications en bas à droite. Monté une fois dans le layout.
+ *  Région live persistante -> les lecteurs d'écran annoncent chaque toast. */
 export default function Toaster() {
   const { toasts, dismiss } = useToastStore();
 
-  if (toasts.length === 0) return null;
-
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-[100] flex w-[min(92vw,22rem)] flex-col gap-2">
+    <div
+      aria-live="polite"
+      aria-atomic="false"
+      className="pointer-events-none fixed bottom-4 right-4 z-[100] flex w-[min(92vw,22rem)] flex-col gap-2"
+    >
       {toasts.map((t) => {
         const s = STYLES[t.type];
         return (

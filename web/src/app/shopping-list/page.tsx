@@ -82,15 +82,24 @@ export default function FavoritesPage() {
     if (!name) return;
     // Couleur auto distincte (rotation de la palette).
     const color = LIST_COLORS[lists.length % LIST_COLORS.length];
-    await apiFetch('/favorites/lists', { method: 'POST', json: { name, color } }).catch(() => null);
-    load();
+    try {
+      await apiFetch('/favorites/lists', { method: 'POST', json: { name, color } });
+      toast.success(`Liste « ${name} » créée`);
+      load();
+    } catch {
+      toast.error('Création de la liste impossible');
+    }
   };
 
   const renameList = async (l: FavoriteList) => {
     const name = window.prompt('Renommer la liste :', l.name)?.trim();
     if (!name || name === l.name) return;
-    await apiFetch(`/favorites/lists/${l.id}`, { method: 'PATCH', json: { name } }).catch(() => null);
-    load();
+    try {
+      await apiFetch(`/favorites/lists/${l.id}`, { method: 'PATCH', json: { name } });
+      load();
+    } catch {
+      toast.error('Renommage impossible');
+    }
   };
 
   const setListColor = async (l: FavoriteList, color: string) => {
@@ -101,8 +110,13 @@ export default function FavoritesPage() {
   const deleteList = async (l: FavoriteList) => {
     if (!window.confirm(`Supprimer la liste « ${l.name} » ? (les favoris sont conservés)`)) return;
     if (activeList === l.id) setActiveList(null);
-    await apiFetch(`/favorites/lists/${l.id}`, { method: 'DELETE' }).catch(() => null);
-    load();
+    try {
+      await apiFetch(`/favorites/lists/${l.id}`, { method: 'DELETE' });
+      toast.info(`Liste « ${l.name} » supprimée`);
+      load();
+    } catch {
+      toast.error('Suppression impossible');
+    }
   };
 
   // Déplace une liste d'un cran (échange les sortOrder avec le voisin).
