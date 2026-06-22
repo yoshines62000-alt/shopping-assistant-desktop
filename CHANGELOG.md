@@ -6,6 +6,20 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.18.0] — 2026-06-22
+### Corrigé — important
+- **Fenêtre qui se figeait / boutons réduire-fermer peu réactifs** : la refonte
+  empilait des effets de flou (« verre ») sur toutes les cartes au-dessus d'orbes
+  animées, saturant les cartes graphiques modestes. Effets allégés (surfaces
+  opaques, orbes statiques) — **interface beaucoup plus fluide**, look conservé.
+### Optimisé
+- **Moins d'appels réseau** : les requêtes identiques simultanées sont fusionnées
+  (l'accueil et le menu ne chargent plus les favoris en double).
+### Réglages
+- Champs sensibles (**webhook Discord, token Telegram, mot de passe SMTP**)
+  **masqués** avec bouton afficher/masquer.
+- Barre d'actions **Enregistrer / Annuler les modifications**.
+
 ## [0.17.0] — 2026-06-21
 ### Confort page par page (suite)
 - **Accueil** : squelettes de chargement (plus de « flash » de zéros au démarrage).
