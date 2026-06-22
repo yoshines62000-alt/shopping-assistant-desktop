@@ -6,6 +6,14 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.20.0] — 2026-06-22
+### Fiabilité du scraping
+- **Détection des « parsers cassés »** : si une source (Amazon/eBay/Leboncoin)
+  répond normalement mais ne renvoie plus aucun résultat à répétition — signe
+  qu'elle a changé sa mise en page — l'app te **prévient** (notification) et
+  l'indique dans **Réglages → Santé du scraping** (« Parser à vérifier »). Avant,
+  cette panne silencieuse passait inaperçue et faussait la confiance dans les prix.
+
 ## [0.19.0] — 2026-06-22
 ### Ajouté
 - **Alertes** : modifie le **seuil d'une alerte en ligne** (crayon → valeur →
