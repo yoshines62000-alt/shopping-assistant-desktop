@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, PlugZap, Loader2 } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { toast } from '@/lib/toast';
 
 interface ConnHealth {
   lastCount: number | null;
@@ -33,6 +34,7 @@ function ago(s: number | null): string {
 export default function ScrapingHealth() {
   const [data, setData] = useState<Record<string, ConnHealth> | null>(null);
   const [error, setError] = useState(false);
+  const [testingKey, setTestingKey] = useState<string | null>(null);
 
   const load = () => {
     apiFetch<{ connectors: Record<string, ConnHealth> }>('/connectors/health')
@@ -47,6 +49,26 @@ export default function ScrapingHealth() {
     load();
   }, []);
 
+  // Teste chaque source via une recherche-témoin réelle (séquentiel : on évite
+  // de lancer 4 navigateurs en même temps). Chaque test met à jour la santé.
+  const testAll = async () => {
+    if (testingKey || !data) return;
+    const keys = Object.keys(data);
+    let ok = 0;
+    for (const key of keys) {
+      setTestingKey(key);
+      try {
+        const res = await apiFetch<{ ok: boolean }>(`/connectors/${key}/test`, { method: 'POST' });
+        if (res.ok) ok += 1;
+      } catch {
+        /* le test enregistre déjà l'échec côté santé */
+      }
+      load(); // rafraîchit la santé au fil de l'eau
+    }
+    setTestingKey(null);
+    toast.success(`Test terminé : ${ok}/${keys.length} source(s) fonctionnelle(s)`);
+  };
+
   return (
     <div className="card-pad">
       <div className="mb-3 flex items-center justify-between">
@@ -54,9 +76,27 @@ export default function ScrapingHealth() {
           <h2 className="text-sm font-semibold text-slate-100">Santé du scraping</h2>
           <p className="text-xs text-slate-500">État de chaque source (mis à jour à chaque recherche)</p>
         </div>
-        <button onClick={load} className="btn-ghost" title="Rafraîchir">
-          <RefreshCw className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={testAll}
+            disabled={testingKey !== null}
+            className="btn-secondary !px-3 !py-1 text-xs disabled:opacity-60"
+            title="Lance une recherche-témoin sur chaque source (~1 min)"
+          >
+            {testingKey ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Test… ({testingKey})
+              </>
+            ) : (
+              <>
+                <PlugZap className="h-3.5 w-3.5" /> Tester les sources
+              </>
+            )}
+          </button>
+          <button onClick={load} className="btn-ghost" title="Rafraîchir" disabled={testingKey !== null}>
+            <RefreshCw className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {error && <p className="text-xs text-rose-400">État indisponible (le service est-il démarré ?)</p>}
@@ -72,7 +112,13 @@ export default function ScrapingHealth() {
               >
                 <div className="flex items-center gap-2 text-sm">
                   <span className="font-medium capitalize text-slate-200">{name}</span>
-                  <span className={`text-xs font-medium ${st.cls}`}>● {st.label}</span>
+                  {testingKey === name ? (
+                    <span className="flex items-center gap-1 text-xs font-medium text-accent">
+                      <Loader2 className="h-3 w-3 animate-spin" /> test en cours…
+                    </span>
+                  ) : (
+                    <span className={`text-xs font-medium ${st.cls}`}>● {st.label}</span>
+                  )}
                 </div>
                 <div className="text-xs text-slate-500">
                   {h.lastCount != null ? `${h.lastCount} résultats` : '—'}

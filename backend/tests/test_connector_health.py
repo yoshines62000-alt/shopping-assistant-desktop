@@ -1,6 +1,7 @@
 """Tests du suivi de sante des connecteurs + circuit breaker."""
 
 import pytest
+from fastapi.testclient import TestClient
 
 from src.connectors import health
 
@@ -49,6 +50,25 @@ def test_circuit_se_referme_apres_le_cooldown():
 
 def test_connecteur_inconnu_pas_de_skip():
     assert health.should_skip("inconnu") is False
+
+
+def test_endpoint_test_connecteur_instancie_avant_search(monkeypatch):
+    """Garde-fou : l'endpoint /connectors/{id}/test doit INSTANCIER le connecteur
+    (CONNECTORS = des classes) avant d'appeler search. Sans instanciation,
+    `search` est non-lié -> 'query' manquant. On mocke search pour eviter le
+    scraping reel."""
+    from src.connectors.amazon import AmazonConnector
+    from src.main import app
+
+    monkeypatch.setattr(AmazonConnector, "search", lambda self, query, max_results=5: ["a", "b"])
+    with TestClient(app) as client:
+        res = client.post("/api/v1/connectors/amazon/test")
+        assert res.status_code == 200
+        body = res.json()
+        assert body["connector"] == "amazon"
+        assert body["ok"] is True and body["count"] == 2
+
+    assert client.post("/api/v1/connectors/inconnu/test").status_code == 404
 
 
 def test_snapshot_structure():
