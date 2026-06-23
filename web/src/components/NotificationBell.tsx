@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, Sparkles, BellRing, ExternalLink } from 'lucide-react';
+import { Bell, Sparkles, BellRing, AlertTriangle, ExternalLink } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { euro, relativeTime } from '@/lib/format';
 
@@ -25,9 +25,16 @@ interface PriceAlert {
   triggeredAt: string | null;
 }
 
+interface ConnHealth {
+  circuitOpen: boolean;
+  parserSuspect?: boolean;
+  lastIssue: string | null;
+  secondsSinceAttempt: number | null;
+}
+
 interface NotifItem {
   key: string;
-  type: 'deal' | 'alert';
+  type: 'deal' | 'alert' | 'warn';
   name: string;
   sub: string;
   href: string;
@@ -62,9 +69,12 @@ export default function NotificationBell() {
   }, []);
 
   const load = useCallback(async () => {
-    const [dealsRes, alertsRes] = await Promise.all([
+    const [dealsRes, alertsRes, healthRes] = await Promise.all([
       apiFetch<{ deals?: DealHit[] }>('/watch/deals?limit=20').catch(() => ({ deals: [] })),
       apiFetch<{ alerts?: PriceAlert[] }>('/alerts').catch(() => ({ alerts: [] })),
+      apiFetch<{ connectors?: Record<string, ConnHealth> }>('/connectors/health').catch(
+        () => ({ connectors: {} as Record<string, ConnHealth> })
+      ),
     ]);
     const deals: NotifItem[] = (dealsRes.deals ?? []).map((d) => ({
       key: `deal-${d.id}`,
@@ -86,7 +96,19 @@ export default function NotificationBell() {
         external: false,
         ts: a.triggeredAt ? tsOf(a.triggeredAt) : 0,
       }));
-    setItems([...deals, ...alerts].sort((x, y) => y.ts - x.ts).slice(0, 30));
+    // Sources en panne (circuit ouvert) ou parser cassé : on les remonte aussi.
+    const warns: NotifItem[] = Object.entries(healthRes.connectors ?? {})
+      .filter(([, h]) => h.circuitOpen || h.parserSuspect)
+      .map(([name, h]) => ({
+        key: `warn-${name}`,
+        type: 'warn',
+        name: h.parserSuspect ? `Source ${name} : parser à vérifier` : `Source ${name} en panne`,
+        sub: h.parserSuspect ? 'page reçue mais 0 résultat' : h.lastIssue || 'circuit ouvert (anti-bot)',
+        href: '/settings',
+        external: false,
+        ts: Date.now() - (h.secondsSinceAttempt ?? 0) * 1000,
+      }));
+    setItems([...warns, ...deals, ...alerts].sort((x, y) => y.ts - x.ts).slice(0, 30));
   }, []);
 
   useEffect(() => {
@@ -154,6 +176,8 @@ export default function NotificationBell() {
                     <span className="flex items-start gap-2.5 px-3 py-2.5 transition-colors hover:bg-[rgb(var(--overlay)/0.05)]">
                       {it.type === 'deal' ? (
                         <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                      ) : it.type === 'warn' ? (
+                        <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
                       ) : (
                         <BellRing className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
                       )}
