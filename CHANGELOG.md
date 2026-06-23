@@ -6,6 +6,12 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.22.1] — 2026-06-22
+### Amélioré
+- La **cloche de notifications** regroupe maintenant les **bonnes affaires** ET les
+  **alertes prix déclenchées** (un produit surveillé a atteint ton seuil), triées
+  par date, avec un compteur de non-lus unifié.
+
 ## [0.22.0] — 2026-06-22
 ### Ajouté
 - **Cloche de notifications** dans la barre du haut : pastille des bonnes affaires
