@@ -6,6 +6,15 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.22.0] — 2026-06-22
+### Ajouté
+- **Cloche de notifications** dans la barre du haut : pastille des bonnes affaires
+  repérées par la veille depuis ton dernier coup d'œil, avec la liste (prix, site,
+  quand) et un accès direct aux alertes.
+- **Menu clic-droit** dans les champs de saisie : couper / copier / coller /
+  tout sélectionner / annuler-rétablir, et **correction orthographique** (français)
+  avec suggestions. Clic-droit sur un lien : ouvrir / copier.
+
 ## [0.21.0] — 2026-06-22
 ### Fiabilité du scraping
 - **Bouton « Tester les sources »** (Réglages → Santé du scraping) : lance une
