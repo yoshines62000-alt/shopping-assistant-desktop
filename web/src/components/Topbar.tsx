@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import ThemeToggle from '@/components/ThemeToggle';
 import BackendStatus from '@/components/BackendStatus';
+import NotificationBell from '@/components/NotificationBell';
 import clsx from 'clsx';
 
 const MOBILE_LINKS = [
@@ -59,6 +60,7 @@ export default function Topbar() {
 
         <div className="ml-auto flex items-center gap-2">
           <BackendStatus />
+          <NotificationBell />
           <ThemeToggle />
         </div>
       </div>

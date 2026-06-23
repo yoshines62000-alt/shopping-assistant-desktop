@@ -207,9 +207,13 @@ async function createWindow() {
     backgroundColor: '#0f1526',
     title: 'Shopping Assistant',
     autoHideMenuBar: true, // barre de menu masquee par defaut (Alt pour l'afficher)
-    webPreferences: { preload: path.join(__dirname, 'preload.js') },
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      spellcheck: true, // correction orthographique dans les champs de saisie
+    },
   });
   buildAppMenu();
+  setupContextMenu(mainWindow);
   // Fermer la fenetre ne quitte pas : on la masque dans la zone de notification
   // (l'app continue de surveiller les alertes en fond). Quitter = menu du tray.
   mainWindow.on('close', (e) => {
@@ -222,6 +226,51 @@ async function createWindow() {
     mainWindow = null;
   });
   await mainWindow.loadURL(`http://127.0.0.1:${FRONTEND_PORT}`);
+}
+
+// Menu clic-droit natif : copier/coller/couper/tout selectionner + correction
+// orthographique dans les champs de saisie ; ouvrir/copier un lien sinon.
+function setupContextMenu(win) {
+  try {
+    win.webContents.session.setSpellCheckerLanguages(['fr']);
+  } catch (e) {
+    /* dictionnaire fr indisponible : on garde la langue par defaut */
+  }
+  win.webContents.on('context-menu', (event, params) => {
+    const t = [];
+    for (const s of params.dictionarySuggestions) {
+      t.push({ label: s, click: () => win.webContents.replaceMisspelling(s) });
+    }
+    if (params.dictionarySuggestions.length) t.push({ type: 'separator' });
+    if (params.misspelledWord) {
+      t.push({
+        label: 'Ajouter au dictionnaire',
+        click: () =>
+          win.webContents.session.addWordToSpellCheckerDictionary(params.misspelledWord),
+      });
+      t.push({ type: 'separator' });
+    }
+    const f = params.editFlags;
+    if (params.isEditable) {
+      t.push(
+        { label: 'Annuler', role: 'undo', enabled: f.canUndo },
+        { label: 'Rétablir', role: 'redo', enabled: f.canRedo },
+        { type: 'separator' },
+        { label: 'Couper', role: 'cut', enabled: f.canCut },
+        { label: 'Copier', role: 'copy', enabled: f.canCopy },
+        { label: 'Coller', role: 'paste', enabled: f.canPaste },
+        { label: 'Tout sélectionner', role: 'selectAll', enabled: f.canSelectAll }
+      );
+    } else if (params.selectionText) {
+      t.push({ label: 'Copier', role: 'copy' }, { label: 'Tout sélectionner', role: 'selectAll' });
+    } else if (params.linkURL) {
+      t.push(
+        { label: 'Ouvrir le lien dans le navigateur', click: () => shell.openExternal(params.linkURL) },
+        { label: 'Copier le lien', click: () => require('electron').clipboard.writeText(params.linkURL) }
+      );
+    }
+    if (t.length) Menu.buildFromTemplate(t).popup({ window: win });
+  });
 }
 
 // Tue l'arbre de chaque sidecar. Sous Windows, taskkill /T emporte les enfants
