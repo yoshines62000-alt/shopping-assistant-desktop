@@ -6,6 +6,12 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.22.2] — 2026-06-22
+### Amélioré
+- La **cloche** signale aussi les **sources de scraping en panne** (bloquées) ou
+  dont le **parser est cassé** — tu vois d'un coup d'œil si une source ne fournit
+  plus de prix fiables, avec un accès direct aux réglages.
+
 ## [0.22.1] — 2026-06-22
 ### Amélioré
 - La **cloche de notifications** regroupe maintenant les **bonnes affaires** ET les
