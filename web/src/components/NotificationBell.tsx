@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { Bell, Sparkles, ExternalLink } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Bell, Sparkles, BellRing, ExternalLink } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { euro, relativeTime } from '@/lib/format';
 
@@ -15,12 +16,38 @@ interface DealHit {
   foundAt: string;
 }
 
+interface PriceAlert {
+  alertId: string;
+  productId: string;
+  name: string | null;
+  thresholdPrice: number;
+  active: boolean;
+  triggeredAt: string | null;
+}
+
+interface NotifItem {
+  key: string;
+  type: 'deal' | 'alert';
+  name: string;
+  sub: string;
+  href: string;
+  external: boolean;
+  ts: number;
+}
+
 const SEEN_KEY = 'notif-last-seen';
 
-/** Cloche de notifications : bonnes affaires repérées par la veille (deal-watcher),
- *  avec pastille de non-lus + lien vers les alertes. */
+// Les dates backend sont en UTC naïf (sans suffixe) : on ajoute « Z » sinon le
+// navigateur les lit en heure locale -> ts décalé (fausse tri/non-lus/relatif).
+const tsOf = (iso: string): number =>
+  new Date(/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? iso : `${iso}Z`).getTime();
+
+/** Cloche de notifications : bonnes affaires de la veille (deal-watcher) + alertes
+ *  prix déclenchées (un produit surveillé a atteint ton seuil), avec pastille de
+ *  non-lus + lien vers les alertes. */
 export default function NotificationBell() {
-  const [deals, setDeals] = useState<DealHit[]>([]);
+  const router = useRouter();
+  const [items, setItems] = useState<NotifItem[]>([]);
   const [open, setOpen] = useState(false);
   const [lastSeen, setLastSeen] = useState(0);
   const [mounted, setMounted] = useState(false);
@@ -34,10 +61,32 @@ export default function NotificationBell() {
     }
   }, []);
 
-  const load = useCallback(() => {
-    apiFetch<{ deals?: DealHit[] }>('/watch/deals?limit=20')
-      .then((d) => setDeals(d.deals ?? []))
-      .catch(() => setDeals([]));
+  const load = useCallback(async () => {
+    const [dealsRes, alertsRes] = await Promise.all([
+      apiFetch<{ deals?: DealHit[] }>('/watch/deals?limit=20').catch(() => ({ deals: [] })),
+      apiFetch<{ alerts?: PriceAlert[] }>('/alerts').catch(() => ({ alerts: [] })),
+    ]);
+    const deals: NotifItem[] = (dealsRes.deals ?? []).map((d) => ({
+      key: `deal-${d.id}`,
+      type: 'deal',
+      name: d.name,
+      sub: `${euro(d.price)} · ${d.siteDomain}`,
+      href: d.sourceUrl,
+      external: true,
+      ts: tsOf(d.foundAt),
+    }));
+    const alerts: NotifItem[] = (alertsRes.alerts ?? [])
+      .filter((a) => !a.active && a.triggeredAt)
+      .map((a) => ({
+        key: `alert-${a.alertId}`,
+        type: 'alert',
+        name: a.name || `${a.productId.slice(0, 24)}…`,
+        sub: `seuil atteint · ${euro(a.thresholdPrice)}`,
+        href: `/products/${encodeURIComponent(a.productId)}`,
+        external: false,
+        ts: a.triggeredAt ? tsOf(a.triggeredAt) : 0,
+      }));
+    setItems([...deals, ...alerts].sort((x, y) => y.ts - x.ts).slice(0, 30));
   }, []);
 
   useEffect(() => {
@@ -46,13 +95,12 @@ export default function NotificationBell() {
     return () => clearInterval(id);
   }, [load]);
 
-  const unread = mounted ? deals.filter((d) => new Date(d.foundAt).getTime() > lastSeen).length : 0;
+  const unread = mounted ? items.filter((it) => it.ts > lastSeen).length : 0;
 
   const toggle = () => {
     const next = !open;
     setOpen(next);
     if (next) {
-      // Ouvrir = tout marquer comme lu.
       const now = Date.now();
       setLastSeen(now);
       try {
@@ -82,7 +130,6 @@ export default function NotificationBell() {
 
       {open && (
         <>
-          {/* Capture le clic extérieur */}
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden />
           <div className="absolute right-0 z-50 mt-2 w-[min(92vw,22rem)] overflow-hidden rounded-xl border border-line-strong bg-surface shadow-card-hover">
             <div className="flex items-center justify-between border-b border-line px-3 py-2">
@@ -96,35 +143,52 @@ export default function NotificationBell() {
               </Link>
             </div>
 
-            {deals.length === 0 ? (
+            {items.length === 0 ? (
               <p className="px-3 py-6 text-center text-sm text-slate-500">
-                Aucune bonne affaire pour l&apos;instant. Surveille une recherche depuis « Alertes ».
+                Rien à signaler. Surveille un prix ou une recherche depuis « Alertes ».
               </p>
             ) : (
               <ul className="max-h-[60vh] divide-y divide-line overflow-y-auto">
-                {deals.map((d) => (
-                  <li key={d.id}>
-                    <a
-                      href={d.sourceUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-start gap-2.5 px-3 py-2.5 transition-colors hover:bg-[rgb(var(--overlay)/0.05)]"
-                    >
-                      <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                {items.map((it) => {
+                  const inner = (
+                    <span className="flex items-start gap-2.5 px-3 py-2.5 transition-colors hover:bg-[rgb(var(--overlay)/0.05)]">
+                      {it.type === 'deal' ? (
+                        <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-emerald-400" />
+                      ) : (
+                        <BellRing className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+                      )}
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm text-slate-200">{d.name}</span>
+                        <span className="block truncate text-sm text-slate-200">{it.name}</span>
                         <span className="text-xs text-slate-500">
-                          <span className="numeric font-semibold text-accent">{euro(d.price)}</span>
+                          <span className="numeric text-slate-400">{it.sub}</span>
                           <span className="mx-1.5 text-slate-600">·</span>
-                          {d.siteDomain}
-                          <span className="mx-1.5 text-slate-600">·</span>
-                          {relativeTime(d.foundAt)}
+                          {relativeTime(new Date(it.ts).toISOString())}
                         </span>
                       </span>
-                      <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-600" />
-                    </a>
-                  </li>
-                ))}
+                      {it.external && <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-600" />}
+                    </span>
+                  );
+                  return (
+                    <li key={it.key}>
+                      {it.external ? (
+                        <a href={it.href} target="_blank" rel="noreferrer">
+                          {inner}
+                        </a>
+                      ) : (
+                        <button
+                          type="button"
+                          className="w-full text-left"
+                          onClick={() => {
+                            setOpen(false);
+                            router.push(it.href);
+                          }}
+                        >
+                          {inner}
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
