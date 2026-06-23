@@ -6,6 +6,13 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.21.0] — 2026-06-22
+### Fiabilité du scraping
+- **Bouton « Tester les sources »** (Réglages → Santé du scraping) : lance une
+  recherche-témoin réelle sur chaque source et te dit en ~1 min lesquelles
+  fonctionnent vraiment (et met à jour leur état de santé). Pratique après la mise
+  à jour d'un site, ou simplement pour se rassurer.
+
 ## [0.20.1] — 2026-06-22
 ### Fiabilité du scraping
 - **Parser Amazon durci** : sélecteurs de repli (conteneur + image) pour continuer
