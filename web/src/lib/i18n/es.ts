@@ -1,0 +1,57 @@
+import type { TranslationKey } from './fr';
+
+// ESPAÑOL
+export const es: Record<TranslationKey, string> = {
+  'nav.home': 'Inicio',
+  'nav.search': 'Búsqueda',
+  'nav.deals': 'Ofertas',
+  'nav.arbitrage': 'Arbitraje',
+  'nav.estimate': 'Estimación',
+  'nav.stock': 'Inventario',
+  'nav.accounting': 'Cuentas',
+  'nav.favorites': 'Favoritos',
+  'nav.alerts': 'Alertas',
+  'nav.digest': 'Resumen',
+  'nav.scan': 'Escáner',
+  'nav.settings': 'Ajustes',
+  'nav.changelog': 'Novedades',
+  'group.explore': 'Explorar',
+  'group.manage': 'Gestionar',
+  'nav.collapse': 'Contraer',
+  'nav.expand': 'Expandir',
+  'nav.openMenu': 'Abrir el menú',
+  'nav.closeMenu': 'Cerrar el menú',
+  'nav.home.title': 'Inicio',
+
+  'topbar.searchPage': 'Buscar una página…',
+  'topbar.notifications': 'Notificaciones',
+  'topbar.toggleTheme': 'Cambiar tema',
+
+  'status.online': 'Servicios conectados',
+  'status.offline': 'Servicios sin conexión',
+  'status.checking': 'Conectando…',
+
+  'settings.title': 'Ajustes',
+  'settings.subtitle': 'Comisiones de reventa, notificaciones, copia de seguridad y tareas automáticas',
+  'settings.appearance': 'Apariencia',
+  'settings.language': 'Idioma',
+  'settings.languageHelp': 'Idioma de la interfaz (aplicado y guardado al instante).',
+  'settings.backend': 'Conexión al backend',
+  'settings.backendTest': 'Probar',
+  'settings.backendTesting': 'Probando…',
+  'settings.backendSave': 'Guardar y recargar',
+  'settings.backendReachable': '✓ Backend accesible en esta dirección.',
+  'settings.currently': 'Actualmente',
+
+  'common.save': 'Guardar',
+  'common.saved': 'Guardado',
+  'common.cancel': 'Cancelar',
+  'common.close': 'Cerrar',
+
+  'changelog.title': 'Novedades',
+  'changelog.subtitle': 'Mejoras y correcciones, versión por versión',
+  'changelog.current': 'Versión actual',
+  'changelog.added': 'Añadido',
+  'changelog.improved': 'Mejorado',
+  'changelog.fixed': 'Corregido',
+};

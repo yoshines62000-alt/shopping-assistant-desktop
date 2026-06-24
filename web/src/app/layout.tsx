@@ -9,6 +9,7 @@ import Toaster from '@/components/ui/Toaster';
 import CommandPalette from '@/components/CommandPalette';
 import AccentInit from '@/components/AccentInit';
 import KeyboardShortcuts from '@/components/KeyboardShortcuts';
+import { LocaleProvider } from '@/lib/i18n';
 import './globals.css';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -27,6 +28,9 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: '#07090d',
+  // Permet à l'UI d'occuper sous l'encoche / barre de statut ; les classes
+  // safe-pt / safe-pb réservent ensuite l'espace nécessaire (app mobile).
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -46,19 +50,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className="min-h-screen">
         <BackgroundFX />
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <div className="flex min-w-0 flex-1 flex-col">
-            <Topbar />
-            <main className="flex-1">{children}</main>
-            <Footer />
+        <LocaleProvider>
+          <div className="flex min-h-screen">
+            <Sidebar />
+            <div className="flex min-w-0 flex-1 flex-col">
+              <Topbar />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </div>
           </div>
-        </div>
-        <PwaRegister />
-        <Toaster />
-        <CommandPalette />
-        <AccentInit />
-        <KeyboardShortcuts />
+          <PwaRegister />
+          <Toaster />
+          <CommandPalette />
+          <AccentInit />
+          <KeyboardShortcuts />
+        </LocaleProvider>
       </body>
     </html>
   );

@@ -1,0 +1,57 @@
+import type { TranslationKey } from './fr';
+
+// DEUTSCH
+export const de: Record<TranslationKey, string> = {
+  'nav.home': 'Start',
+  'nav.search': 'Suche',
+  'nav.deals': 'Angebote',
+  'nav.arbitrage': 'Arbitrage',
+  'nav.estimate': 'Schätzung',
+  'nav.stock': 'Bestand',
+  'nav.accounting': 'Konten',
+  'nav.favorites': 'Favoriten',
+  'nav.alerts': 'Warnungen',
+  'nav.digest': 'Übersicht',
+  'nav.scan': 'Scanner',
+  'nav.settings': 'Einstellungen',
+  'nav.changelog': 'Neuigkeiten',
+  'group.explore': 'Entdecken',
+  'group.manage': 'Verwalten',
+  'nav.collapse': 'Einklappen',
+  'nav.expand': 'Ausklappen',
+  'nav.openMenu': 'Menü öffnen',
+  'nav.closeMenu': 'Menü schließen',
+  'nav.home.title': 'Start',
+
+  'topbar.searchPage': 'Seite suchen…',
+  'topbar.notifications': 'Benachrichtigungen',
+  'topbar.toggleTheme': 'Thema wechseln',
+
+  'status.online': 'Dienste verbunden',
+  'status.offline': 'Dienste offline',
+  'status.checking': 'Verbinde…',
+
+  'settings.title': 'Einstellungen',
+  'settings.subtitle': 'Wiederverkaufsgebühren, Benachrichtigungen, Backup und automatische Aufgaben',
+  'settings.appearance': 'Erscheinungsbild',
+  'settings.language': 'Sprache',
+  'settings.languageHelp': 'Sprache der Oberfläche (sofort angewendet und gespeichert).',
+  'settings.backend': 'Backend-Verbindung',
+  'settings.backendTest': 'Testen',
+  'settings.backendTesting': 'Teste…',
+  'settings.backendSave': 'Speichern & neu laden',
+  'settings.backendReachable': '✓ Backend unter dieser Adresse erreichbar.',
+  'settings.currently': 'Aktuell',
+
+  'common.save': 'Speichern',
+  'common.saved': 'Gespeichert',
+  'common.cancel': 'Abbrechen',
+  'common.close': 'Schließen',
+
+  'changelog.title': 'Neuigkeiten',
+  'changelog.subtitle': 'Verbesserungen und Korrekturen, Version für Version',
+  'changelog.current': 'Aktuelle Version',
+  'changelog.added': 'Hinzugefügt',
+  'changelog.improved': 'Verbessert',
+  'changelog.fixed': 'Behoben',
+};

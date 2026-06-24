@@ -3,63 +3,17 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import {
-  ShoppingBag,
-  Home,
-  Search,
-  Sparkles,
-  ArrowLeftRight,
-  Coins,
-  Package,
-  Wallet,
-  Heart,
-  Bell,
-  Newspaper,
-  ScanBarcode,
-  Settings,
-  PanelLeftClose,
-  PanelLeftOpen,
-  type LucideIcon,
-} from 'lucide-react';
+import { ShoppingBag, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useFavorites, migrateLocalFavorites } from '@/lib/favorites';
+import { NAV_HOME, NAV_GROUPS, NAV_BOTTOM, isNavActive, type NavItem } from '@/lib/navigation';
+import { useI18n } from '@/lib/i18n';
 import clsx from 'clsx';
 
-interface Item {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-  badge?: boolean;
-}
-
-const GROUPS: { label: string; items: Item[] }[] = [
-  {
-    label: 'Explorer',
-    items: [
-      { href: '/search', label: 'Recherche', icon: Search },
-      { href: '/deals', label: 'Affaires', icon: Sparkles },
-      { href: '/arbitrage', label: 'Arbitrage', icon: ArrowLeftRight },
-      { href: '/estimate', label: 'Estimation', icon: Coins },
-    ],
-  },
-  {
-    label: 'Gérer',
-    items: [
-      { href: '/stock', label: 'Stock', icon: Package },
-      { href: '/accounting', label: 'Comptes', icon: Wallet },
-      { href: '/shopping-list', label: 'Favoris', icon: Heart, badge: true },
-      { href: '/alerts', label: 'Alertes', icon: Bell },
-      { href: '/digest', label: 'Digest', icon: Newspaper },
-    ],
-  },
-];
-
-const BOTTOM: Item[] = [
-  { href: '/scan', label: 'Scanner', icon: ScanBarcode },
-  { href: '/settings', label: 'Réglages', icon: Settings },
-];
+type Item = NavItem;
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { t } = useI18n();
   const { favoriteIds, loaded, load } = useFavorites();
   const [mounted, setMounted] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -87,16 +41,16 @@ export default function Sidebar() {
     });
 
   const favCount = mounted ? favoriteIds.size : 0;
-  const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href));
 
   const renderItem = (item: Item) => {
-    const active = isActive(item.href);
+    const active = isNavActive(item.href, pathname);
     const Icon = item.icon;
+    const label = t(item.tkey, item.label);
     return (
       <Link
         key={item.href}
         href={item.href}
-        title={collapsed ? item.label : undefined}
+        title={collapsed ? label : undefined}
         className={clsx('side-link', active && 'side-link-active', collapsed && 'justify-center')}
       >
         <span className="relative flex shrink-0 items-center justify-center">
@@ -107,7 +61,7 @@ export default function Sidebar() {
             </span>
           )}
         </span>
-        {!collapsed && <span className="truncate">{item.label}</span>}
+        {!collapsed && <span className="truncate">{label}</span>}
         {active && <span aria-hidden className="side-glow" />}
       </Link>
     );
@@ -132,11 +86,11 @@ export default function Sidebar() {
 
       {/* Accueil */}
       <nav className="flex-1 overflow-y-auto px-3 pb-4">
-        <div className="mb-1">{renderItem({ href: '/', label: 'Accueil', icon: Home })}</div>
+        <div className="mb-1">{renderItem(NAV_HOME)}</div>
 
-        {GROUPS.map((g) => (
-          <div key={g.label} className="mt-4">
-            {!collapsed && <p className="side-group-label">{g.label}</p>}
+        {NAV_GROUPS.map((g) => (
+          <div key={g.labelKey} className="mt-4">
+            {!collapsed && <p className="side-group-label">{t(g.labelKey, g.label)}</p>}
             <div className="space-y-0.5">{g.items.map(renderItem)}</div>
           </div>
         ))}
@@ -144,18 +98,18 @@ export default function Sidebar() {
 
       {/* Bas : utilitaires + repli */}
       <div className="space-y-0.5 border-t border-line px-3 py-3">
-        {BOTTOM.map(renderItem)}
+        {NAV_BOTTOM.map(renderItem)}
         <button
           onClick={toggle}
           className={clsx('side-link w-full', collapsed && 'justify-center')}
-          title={collapsed ? 'Déplier le menu' : 'Replier le menu'}
+          title={collapsed ? t('nav.expand', 'Déplier') : t('nav.collapse', 'Replier')}
         >
           {collapsed ? (
             <PanelLeftOpen className="h-[18px] w-[18px] shrink-0" />
           ) : (
             <PanelLeftClose className="h-[18px] w-[18px] shrink-0" />
           )}
-          {!collapsed && <span>Replier</span>}
+          {!collapsed && <span>{t('nav.collapse', 'Replier')}</span>}
         </button>
       </div>
     </aside>

@@ -124,6 +124,15 @@
     @apply mx-auto w-full max-w-5xl px-4;
   }
 
+  /* Marges « safe area » (encoche / barre de statut) — surtout l'app mobile.
+     0px en fallback => sans effet sur desktop / navigateur. */
+  .safe-pt {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .safe-pb {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
   /* Carte : surface quasi-opaque (pas de backdrop-filter -> léger pour le GPU,
      la trame de fond transparaît à peine via l'opacité). */
   .card {

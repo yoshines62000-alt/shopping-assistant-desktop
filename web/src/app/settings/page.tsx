@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import type { AppSettings } from '@shopping-assistant/types';
-import { Settings, Save, Download, Check, Upload, Send, Bell, RotateCcw } from 'lucide-react';
+import { Settings, Save, Download, Check, Upload, Send, Bell, RotateCcw, Wifi } from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
 import SecretInput from '@/components/ui/SecretInput';
 import ErrorBanner from '@/components/ui/ErrorBanner';
@@ -12,6 +12,8 @@ import { API_BASE, setApiBase } from '@/lib/config';
 import { toast } from '@/lib/toast';
 import ScrapingHealth from '@/components/ScrapingHealth';
 import AccentPicker from '@/components/AccentPicker';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { useI18n } from '@/lib/i18n';
 
 const PLATFORM_LABELS: Record<string, string> = {
   ebay: 'eBay',
@@ -21,6 +23,7 @@ const PLATFORM_LABELS: Record<string, string> = {
 };
 
 export default function SettingsPage() {
+  const { t } = useI18n();
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -40,12 +43,38 @@ export default function SettingsPage() {
   const [weeklyDigest, setWeeklyDigest] = useState(false);
   const [testing, setTesting] = useState(false);
   const [backendUrl, setBackendUrl] = useState(API_BASE);
+  const [conn, setConn] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle');
   const fileInput = useRef<HTMLInputElement>(null);
 
   const saveBackendUrl = () => {
     setApiBase(backendUrl);
     toast.success('Backend enregistré — rechargement…');
     setTimeout(() => window.location.reload(), 600);
+  };
+
+  // Teste l'adresse SAISIE (pas celle enregistrée) en pingant /health, avec latence.
+  const testBackend = async () => {
+    const url = backendUrl.trim().replace(/\/+$/, '');
+    if (!url) {
+      toast.error('Renseigne d’abord une adresse de backend');
+      return;
+    }
+    setConn('testing');
+    const t0 = performance.now();
+    try {
+      const res = await fetch(`${url}/health`, { cache: 'no-store' });
+      const ms = Math.round(performance.now() - t0);
+      if (res.ok) {
+        setConn('ok');
+        toast.success(`Backend joignable (${ms} ms)`);
+      } else {
+        setConn('fail');
+        toast.error(`Le backend a répondu ${res.status}`);
+      }
+    } catch {
+      setConn('fail');
+      toast.error('Backend injoignable à cette adresse');
+    }
   };
 
   // Remplit le formulaire depuis un objet réglages (réutilisé pour « annuler »).
@@ -177,15 +206,23 @@ export default function SettingsPage() {
 
   return (
     <PageShell
-      title="Réglages"
+      title={t('settings.title', 'Réglages')}
       icon={<Settings className="h-6 w-6" />}
-      subtitle="Frais de revente, notifications, sauvegarde et tâches automatiques"
+      subtitle={t('settings.subtitle', 'Frais de revente, notifications, sauvegarde et tâches automatiques')}
     >
       <div className="space-y-4">
         {error && <ErrorBanner message={error} />}
 
         <div className="card-pad">
-          <h2 className="mb-1 text-sm font-semibold text-slate-100">Apparence</h2>
+          <h2 className="mb-1 text-sm font-semibold text-slate-100">{t('settings.language', 'Langue')}</h2>
+          <p className="mb-4 text-xs text-slate-500">
+            {t('settings.languageHelp', "Langue de l'interface (appliquée et mémorisée aussitôt).")}
+          </p>
+          <LanguageSwitcher />
+        </div>
+
+        <div className="card-pad">
+          <h2 className="mb-1 text-sm font-semibold text-slate-100">{t('settings.appearance', 'Apparence')}</h2>
           <p className="mb-4 text-xs text-slate-500">
             Couleur d&apos;accent de l&apos;interface (appliquée et mémorisée aussitôt). Le thème
             clair/sombre se change depuis la barre du haut.
@@ -194,27 +231,47 @@ export default function SettingsPage() {
         </div>
 
         <div className="card-pad">
-          <h2 className="mb-1 text-sm font-semibold text-slate-100">Connexion au backend</h2>
+          <h2 className="mb-1 text-sm font-semibold text-slate-100">{t('settings.backend', 'Connexion au backend')}</h2>
           <p className="mb-3 text-xs text-slate-500">
             Adresse du service de recherche. Sur l&apos;app <strong>mobile</strong>, indique l&apos;IP de
-            ton PC sur le réseau local (ex. <code className="text-slate-400">http://192.168.1.20:8000</code>) —
-            le PC doit faire tourner l&apos;application.
+            ton PC sur le réseau local (ex. <code className="text-slate-400">http://192.168.1.20:8756</code>) —
+            le PC doit faire tourner l&apos;application desktop et le port <strong>8756</strong> doit être
+            autorisé dans le pare-feu. Le téléphone et le PC doivent être sur le même Wi-Fi.
           </p>
           <div className="flex flex-wrap gap-2">
             <input
               value={backendUrl}
-              onChange={(e) => setBackendUrl(e.target.value)}
-              placeholder="http://192.168.1.20:8000"
-              className="input min-w-[220px] flex-1"
+              onChange={(e) => {
+                setBackendUrl(e.target.value);
+                setConn('idle');
+              }}
+              placeholder="http://192.168.1.20:8756"
+              className="input min-w-[200px] flex-1"
               inputMode="url"
               autoCapitalize="none"
               autoCorrect="off"
             />
+            <button
+              type="button"
+              onClick={testBackend}
+              disabled={conn === 'testing'}
+              className="btn-secondary whitespace-nowrap"
+            >
+              <Wifi className="h-4 w-4" /> {conn === 'testing' ? t('settings.backendTesting', 'Test…') : t('settings.backendTest', 'Tester')}
+            </button>
             <button type="button" onClick={saveBackendUrl} className="btn-secondary whitespace-nowrap">
-              Enregistrer &amp; recharger
+              {t('settings.backendSave', 'Enregistrer & recharger')}
             </button>
           </div>
-          <p className="mt-2 text-xs text-slate-600">Actuellement : {API_BASE || '(non défini)'}</p>
+          {conn === 'ok' && (
+            <p className="mt-2 text-xs text-emerald-400">{t('settings.backendReachable', '✓ Backend joignable à cette adresse.')}</p>
+          )}
+          {conn === 'fail' && (
+            <p className="mt-2 text-xs text-rose-400">
+              ✗ Injoignable. Vérifie : même Wi-Fi, pare-feu (port 8756), IP du PC correcte, app desktop lancée.
+            </p>
+          )}
+          <p className="mt-2 text-xs text-slate-600">{t('settings.currently', 'Actuellement')} : {API_BASE || '(non défini)'}</p>
         </div>
 
         {!settings && !error && <LoadingBlock label="Chargement des réglages..." />}

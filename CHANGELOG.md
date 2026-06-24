@@ -6,6 +6,17 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.25.0] — 2026-06-24
+### Ajouté
+- **Multi-langues** : l'interface est disponible en **français, anglais, espagnol,
+  allemand et italien** (Réglages → Langue, appliqué et mémorisé aussitôt).
+- **Page « Nouveautés »** (changelog intégré) accessible depuis le menu, qui
+  récapitule les améliorations version par version.
+### Amélioré
+- Navigation : menu unifié (la définition des entrées est désormais partagée, fini
+  la dérive entre les menus) ; tiroir de navigation complet sur petit écran.
+- Réglages → Connexion au backend : bouton **« Tester »** la connexion.
+
 ## [0.24.0] — 2026-06-24
 ### Ajouté
 - **Accès mobile (app Android)** : le backend peut désormais être joint depuis le

@@ -1,0 +1,57 @@
+import type { TranslationKey } from './fr';
+
+// ITALIANO
+export const it: Record<TranslationKey, string> = {
+  'nav.home': 'Home',
+  'nav.search': 'Ricerca',
+  'nav.deals': 'Offerte',
+  'nav.arbitrage': 'Arbitraggio',
+  'nav.estimate': 'Stima',
+  'nav.stock': 'Magazzino',
+  'nav.accounting': 'Conti',
+  'nav.favorites': 'Preferiti',
+  'nav.alerts': 'Avvisi',
+  'nav.digest': 'Riepilogo',
+  'nav.scan': 'Scanner',
+  'nav.settings': 'Impostazioni',
+  'nav.changelog': 'Novità',
+  'group.explore': 'Esplora',
+  'group.manage': 'Gestisci',
+  'nav.collapse': 'Comprimi',
+  'nav.expand': 'Espandi',
+  'nav.openMenu': 'Apri il menu',
+  'nav.closeMenu': 'Chiudi il menu',
+  'nav.home.title': 'Home',
+
+  'topbar.searchPage': 'Cerca una pagina…',
+  'topbar.notifications': 'Notifiche',
+  'topbar.toggleTheme': 'Cambia tema',
+
+  'status.online': 'Servizi connessi',
+  'status.offline': 'Servizi offline',
+  'status.checking': 'Connessione…',
+
+  'settings.title': 'Impostazioni',
+  'settings.subtitle': 'Commissioni di rivendita, notifiche, backup e attività automatiche',
+  'settings.appearance': 'Aspetto',
+  'settings.language': 'Lingua',
+  'settings.languageHelp': "Lingua dell'interfaccia (applicata e salvata subito).",
+  'settings.backend': 'Connessione al backend',
+  'settings.backendTest': 'Prova',
+  'settings.backendTesting': 'Prova…',
+  'settings.backendSave': 'Salva e ricarica',
+  'settings.backendReachable': '✓ Backend raggiungibile a questo indirizzo.',
+  'settings.currently': 'Attualmente',
+
+  'common.save': 'Salva',
+  'common.saved': 'Salvato',
+  'common.cancel': 'Annulla',
+  'common.close': 'Chiudi',
+
+  'changelog.title': 'Novità',
+  'changelog.subtitle': 'Miglioramenti e correzioni, versione per versione',
+  'changelog.current': 'Versione attuale',
+  'changelog.added': 'Aggiunto',
+  'changelog.improved': 'Migliorato',
+  'changelog.fixed': 'Corretto',
+};

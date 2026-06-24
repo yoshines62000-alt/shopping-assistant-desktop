@@ -1,0 +1,57 @@
+import type { TranslationKey } from './fr';
+
+// ENGLISH
+export const en: Record<TranslationKey, string> = {
+  'nav.home': 'Home',
+  'nav.search': 'Search',
+  'nav.deals': 'Deals',
+  'nav.arbitrage': 'Arbitrage',
+  'nav.estimate': 'Estimate',
+  'nav.stock': 'Stock',
+  'nav.accounting': 'Accounts',
+  'nav.favorites': 'Favorites',
+  'nav.alerts': 'Alerts',
+  'nav.digest': 'Digest',
+  'nav.scan': 'Scanner',
+  'nav.settings': 'Settings',
+  'nav.changelog': "What's new",
+  'group.explore': 'Explore',
+  'group.manage': 'Manage',
+  'nav.collapse': 'Collapse',
+  'nav.expand': 'Expand',
+  'nav.openMenu': 'Open menu',
+  'nav.closeMenu': 'Close menu',
+  'nav.home.title': 'Home',
+
+  'topbar.searchPage': 'Search a page…',
+  'topbar.notifications': 'Notifications',
+  'topbar.toggleTheme': 'Toggle theme',
+
+  'status.online': 'Services online',
+  'status.offline': 'Services offline',
+  'status.checking': 'Connecting…',
+
+  'settings.title': 'Settings',
+  'settings.subtitle': 'Resale fees, notifications, backup and automatic tasks',
+  'settings.appearance': 'Appearance',
+  'settings.language': 'Language',
+  'settings.languageHelp': 'Interface language (applied and saved instantly).',
+  'settings.backend': 'Backend connection',
+  'settings.backendTest': 'Test',
+  'settings.backendTesting': 'Testing…',
+  'settings.backendSave': 'Save & reload',
+  'settings.backendReachable': '✓ Backend reachable at this address.',
+  'settings.currently': 'Currently',
+
+  'common.save': 'Save',
+  'common.saved': 'Saved',
+  'common.cancel': 'Cancel',
+  'common.close': 'Close',
+
+  'changelog.title': "What's new",
+  'changelog.subtitle': 'Improvements and fixes, version by version',
+  'changelog.current': 'Current version',
+  'changelog.added': 'Added',
+  'changelog.improved': 'Improved',
+  'changelog.fixed': 'Fixed',
+};
