@@ -87,7 +87,10 @@ function startBackend() {
   const env = {
     ...process.env,
     DATABASE_URL: databaseUrl(),
-    CORS_ALLOW_ORIGINS: `http://127.0.0.1:${FRONTEND_PORT},http://localhost:${FRONTEND_PORT}`,
+    // Accès mobile : backend exposé sur le réseau local (0.0.0.0) pour que le
+    // téléphone l'atteigne, + origines de l'app Capacitor autorisées en CORS.
+    BACKEND_HOST: '0.0.0.0',
+    CORS_ALLOW_ORIGINS: `http://127.0.0.1:${FRONTEND_PORT},http://localhost:${FRONTEND_PORT},https://localhost,http://localhost,capacitor://localhost`,
   };
   const chromium = chromiumDir();
   if (fs.existsSync(chromium)) {
@@ -96,7 +99,7 @@ function startBackend() {
   if (isDev) {
     backendProc = spawn(
       'python',
-      ['-m', 'uvicorn', 'src.main:app', '--port', String(BACKEND_PORT)],
+      ['-m', 'uvicorn', 'src.main:app', '--host', env.BACKEND_HOST, '--port', String(BACKEND_PORT)],
       { cwd, env }
     );
   } else {

@@ -31,7 +31,10 @@ def main() -> None:
 
     from src.main import app
 
-    uvicorn.run(app, host="127.0.0.1", port=_parse_port(), log_level="info")
+    # 127.0.0.1 par défaut (desktop seul). BACKEND_HOST=0.0.0.0 expose le backend
+    # sur le réseau local pour que l'app mobile (téléphone) puisse l'atteindre.
+    host = os.environ.get("BACKEND_HOST", "127.0.0.1")
+    uvicorn.run(app, host=host, port=_parse_port(), log_level="info")
 
 
 if __name__ == "__main__":
