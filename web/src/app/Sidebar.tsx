@@ -7,6 +7,7 @@ import { ShoppingBag, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { useFavorites, migrateLocalFavorites } from '@/lib/favorites';
 import { NAV_HOME, NAV_GROUPS, NAV_BOTTOM, isNavActive, type NavItem } from '@/lib/navigation';
 import { useI18n } from '@/lib/i18n';
+import { useChangelogUnseen } from '@/lib/useChangelogUnseen';
 import clsx from 'clsx';
 
 type Item = NavItem;
@@ -14,6 +15,7 @@ type Item = NavItem;
 export default function Sidebar() {
   const pathname = usePathname();
   const { t } = useI18n();
+  const changelogUnseen = useChangelogUnseen();
   const { favoriteIds, loaded, load } = useFavorites();
   const [mounted, setMounted] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
@@ -46,6 +48,7 @@ export default function Sidebar() {
     const active = isNavActive(item.href, pathname);
     const Icon = item.icon;
     const label = t(item.tkey, item.label);
+    const showDot = item.href === '/changelog' && changelogUnseen;
     return (
       <Link
         key={item.href}
@@ -59,6 +62,9 @@ export default function Sidebar() {
             <span className="absolute -right-2 -top-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-ink">
               {favCount}
             </span>
+          )}
+          {showDot && (
+            <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-accent ring-2 ring-surface" />
           )}
         </span>
         {!collapsed && <span className="truncate">{label}</span>}

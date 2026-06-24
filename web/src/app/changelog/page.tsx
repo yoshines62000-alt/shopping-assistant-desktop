@@ -4,18 +4,15 @@ import { useEffect } from 'react';
 import { Megaphone } from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
 import { CHANGELOG, LATEST_VERSION, type ChangelogEntry } from '@/lib/changelog';
+import { markChangelogSeen } from '@/lib/useChangelogUnseen';
 import { useI18n } from '@/lib/i18n';
 
 export default function ChangelogPage() {
   const { t, locale } = useI18n();
 
-  // Marque la dernière version comme vue (sert à l'indicateur « nouveautés »).
+  // Marque la dernière version comme vue (retire le point « nouveauté » du menu).
   useEffect(() => {
-    try {
-      localStorage.setItem('changelog-seen', LATEST_VERSION);
-    } catch {
-      /* ignore */
-    }
+    markChangelogSeen();
   }, []);
 
   const fmtDate = (iso: string) =>

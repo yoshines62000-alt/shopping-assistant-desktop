@@ -59,6 +59,26 @@ export const fr = {
   'changelog.added': 'Ajouté',
   'changelog.improved': 'Amélioré',
   'changelog.fixed': 'Corrigé',
+
+  // En-têtes de pages
+  'page.search.title': 'Recherche',
+  'page.search.sub': 'Offres réelles Amazon.fr et eBay.fr, triées par score',
+  'page.deals.title': 'Bonnes affaires',
+  'page.deals.sub': "Tape ce que tu cherches : l'app trouve les offres et estime automatiquement leur revente, classées par marge",
+  'page.arbitrage.title': 'Arbitrage',
+  'page.arbitrage.sub': "Même produit moins cher d'un côté que de l'autre : achète bas, revends haut",
+  'page.estimate.title': 'Estimation de revente',
+  'page.estimate.sub': 'Basée sur les ventes réellement conclues sur eBay — pas les prix affichés',
+  'page.stock.title': 'Mon stock',
+  'page.accounting.title': 'Mes comptes',
+  'page.accounting.sub': 'Bilan achat / revente',
+  'page.favorites.title': 'Mes favoris',
+  'page.alerts.title': 'Alertes & surveillances',
+  'page.alerts.sub': "Surveille des recherches favorites ou un produit précis — re-scan automatique en fond et notification quand le prix passe sous ta cible",
+  'page.digest.title': 'Digest quotidien',
+  'page.digest.sub': 'Baisses de prix récentes',
+  'page.scan.title': 'Mode brocante',
+  'page.scan.sub': "Scanne ou saisis un objet : verdict immédiat et prix d'achat max pour ta marge cible",
 } as const;
 
 export type TranslationKey = keyof typeof fr;

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useI18n } from '@/lib/i18n';
 import type { Favorite, FavoriteList } from '@shopping-assistant/types';
 import {
   Heart,
@@ -33,6 +34,7 @@ import { euro } from '@/lib/format';
 const LIST_COLORS = ['#22d3ee', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#3b82f6', '#ec4899', '#14b8a6'];
 
 export default function FavoritesPage() {
+  const { t } = useI18n();
   const [lists, setLists] = useState<FavoriteList[]>([]);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [activeList, setActiveList] = useState<number | null>(null);
@@ -262,7 +264,7 @@ export default function FavoritesPage() {
 
   return (
     <PageShell
-      title="Mes favoris"
+      title={t('page.favorites.title', 'Mes favoris')}
       icon={<Heart className="h-6 w-6" />}
       subtitle={
         favorites.length > 0

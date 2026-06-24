@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ScanBarcode, CameraOff, Keyboard, Loader2, WifiOff, History, ExternalLink } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
 import type { ResaleEstimate } from '@shopping-assistant/types';
 import PageShell from '@/components/ui/PageShell';
 import ErrorBanner from '@/components/ui/ErrorBanner';
@@ -64,6 +65,7 @@ function readHistory(): HistoryEntry[] {
 }
 
 export default function ScanPage() {
+  const { t } = useI18n();
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [supported, setSupported] = useState<boolean | null>(null);
@@ -204,9 +206,9 @@ export default function ScanPage() {
 
   return (
     <PageShell
-      title="Mode brocante"
+      title={t('page.scan.title', 'Mode brocante')}
       icon={<ScanBarcode className="h-6 w-6" />}
-      subtitle="Scanne ou saisis un objet : verdict immédiat et prix d'achat max pour ta marge cible"
+      subtitle={t('page.scan.sub', "Scanne ou saisis un objet : verdict immédiat et prix d'achat max pour ta marge cible")}
     >
       <div className="mx-auto max-w-md space-y-4">
         {queue.length > 0 && (

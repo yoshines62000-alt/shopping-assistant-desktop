@@ -2,6 +2,7 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 import { ArrowLeftRight, ExternalLink, Loader2, SearchX } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
 import type { ArbitrageResponse, ArbitragePair } from '@shopping-assistant/types';
 import PageShell from '@/components/ui/PageShell';
 import ErrorBanner from '@/components/ui/ErrorBanner';
@@ -11,6 +12,7 @@ import { apiFetch } from '@/lib/api';
 import { euro } from '@/lib/format';
 
 export default function ArbitragePage() {
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [minMargin, setMinMargin] = useState('15');
   const [loading, setLoading] = useState(false);
@@ -52,9 +54,9 @@ export default function ArbitragePage() {
 
   return (
     <PageShell
-      title="Arbitrage"
+      title={t('page.arbitrage.title', 'Arbitrage')}
       icon={<ArrowLeftRight className="h-6 w-6" />}
-      subtitle="Même produit moins cher d'un côté que de l'autre : achète bas, revends haut"
+      subtitle={t('page.arbitrage.sub', "Même produit moins cher d'un côté que de l'autre : achète bas, revends haut")}
     >
       <form onSubmit={run} className="card-pad mb-6 grid gap-3 sm:grid-cols-[1fr_170px_auto]">
         <input

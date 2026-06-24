@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense, FormEvent } from 'react';
 import Link from 'next/link';
+import { useI18n } from '@/lib/i18n';
 import { useSearchParams } from 'next/navigation';
 import type { ResaleEstimate, AppSettings } from '@shopping-assistant/types';
 import { Coins, ExternalLink, PackagePlus, Check, SearchX, Loader2 } from 'lucide-react';
@@ -265,11 +266,12 @@ function EstimateContent() {
 }
 
 export default function EstimatePage() {
+  const { t } = useI18n();
   return (
     <PageShell
-      title="Estimation de revente"
+      title={t('page.estimate.title', 'Estimation de revente')}
       icon={<Coins className="h-6 w-6" />}
-      subtitle="Basée sur les ventes réellement conclues sur eBay — pas les prix affichés"
+      subtitle={t('page.estimate.sub', 'Basée sur les ventes réellement conclues sur eBay — pas les prix affichés')}
     >
       <Suspense fallback={<div className="text-center text-sm text-slate-400">Chargement...</div>}>
         <EstimateContent />

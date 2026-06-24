@@ -7,6 +7,7 @@ import { Menu, X, ShoppingBag } from 'lucide-react';
 import { useFavorites } from '@/lib/favorites';
 import { NAV_HOME, NAV_GROUPS, NAV_BOTTOM, isNavActive, type NavItem } from '@/lib/navigation';
 import { useI18n } from '@/lib/i18n';
+import { useChangelogUnseen } from '@/lib/useChangelogUnseen';
 import clsx from 'clsx';
 
 /**
@@ -17,6 +18,7 @@ import clsx from 'clsx';
 export default function MobileNav() {
   const pathname = usePathname();
   const { t } = useI18n();
+  const changelogUnseen = useChangelogUnseen();
   const [open, setOpen] = useState(false);
   const { favoriteIds } = useFavorites();
   const [mounted, setMounted] = useState(false);
@@ -38,6 +40,7 @@ export default function MobileNav() {
   const renderItem = (item: NavItem) => {
     const active = isNavActive(item.href, pathname);
     const Icon = item.icon;
+    const showDot = item.href === '/changelog' && changelogUnseen;
     return (
       <Link key={item.href} href={item.href} className={clsx('side-link', active && 'side-link-active')}>
         <span className="relative flex shrink-0 items-center justify-center">
@@ -46,6 +49,9 @@ export default function MobileNav() {
             <span className="absolute -right-2 -top-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-ink">
               {favCount}
             </span>
+          )}
+          {showDot && (
+            <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-accent ring-2 ring-surface" />
           )}
         </span>
         <span className="truncate">{t(item.tkey, item.label)}</span>

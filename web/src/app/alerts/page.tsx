@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, ChangeEvent, FormEvent } from 'react';
 import Link from 'next/link';
+import { useI18n } from '@/lib/i18n';
 import type { PriceAlert } from '@shopping-assistant/types';
 import { Bell, BellOff, BellRing, Trash2, Settings, Pencil, Check, X } from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
@@ -13,6 +14,7 @@ import { toast } from '@/lib/toast';
 import { euro, dateFr } from '@/lib/format';
 
 export default function AlertsPage() {
+  const { t } = useI18n();
   const [alerts, setAlerts] = useState<PriceAlert[]>([]);
   const [productId, setProductId] = useState('');
   const [threshold, setThreshold] = useState('');
@@ -80,9 +82,9 @@ export default function AlertsPage() {
 
   return (
     <PageShell
-      title="Alertes & surveillances"
+      title={t('page.alerts.title', 'Alertes & surveillances')}
       icon={<Bell className="h-6 w-6" />}
-      subtitle="Surveille des recherches favorites ou un produit précis — re-scan automatique en fond et notification quand le prix passe sous ta cible"
+      subtitle={t('page.alerts.sub', 'Surveille des recherches favorites ou un produit précis — re-scan automatique en fond et notification quand le prix passe sous ta cible')}
       actions={
         <Link href="/settings" className="btn-ghost text-xs" title="Configurer le webhook Discord">
           <Settings className="h-4 w-4" /> Configurer Discord

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, FormEvent } from 'react';
 import Link from 'next/link';
+import { useI18n } from '@/lib/i18n';
 import { useRouter } from 'next/navigation';
 import type { Deal, DealsResponse } from '@shopping-assistant/types';
 import { Sparkles, ExternalLink, Coins, Loader2, SearchX, Copy, BarChart3 } from 'lucide-react';
@@ -136,6 +137,7 @@ function DealCard({ deal, index = 0 }: { deal: Deal; index?: number }) {
 }
 
 export default function DealsPage() {
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [analyze, setAnalyze] = useState('3');
   const [platform, setPlatform] = useState('ebay');
@@ -182,9 +184,9 @@ export default function DealsPage() {
 
   return (
     <PageShell
-      title="Bonnes affaires"
+      title={t('page.deals.title', 'Bonnes affaires')}
       icon={<Sparkles className="h-6 w-6" />}
-      subtitle="Tape ce que tu cherches : l'app trouve les offres et estime automatiquement leur revente, classées par marge"
+      subtitle={t('page.deals.sub', "Tape ce que tu cherches : l'app trouve les offres et estime automatiquement leur revente, classées par marge")}
     >
       <form onSubmit={submit} className="card-pad mb-6 grid gap-3 sm:grid-cols-[1fr_130px_130px_auto]">
         <input

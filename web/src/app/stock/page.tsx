@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, FormEvent } from 'react';
 import Link from 'next/link';
+import { useI18n } from '@/lib/i18n';
 import type { StockItem, StockStatus, ResaleEstimate, AppSettings } from '@shopping-assistant/types';
 import { Package, Plus, Coins, Clock, Download, Upload, Search } from 'lucide-react';
 import StockItemCard, { STATUS_LABELS, type SellForm } from '@/components/StockItemCard';
@@ -18,6 +19,7 @@ import { euro } from '@/lib/format';
 
 
 export default function StockPage() {
+  const { t } = useI18n();
   const [items, setItems] = useState<StockItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -229,7 +231,7 @@ export default function StockPage() {
 
   return (
     <PageShell
-      title="Mon stock"
+      title={t('page.stock.title', 'Mon stock')}
       icon={<Package className="h-6 w-6" />}
       subtitle={`${totalRemaining} exemplaire(s) · valeur d'achat ${euro(stockValue)}${potentialNet > 0 ? ` · potentiel net ~${euro(potentialNet)}` : ''}`}
       actions={

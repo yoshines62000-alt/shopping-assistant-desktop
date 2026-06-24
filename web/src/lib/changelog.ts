@@ -11,6 +11,14 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.26.0',
+    date: '2026-06-24',
+    improved: [
+      'Traduction étendue : les en-têtes de toutes les pages suivent la langue choisie.',
+      "Un point dans le menu signale qu'une nouvelle version est disponible (page « Nouveautés »).",
+    ],
+  },
+  {
     version: '0.25.0',
     date: '2026-06-24',
     added: [

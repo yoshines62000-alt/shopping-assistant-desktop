@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, FormEvent } from 'react';
 import Link from 'next/link';
+import { useI18n } from '@/lib/i18n';
 import type { AccountingSummary, Sale, Expense, FiscalSummary } from '@shopping-assistant/types';
 import { Wallet, Undo2, BookOpenCheck, Package, Download, Plus, Trash2, FileText, RotateCcw } from 'lucide-react';
 import PageShell from '@/components/ui/PageShell';
@@ -36,6 +37,7 @@ function monthLabel(ym: string): string {
 }
 
 export default function AccountingPage() {
+  const { t } = useI18n();
   const [summary, setSummary] = useState<AccountingSummary | null>(null);
   const [fiscal, setFiscal] = useState<FiscalSummary | null>(null);
   const [sales, setSales] = useState<Sale[]>([]);
@@ -157,9 +159,9 @@ export default function AccountingPage() {
 
   return (
     <PageShell
-      title="Mes comptes"
+      title={t('page.accounting.title', 'Mes comptes')}
       icon={<BookOpenCheck className="h-6 w-6" />}
-      subtitle="Bilan achat / revente"
+      subtitle={t('page.accounting.sub', 'Bilan achat / revente')}
       actions={
         summary && sales.length > 0 ? (
           <>

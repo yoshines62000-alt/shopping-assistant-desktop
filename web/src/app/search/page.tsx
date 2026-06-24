@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import { useI18n } from '@/lib/i18n';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, SearchX, Download } from 'lucide-react';
 import type { Product, IntentParams } from '@shopping-assistant/types';
@@ -239,11 +240,12 @@ function SearchContent() {
 }
 
 export default function SearchPage() {
+  const { t } = useI18n();
   return (
     <PageShell
-      title="Recherche"
+      title={t('page.search.title', 'Recherche')}
       icon={<Search className="h-6 w-6" />}
-      subtitle="Offres réelles Amazon.fr et eBay.fr, triées par score"
+      subtitle={t('page.search.sub', 'Offres réelles Amazon.fr et eBay.fr, triées par score')}
     >
       <Suspense fallback={<div className="text-center text-sm text-slate-400">Chargement...</div>}>
         <SearchContent />

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { BarChart3, TrendingDown, RefreshCw, Bell } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
 import { apiFetch } from '@/lib/api';
 import PageShell from '@/components/ui/PageShell';
 import EmptyState from '@/components/ui/EmptyState';
@@ -18,6 +19,7 @@ interface PriceDrop {
 }
 
 export default function DigestPage() {
+  const { t } = useI18n();
   const [drops, setDrops] = useState<PriceDrop[]>([]);
   const [loading, setLoading] = useState(true);
   const [refetching, setRefetching] = useState(false);
@@ -53,9 +55,9 @@ export default function DigestPage() {
 
   return (
     <PageShell
-      title="Digest quotidien"
+      title={t('page.digest.title', 'Digest quotidien')}
       icon={<BarChart3 className="h-6 w-6" />}
-      subtitle="Baisses de prix récentes"
+      subtitle={t('page.digest.sub', 'Baisses de prix récentes')}
     >
       <div className="mb-4 flex items-center gap-2">
         <button

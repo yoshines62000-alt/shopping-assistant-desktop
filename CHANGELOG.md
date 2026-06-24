@@ -6,6 +6,13 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.26.0] — 2026-06-24
+### Amélioré
+- **Traduction étendue** : les **en-têtes de toutes les pages** (recherche, stock,
+  comptes, favoris, etc.) suivent désormais la langue choisie.
+- **Badge « nouveauté »** : un point apparaît sur l'entrée *Nouveautés* du menu
+  tant que la dernière version du changelog n'a pas été ouverte.
+
 ## [0.25.0] — 2026-06-24
 ### Ajouté
 - **Multi-langues** : l'interface est disponible en **français, anglais, espagnol,
