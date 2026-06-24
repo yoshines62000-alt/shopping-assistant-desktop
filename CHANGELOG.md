@@ -6,6 +6,13 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.23.0] — 2026-06-22
+### Corrigé
+- **Vignettes manquantes sur d'anciens favoris** : les favoris ajoutés avant la
+  capture d'image affichaient un placeholder. Désormais, au **rafraîchissement du
+  prix** (bouton « Rafraîchir » ou auto quotidien), la vignette est **récupérée et
+  enregistrée** pour les favoris Amazon/eBay qui n'en avaient pas.
+
 ## [0.22.2] — 2026-06-22
 ### Amélioré
 - La **cloche** signale aussi les **sources de scraping en panne** (bloquées) ou
