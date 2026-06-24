@@ -6,6 +6,12 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.27.0] — 2026-06-24
+### Amélioré
+- **Résultats de recherche traduits** : le tri, le menu clic-droit, les libellés
+  (TTC, Score, Détails…) et les messages suivent la langue choisie, sur les pages
+  Recherche et Affaires.
+
 ## [0.26.0] — 2026-06-24
 ### Amélioré
 - **Traduction étendue** : les **en-têtes de toutes les pages** (recherche, stock,

@@ -27,6 +27,7 @@ import ContextMenu, { type ContextMenuItem } from '@/components/ui/ContextMenu';
 import { euro } from '@/lib/format';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
+import { useI18n } from '@/lib/i18n';
 
 interface Props {
   products: Product[];
@@ -87,22 +88,20 @@ export default function SearchResults({ products, isLoading }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState<'score' | 'priceAsc' | 'priceDesc' | 'delivery' | 'rating'>('score');
   const router = useRouter();
+  const { t } = useI18n();
 
   // « Favori + prix cible » : on suggère -10 % et on alerte si le prix repasse dessous.
   const favoriteWithTarget = (p: Product) => {
     const suggested = Math.round(p.totalPrice * 0.9 * 100) / 100;
-    const raw = window.prompt(
-      `Prix cible pour « ${p.name.slice(0, 60)} » ?\nTu seras notifié si le prix passe sous ce seuil.`,
-      String(suggested)
-    );
+    const raw = window.prompt(t('prompt.targetPrice'), String(suggested));
     if (raw == null) return;
     const target = Number(raw.replace(',', '.'));
     if (!Number.isFinite(target) || target <= 0) {
-      toast.error('Prix cible invalide');
+      toast.error(t('toast.targetInvalid'));
       return;
     }
     addWithTarget(p, target);
-    toast.success(`Favori ajouté · cible ${euro(target)}`);
+    toast.success(`${t('toast.favAddedTarget')} ${euro(target)}`);
   };
 
   // Favoris persistés côté backend : migration des anciens favoris locaux + chargement.
@@ -122,7 +121,7 @@ export default function SearchResults({ products, isLoading }: Props) {
         await apiFetch(`/alerts/${existing.alertId}`, { method: 'DELETE' }).catch(() => null);
       }
       removeFromWatchList(p.id);
-      toast.info('Surveillance retirée');
+      toast.info(t('toast.watchRemoved'));
       return;
     }
     const threshold = Math.round(p.totalPrice * 0.9 * 100) / 100;
@@ -132,9 +131,9 @@ export default function SearchResults({ products, isLoading }: Props) {
         json: { productId: p.id, thresholdPrice: threshold, channels: ['discord'] },
       });
       addToWatchList(p.id, threshold, res.alertId);
-      toast.success(`Surveillé — alerte si le prix passe sous ${euro(threshold)}`);
+      toast.success(`${t('toast.watchedUnder')} ${euro(threshold)}`);
     } catch {
-      toast.error('Impossible de créer la surveillance');
+      toast.error(t('toast.watchFailed'));
     }
   };
 
@@ -161,21 +160,21 @@ export default function SearchResults({ products, isLoading }: Props) {
     <div className="space-y-4" aria-label={`${sorted.length} résultats de recherche`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-slate-400">
-          {sorted.length} résultat{sorted.length > 1 ? 's' : ''} &middot; score moyen{' '}
+          {sorted.length} {t('results.resultsWord')} &middot; {t('results.avgScore')}{' '}
           {avgScore.toFixed(0)}/100
         </p>
         <select
           value={sortKey}
           onChange={(e) => setSortKey(e.target.value as typeof sortKey)}
           className="input !w-auto !py-1 text-xs"
-          title="Trier les résultats"
-          aria-label="Trier les résultats"
+          title={t('sort.title')}
+          aria-label={t('sort.title')}
         >
-          <option value="score">Pertinence</option>
-          <option value="priceAsc">Prix croissant</option>
-          <option value="priceDesc">Prix décroissant</option>
-          <option value="delivery">Livraison rapide</option>
-          <option value="rating">Mieux notés</option>
+          <option value="score">{t('sort.relevance')}</option>
+          <option value="priceAsc">{t('sort.priceAsc')}</option>
+          <option value="priceDesc">{t('sort.priceDesc')}</option>
+          <option value="delivery">{t('sort.delivery')}</option>
+          <option value="rating">{t('sort.rating')}</option>
         </select>
       </div>
 
@@ -186,7 +185,7 @@ export default function SearchResults({ products, isLoading }: Props) {
         const expanded = expandedId === p.id;
         const menuItems: ContextMenuItem[] = [
           {
-            label: inList ? 'Retirer des favoris' : 'Ajouter aux favoris',
+            label: inList ? t('menu.removeFav') : t('menu.addFav'),
             icon: <Heart className={`h-4 w-4 ${inList ? 'fill-rose-500 text-rose-500' : ''}`} />,
             onClick: () => toggleFavorite(p),
           },
@@ -194,45 +193,45 @@ export default function SearchResults({ products, isLoading }: Props) {
             ? []
             : [
                 {
-                  label: 'Favori + prix cible…',
+                  label: t('menu.favTarget'),
                   icon: <Target className="h-4 w-4" />,
                   onClick: () => favoriteWithTarget(p),
                 },
               ]),
           {
-            label: isWatched ? 'Retirer la surveillance' : 'Surveiller le prix',
+            label: isWatched ? t('menu.unwatch') : t('menu.watch'),
             icon: <Bell className="h-4 w-4" />,
             onClick: () => toggleWatch(p),
           },
           {
-            label: 'Estimer la revente',
+            label: t('menu.estimate'),
             icon: <Coins className="h-4 w-4" />,
             onClick: () =>
               router.push(`/estimate?q=${encodeURIComponent(p.name.slice(0, 80))}&price=${p.totalPrice}`),
           },
           {
-            label: 'Comparer les sites',
+            label: t('menu.compare'),
             icon: <BarChart3 className="h-4 w-4" />,
             onClick: () => router.push(`/compare?q=${encodeURIComponent(p.name.slice(0, 80))}`),
           },
           {
-            label: 'Historique & alertes',
+            label: t('menu.history'),
             icon: <TrendingDown className="h-4 w-4" />,
             onClick: () => router.push(`/products?id=${encodeURIComponent(p.id)}`),
           },
           {
-            label: "Ouvrir l'annonce",
+            label: t('menu.openListing'),
             icon: <ExternalLink className="h-4 w-4" />,
             onClick: () => window.open(p.sourceUrl, '_blank', 'noopener'),
             separatorBefore: true,
           },
           {
-            label: 'Copier le lien',
+            label: t('menu.copyLink'),
             icon: <Copy className="h-4 w-4" />,
             onClick: () => {
               navigator.clipboard?.writeText(p.sourceUrl).then(
-                () => toast.success('Lien copié'),
-                () => toast.error('Copie impossible')
+                () => toast.success(t('toast.linkCopied')),
+                () => toast.error(t('toast.copyFailed'))
               );
             },
           },
@@ -260,7 +259,7 @@ export default function SearchResults({ products, isLoading }: Props) {
                 <p className="text-2xl font-bold tracking-tight text-slate-50">
                   {euro(p.totalPrice)}
                 </p>
-                <p className="text-xs text-slate-500">TTC</p>
+                <p className="text-xs text-slate-500">{t('results.inclTax')}</p>
               </div>
             </div>
 
@@ -281,7 +280,7 @@ export default function SearchResults({ products, isLoading }: Props) {
                   type="button"
                   onClick={() => toggleFavorite(p)}
                   className="btn-ghost !px-1.5 !py-1 text-xs"
-                  title={inList ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+                  title={inList ? t('menu.removeFav') : t('menu.addFav')}
                   aria-pressed={inList}
                 >
                   <Heart
@@ -292,7 +291,7 @@ export default function SearchResults({ products, isLoading }: Props) {
                   type="button"
                   onClick={() => toggleWatch(p)}
                   className="btn-ghost !px-1.5 !py-1 text-xs"
-                  title={isWatched ? 'Retirer la surveillance du prix' : 'Surveiller le prix (alerte)'}
+                  title={isWatched ? t('menu.unwatch') : t('menu.watch')}
                   aria-pressed={isWatched}
                 >
                   <Bell
@@ -347,13 +346,13 @@ export default function SearchResults({ products, isLoading }: Props) {
                   />
                 </div>
                 <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
-                  <span>Score {p.scores.final}/100</span>
+                  <span>{t('results.score')} {p.scores.final}/100</span>
                   <button
                     onClick={() => setExpandedId(expanded ? null : p.id)}
                     className="flex items-center gap-1 text-accent transition-colors hover:text-cyan-300"
                     aria-expanded={expanded}
                   >
-                    Détails
+                    {t('results.details')}
                     {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                   </button>
                 </div>

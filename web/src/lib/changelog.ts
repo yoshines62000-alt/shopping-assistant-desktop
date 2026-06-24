@@ -11,6 +11,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.27.0',
+    date: '2026-06-24',
+    improved: [
+      'Résultats de recherche traduits : tri, menu clic-droit, libellés et messages suivent la langue (Recherche et Affaires).',
+    ],
+  },
+  {
     version: '0.26.0',
     date: '2026-06-24',
     improved: [
