@@ -162,7 +162,7 @@ export default function AlertsPage() {
                     </span>
                   ) : (
                     <Link
-                      href={`/products/${encodeURIComponent(a.productId)}`}
+                      href={`/products?id=${encodeURIComponent(a.productId)}`}
                       className="truncate text-sm text-slate-300 hover:text-accent"
                     >
                       {a.name || `${a.productId.slice(0, 24)}…`} — seuil {euro(a.thresholdPrice)}
@@ -216,7 +216,7 @@ export default function AlertsPage() {
                   className="flex items-center justify-between gap-3 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2.5"
                 >
                   <Link
-                    href={`/products/${encodeURIComponent(a.productId)}`}
+                    href={`/products?id=${encodeURIComponent(a.productId)}`}
                     className="flex min-w-0 items-center gap-2 text-sm text-slate-300 hover:text-accent"
                   >
                     <BellRing className="h-4 w-4 shrink-0 text-emerald-400" />

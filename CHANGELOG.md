@@ -6,6 +6,16 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.24.0] — 2026-06-24
+### Ajouté
+- **Accès mobile (app Android)** : le backend peut désormais être joint depuis le
+  **réseau local** (`BACKEND_HOST=0.0.0.0`) et autorise les origines de l'app
+  Capacitor en CORS. Permet à l'app Android (même Wi-Fi) de se connecter au
+  backend du PC sur `http://IP-du-PC:8756`. Pense à autoriser le port 8756 dans
+  le pare-feu Windows.
+- **Réglages → Connexion au backend** : champ pour pointer vers une autre adresse
+  de backend (surtout utile sur mobile).
+
 ## [0.23.0] — 2026-06-22
 ### Corrigé
 - **Vignettes manquantes sur d'anciens favoris** : les favoris ajoutés avant la

@@ -8,6 +8,7 @@ import SecretInput from '@/components/ui/SecretInput';
 import ErrorBanner from '@/components/ui/ErrorBanner';
 import LoadingBlock from '@/components/ui/LoadingBlock';
 import { apiFetch } from '@/lib/api';
+import { API_BASE, setApiBase } from '@/lib/config';
 import { toast } from '@/lib/toast';
 import ScrapingHealth from '@/components/ScrapingHealth';
 import AccentPicker from '@/components/AccentPicker';
@@ -38,7 +39,14 @@ export default function SettingsPage() {
   const [favRefreshHours, setFavRefreshHours] = useState('24');
   const [weeklyDigest, setWeeklyDigest] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [backendUrl, setBackendUrl] = useState(API_BASE);
   const fileInput = useRef<HTMLInputElement>(null);
+
+  const saveBackendUrl = () => {
+    setApiBase(backendUrl);
+    toast.success('Backend enregistré — rechargement…');
+    setTimeout(() => window.location.reload(), 600);
+  };
 
   // Remplit le formulaire depuis un objet réglages (réutilisé pour « annuler »).
   const hydrate = (s: AppSettings) => {
@@ -183,6 +191,30 @@ export default function SettingsPage() {
             clair/sombre se change depuis la barre du haut.
           </p>
           <AccentPicker />
+        </div>
+
+        <div className="card-pad">
+          <h2 className="mb-1 text-sm font-semibold text-slate-100">Connexion au backend</h2>
+          <p className="mb-3 text-xs text-slate-500">
+            Adresse du service de recherche. Sur l&apos;app <strong>mobile</strong>, indique l&apos;IP de
+            ton PC sur le réseau local (ex. <code className="text-slate-400">http://192.168.1.20:8000</code>) —
+            le PC doit faire tourner l&apos;application.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <input
+              value={backendUrl}
+              onChange={(e) => setBackendUrl(e.target.value)}
+              placeholder="http://192.168.1.20:8000"
+              className="input min-w-[220px] flex-1"
+              inputMode="url"
+              autoCapitalize="none"
+              autoCorrect="off"
+            />
+            <button type="button" onClick={saveBackendUrl} className="btn-secondary whitespace-nowrap">
+              Enregistrer &amp; recharger
+            </button>
+          </div>
+          <p className="mt-2 text-xs text-slate-600">Actuellement : {API_BASE || '(non défini)'}</p>
         </div>
 
         {!settings && !error && <LoadingBlock label="Chargement des réglages..." />}

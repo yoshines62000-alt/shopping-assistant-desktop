@@ -218,7 +218,7 @@ export default function SearchResults({ products, isLoading }: Props) {
           {
             label: 'Historique & alertes',
             icon: <TrendingDown className="h-4 w-4" />,
-            onClick: () => router.push(`/products/${encodeURIComponent(p.id)}`),
+            onClick: () => router.push(`/products?id=${encodeURIComponent(p.id)}`),
           },
           {
             label: "Ouvrir l'annonce",
@@ -308,7 +308,7 @@ export default function SearchResults({ products, isLoading }: Props) {
                   <Coins className="h-4 w-4" />
                 </Link>
                 <Link
-                  href={`/products/${encodeURIComponent(p.id)}`}
+                  href={`/products?id=${encodeURIComponent(p.id)}`}
                   className="btn-ghost"
                   aria-label="Voir historique et alertes"
                 >

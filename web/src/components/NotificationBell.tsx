@@ -92,7 +92,7 @@ export default function NotificationBell() {
         type: 'alert',
         name: a.name || `${a.productId.slice(0, 24)}…`,
         sub: `seuil atteint · ${euro(a.thresholdPrice)}`,
-        href: `/products/${encodeURIComponent(a.productId)}`,
+        href: `/products?id=${encodeURIComponent(a.productId)}`,
         external: false,
         ts: a.triggeredAt ? tsOf(a.triggeredAt) : 0,
       }));
