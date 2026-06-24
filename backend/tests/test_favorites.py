@@ -163,6 +163,40 @@ def test_purge_historique_par_age():
     assert _prune_history(allold, now) == [{"price": 2, "at": old}]
 
 
+def test_fetch_price_and_image_extrait_og_image(monkeypatch):
+    """fetch_price_and_image lit le prix + l'image (og:image en repli) de la page."""
+    import src.background as bg
+
+    html = """<html><head>
+      <meta property="og:image" content="https://m.media-amazon.com/images/I/abc.jpg"/>
+    </head><body>
+      <div id="corePrice_feature_div"><span class="a-offscreen">29,99 €</span></div>
+    </body></html>"""
+    monkeypatch.setattr(bg, "fetch_page_html", lambda *a, **k: html)
+    price, image = bg.fetch_price_and_image("https://www.amazon.fr/dp/B000000001")
+    assert price == 29.99
+    assert image == "https://m.media-amazon.com/images/I/abc.jpg"
+    # Site non supporté -> (None, "").
+    assert bg.fetch_price_and_image("https://vinted.fr/x") == (None, "")
+
+
+def test_refresh_retro_remplit_la_vignette(client, monkeypatch):
+    """Un favori Amazon/eBay sans image récupère sa vignette au rafraîchissement
+    du prix (rétro-remplissage des favoris ajoutés avant la capture d'image)."""
+    import src.background as bg
+
+    monkeypatch.setattr(bg, "fetch_price_and_image", lambda url: (38.0, "https://img/x.jpg"))
+    fav = client.post(
+        "/api/v1/favorites",
+        json={"productId": PID + "img", "name": "Sans image", "price": 50,
+              "siteDomain": "ebay.fr", "sourceUrl": "https://www.ebay.fr/itm/12345"},
+    ).json()
+    assert fav["imageUrl"] is None  # créé sans image
+    res = client.post(f"/api/v1/favorites/{fav['id']}/refresh-price").json()
+    assert res["favorite"]["imageUrl"] == "https://img/x.jpg"  # vignette rétro-remplie
+    assert res["favorite"]["price"] == 38.0
+
+
 def test_import_migration(client):
     res = client.post(
         "/api/v1/favorites/import",

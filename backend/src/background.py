@@ -35,17 +35,23 @@ def _utcnow_naive() -> datetime:
     return datetime.now(timezone.utc).replace(tzinfo=None)
 
 
-def fetch_current_price(url: str) -> float | None:
-    """Prix actuel d'une page produit Amazon (/dp/) ou eBay (/itm/)."""
+def fetch_price_and_image(url: str) -> tuple[float | None, str]:
+    """Prix actuel + image d'une fiche Amazon (/dp/) ou eBay (/itm/).
+
+    L'image sert à rétro-remplir la vignette des favoris ajoutés avant que l'image
+    soit capturée (réutilise le même fetch que le prix, pas de page en plus).
+    """
     if not url.startswith("http"):
-        return None
+        return (None, "")
     try:
+        img = None
         if "amazon." in url:
             html = fetch_page_html(url, wait_selector=".a-price", profile="amazon")
             soup = BeautifulSoup(html, "html.parser")
             el = soup.select_one("#corePrice_feature_div .a-offscreen") or soup.select_one(
                 ".a-price .a-offscreen"
             )
+            img = soup.select_one("#landingImage") or soup.select_one("#imgTagWrapperId img")
         elif "ebay." in url:
             html = fetch_page_html(
                 url,
@@ -57,15 +63,30 @@ def fetch_current_price(url: str) -> float | None:
             el = soup.select_one(".x-price-primary .ux-textspans") or soup.select_one(
                 ".x-price-primary"
             )
+            img = soup.select_one("img#icImg") or soup.select_one(".ux-image-carousel-item img")
         else:
-            return None
-        if not el:
-            return None
-        price = _normalizer._parse_price(el.get_text(" ", strip=True))
-        return price if price > 0 else None
+            return (None, "")
+
+        price = _normalizer._parse_price(el.get_text(" ", strip=True)) if el else 0.0
+        price = price if price and price > 0 else None
+
+        image_url = ""
+        if img:
+            image_url = img.get("src") or img.get("data-src") or img.get("data-old-hires") or ""
+        if not image_url:
+            og = soup.select_one('meta[property="og:image"]')
+            image_url = (og.get("content") if og else "") or ""
+        if image_url.startswith("//"):
+            image_url = "https:" + image_url
+        return (price, image_url[:1000])
     except Exception as exc:
-        logger.warning("fetch_current_price failed for %s: %s", url, exc)
-        return None
+        logger.warning("fetch_price_and_image failed for %s: %s", url, exc)
+        return (None, "")
+
+
+def fetch_current_price(url: str) -> float | None:
+    """Prix actuel (compat) — délègue à fetch_price_and_image."""
+    return fetch_price_and_image(url)[0]
 
 
 def notify_discord(message: str) -> bool:

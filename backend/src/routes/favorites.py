@@ -312,9 +312,13 @@ def _refresh_one(session, fav: Favorite) -> dict[str, Any]:
     """Re-scrape le prix d'un favori et met à jour le suivi. Renvoie l'issue."""
     if not _can_refresh(fav):
         return {"id": fav.id, "status": "unsupported"}
-    from ..background import fetch_current_price  # import paresseux (playwright lourd)
+    from ..background import fetch_price_and_image  # import paresseux (playwright lourd)
 
-    new_price = fetch_current_price(fav.source_url)
+    new_price, image_url = fetch_price_and_image(fav.source_url)
+    # Rétro-remplit la vignette des favoris ajoutés avant la capture d'image.
+    if image_url and not (fav.image_url or "").strip():
+        fav.image_url = image_url[:1000]
+        session.add(fav)
     if new_price is None:
         return {"id": fav.id, "status": "unavailable"}
     old_price = fav.price
