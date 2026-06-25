@@ -6,6 +6,14 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.31.0] — 2026-06-25
+### Amélioré
+- **Pages Estimation et Arbitrage traduites** (formulaires, résultats, états vides).
+### Modifié
+- Le backend de l'app desktop redevient **purement local** (`127.0.0.1`). Pour
+  servir l'app Android sur le réseau local, utilise le nouveau logiciel séparé
+  **« Shopping Assistant Serveur »** (panneau de contrôle).
+
 ## [0.30.0] — 2026-06-24
 ### Amélioré
 - **Page Comptes traduite** : résumé, statistiques, tableaux (ROI par catégorie,

@@ -11,6 +11,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.31.0',
+    date: '2026-06-25',
+    improved: [
+      'Pages Estimation et Arbitrage entièrement traduites : formulaires, résultats, états vides et messages suivent la langue.',
+    ],
+  },
+  {
     version: '0.30.0',
     date: '2026-06-24',
     improved: [

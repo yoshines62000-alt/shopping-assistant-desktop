@@ -24,6 +24,7 @@ const PLATFORMS = [
 ];
 
 function EstimateContent() {
+  const { t } = useI18n();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('q') ?? '');
   const [price, setPrice] = useState(searchParams.get('price') ?? '');
@@ -52,11 +53,11 @@ function EstimateContent() {
       });
       setResult(data);
     } catch {
-      setError("Erreur pendant l'estimation. Vérifiez que le service est démarré.");
+      setError(t('est.error'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const q = searchParams.get('q');
@@ -98,9 +99,9 @@ function EstimateContent() {
         },
       });
       setAdded(true);
-      toast.success('Ajouté au stock');
+      toast.success(t('est.added'));
     } catch {
-      setError("Impossible d'ajouter au stock.");
+      setError(t('est.errAdd'));
     }
   };
 
@@ -113,7 +114,7 @@ function EstimateContent() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Objet à estimer (ex : AirPods Pro 2, PS5, Lego 75192...)"
+          placeholder={t('est.placeholder')}
           className="input"
           required
           maxLength={200}
@@ -122,7 +123,7 @@ function EstimateContent() {
           type="number"
           value={price}
           onChange={(e) => setPrice(e.target.value)}
-          placeholder="Prix d'achat (€)"
+          placeholder={t('est.purchasePrice')}
           className="input"
           min="0"
           step="0.01"
@@ -131,23 +132,23 @@ function EstimateContent() {
           value={platform}
           onChange={(e) => setPlatform(e.target.value)}
           className="input"
-          title="Plateforme de revente visée (frais appliqués)"
+          title={t('deals.platformTitle')}
         >
           {PLATFORMS.map((p) => (
             <option key={p.id} value={p.id}>
-              Vente : {p.label}
+              {t('est.salePrefix')} : {p.label}
             </option>
           ))}
         </select>
         <button type="submit" disabled={loading} className="btn-primary whitespace-nowrap">
-          <Coins className="h-4 w-4" /> Estimer
+          <Coins className="h-4 w-4" /> {t('est.estimate')}
         </button>
       </form>
 
       {loading && (
         <div className="card flex items-center justify-center gap-3 px-6 py-12 text-sm text-slate-400">
           <Loader2 className="h-4 w-4 animate-spin text-accent" />
-          Analyse des ventes réussies sur eBay... (~20 s)
+          {t('est.loading')}
         </div>
       )}
 
@@ -155,7 +156,7 @@ function EstimateContent() {
 
       {!loading && result?.barcode && (
         <p className="mb-3 text-sm text-slate-400">
-          Code-barres <span className="font-mono text-slate-300">{result.barcode}</span> →{' '}
+          {t('est.barcode')} <span className="font-mono text-slate-300">{result.barcode}</span> →{' '}
           <span className="text-accent">{result.query}</span>
         </p>
       )}
@@ -163,8 +164,8 @@ function EstimateContent() {
       {!loading && result && result.sampleCount === 0 && (
         <EmptyState
           icon={<SearchX className="h-6 w-6" />}
-          title="Aucune vente trouvée"
-          description={`Pas de vente réussie récente pour « ${result.query} ». Essayez un libellé plus court ou plus générique.`}
+          title={t('est.noSales')}
+          description={t('est.noSalesDesc')}
         />
       )}
 
@@ -172,28 +173,28 @@ function EstimateContent() {
         <div className="animate-rise space-y-4">
           <div className="grid gap-3 sm:grid-cols-3">
             <StatCard
-              label="Prix de vente médian"
+              label={t('est.medianPrice')}
               value={euro(result.median)}
-              sub={`fourchette ${euro(result.low ?? 0)} – ${euro(result.high ?? 0)}`}
+              sub={`${t('est.range')} ${euro(result.low ?? 0)} – ${euro(result.high ?? 0)}`}
               tone="accent"
             />
             <StatCard
-              label={`Net vendeur (frais ~${Math.round((result.feeRate ?? 0) * 100)} %)`}
+              label={`${t('est.netSeller')} (${t('est.fees')} ~${Math.round((result.feeRate ?? 0) * 100)} %)`}
               value={euro(result.netEstimate ?? 0)}
-              sub={`${result.sampleCount} ventes analysées`}
+              sub={`${result.sampleCount} ${t('est.salesAnalyzed')}`}
             />
             {result.estimatedProfit != null ? (
               <StatCard
-                label={`Bénéfice estimé (achat ${euro(result.purchasePrice ?? 0)})`}
+                label={`${t('est.estProfit')} (${t('est.buyWord')} ${euro(result.purchasePrice ?? 0)})`}
                 value={`${result.estimatedProfit >= 0 ? '+' : ''}${euro(result.estimatedProfit)}`}
-                sub={`marge ${result.marginPct ?? '—'} %`}
+                sub={`${t('est.margin')} ${result.marginPct ?? '—'} %`}
                 tone={result.estimatedProfit >= 0 ? 'positive' : 'negative'}
               />
             ) : (
               <StatCard
-                label="Bénéfice estimé"
+                label={t('est.estProfit')}
                 value="—"
-                sub="Indiquez un prix d'achat pour calculer la marge"
+                sub={t('est.enterPrice')}
               />
             )}
           </div>
@@ -202,14 +203,14 @@ function EstimateContent() {
             <div className="flex flex-wrap items-center gap-2 text-xs">
               {result.velocityLabel && (
                 <span className="badge-info">
-                  Se vend {result.velocityLabel}
-                  {result.salesPer30d != null ? ` · ~${result.salesPer30d}/mois` : ''}
-                  {result.avgDaysBetweenSales != null ? ` · 1 vente / ${result.avgDaysBetweenSales} j` : ''}
+                  {t('est.sellsIn')} {result.velocityLabel}
+                  {result.salesPer30d != null ? ` · ~${result.salesPer30d}${t('est.perMonth')}` : ''}
+                  {result.avgDaysBetweenSales != null ? ` · ${t('est.oneSalePer')} ${result.avgDaysBetweenSales} j` : ''}
                 </span>
               )}
               {result.confidenceLabel && (
                 <span className="badge-muted">
-                  Fiabilité {result.confidenceLabel}
+                  {t('est.reliability')} {result.confidenceLabel}
                   {result.confidenceScore != null ? ` (${result.confidenceScore}/100)` : ''}
                 </span>
               )}
@@ -219,18 +220,18 @@ function EstimateContent() {
           <div className="flex flex-wrap gap-2">
             <button onClick={addToStock} disabled={added} className="btn-primary text-sm">
               {added ? <Check className="h-4 w-4" /> : <PackagePlus className="h-4 w-4" />}
-              {added ? 'Ajouté au stock' : 'Ajouter au stock'}
+              {added ? t('est.added') : t('est.addToStock')}
             </button>
             {added && (
               <Link href="/stock" className="btn-secondary text-sm">
-                Voir mon stock
+                {t('est.viewStock')}
               </Link>
             )}
           </div>
 
           <div className="card-pad">
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Ventes réussies analysées — {result.source}
+              {t('est.soldAnalyzed')} — {result.source}
             </h2>
             <div className="space-y-0.5">
               {result.soldListings.map((l, i) => (

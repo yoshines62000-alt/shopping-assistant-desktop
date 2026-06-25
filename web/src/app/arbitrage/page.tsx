@@ -46,7 +46,7 @@ export default function ArbitragePage() {
       });
       setResult(data);
     } catch {
-      setError("Erreur pendant l'analyse. Vérifiez que le service est démarré.");
+      setError(t('arb.error'));
     } finally {
       setLoading(false);
     }
@@ -62,7 +62,7 @@ export default function ArbitragePage() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Produit à comparer entre plateformes (ex : airpods pro 2)"
+          placeholder={t('arb.placeholder')}
           className="input"
           required
           maxLength={200}
@@ -71,22 +71,22 @@ export default function ArbitragePage() {
           value={minMargin}
           onChange={(e) => setMinMargin(e.target.value)}
           className="input"
-          title="Marge minimale"
+          title={t('arb.minMargin')}
         >
-          <option value="10">Marge mini 10 %</option>
-          <option value="15">Marge mini 15 %</option>
-          <option value="25">Marge mini 25 %</option>
-          <option value="40">Marge mini 40 %</option>
+          <option value="10">{t('arb.minMarginN')} 10 %</option>
+          <option value="15">{t('arb.minMarginN')} 15 %</option>
+          <option value="25">{t('arb.minMarginN')} 25 %</option>
+          <option value="40">{t('arb.minMarginN')} 40 %</option>
         </select>
         <button type="submit" disabled={loading} className="btn-primary whitespace-nowrap">
-          <ArrowLeftRight className="h-4 w-4" /> Comparer
+          <ArrowLeftRight className="h-4 w-4" /> {t('arb.compare')}
         </button>
       </form>
 
       {loading && (
         <div className="card flex items-center justify-center gap-3 px-6 py-12 text-sm text-slate-400">
           <Loader2 className="h-4 w-4 animate-spin text-accent" />
-          Comparaison des plateformes... (~20 s)
+          {t('arb.loading')}
         </div>
       )}
 
@@ -95,16 +95,16 @@ export default function ArbitragePage() {
       {!loading && result && result.pairs.length === 0 && (
         <EmptyState
           icon={<SearchX className="h-6 w-6" />}
-          title="Aucun écart rentable"
-          description="Pas de même produit trouvé sur 2 plateformes avec une marge suffisante. Essayez un libellé plus précis (marque + modèle) ou baissez le seuil de marge."
+          title={t('arb.noProfit')}
+          description={t('arb.noProfitDesc')}
         />
       )}
 
       {!loading && result && result.pairs.length > 0 && (
         <div className="space-y-3">
           <p className="text-sm text-slate-400">
-            {result.pairs.length} opportunité{result.pairs.length > 1 ? 's' : ''}
-            {' · sources : '}
+            {result.pairs.length} {t('arb.opportunities')}
+            {` · ${t('arb.sources')} : `}
             {result.sources_queried.join(', ') || '—'}
           </p>
           {result.pairs.map((p, i) => (
@@ -117,6 +117,7 @@ export default function ArbitragePage() {
 }
 
 function ArbitrageCard({ pair, index = 0 }: { pair: ArbitragePair; index?: number }) {
+  const { t } = useI18n();
   return (
     <article
       className="card-pad card-hover animate-rise"
@@ -132,12 +133,12 @@ function ArbitrageCard({ pair, index = 0 }: { pair: ArbitragePair; index?: numbe
         </span>
       </div>
       <div className="grid gap-3 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
-        <OfferBox label="Acheter" offer={pair.buy} tone="buy" />
+        <OfferBox label={t('arb.buy')} offer={pair.buy} tone="buy" />
         <ArrowLeftRight className="mx-auto hidden h-4 w-4 shrink-0 text-slate-500 sm:block" />
-        <OfferBox label="Revendre" offer={pair.sell} tone="sell" />
+        <OfferBox label={t('arb.sell')} offer={pair.sell} tone="sell" />
       </div>
       <p className="mt-2 text-xs text-slate-500">
-        Marge nette après frais de revente (~{Math.round(pair.feeRate * 100)} %)
+        {t('arb.netMargin')} (~{Math.round(pair.feeRate * 100)} %)
       </p>
     </article>
   );
