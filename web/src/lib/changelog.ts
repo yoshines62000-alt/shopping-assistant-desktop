@@ -11,6 +11,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.30.0',
+    date: '2026-06-24',
+    improved: [
+      'Page Comptes traduite : résumé, statistiques, tableaux, dépenses et historique des ventes suivent la langue (la section fiscale micro-entrepreneur, propre à la France, reste en français).',
+    ],
+  },
+  {
     version: '0.29.0',
     date: '2026-06-24',
     improved: [

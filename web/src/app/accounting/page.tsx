@@ -64,11 +64,11 @@ export default function AccountingPage() {
       setFiscal(fiscalData);
       setError(null);
     } catch {
-      setError('Impossible de charger les comptes. Vérifiez que le service est démarré.');
+      setError(t('acc.errLoad'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   const addExpense = async (e: FormEvent) => {
     e.preventDefault();
@@ -81,13 +81,12 @@ export default function AccountingPage() {
       setExpenseAmount('');
       load();
     } catch {
-      setError("Impossible d'ajouter la dépense.");
+      setError(t('acc.errAddExpense'));
     }
   };
 
   const removeExpense = async (expense: Expense) => {
-    if (!window.confirm(`Supprimer la dépense « ${expense.label} » (${euro(expense.amount)}) ?`))
-      return;
+    if (!window.confirm(t('acc.confirmDelExpense'))) return;
     await apiFetch(`/expenses/${expense.id}`, { method: 'DELETE' }).catch(() => null);
     load();
   };
@@ -130,23 +129,13 @@ export default function AccountingPage() {
   }, [load]);
 
   const returnSale = async (sale: Sale) => {
-    if (
-      !window.confirm(
-        `Marquer la vente de « ${sale.itemName} » comme retournée ? La quantité revient en stock et la vente est exclue de la compta (mais conservée pour le taux de retour).`
-      )
-    )
-      return;
+    if (!window.confirm(t('acc.confirmReturn'))) return;
     await apiFetch(`/sales/${sale.id}/return`, { method: 'POST' }).catch(() => null);
     load();
   };
 
   const cancelSale = async (sale: Sale) => {
-    if (
-      !window.confirm(
-        `Annuler la vente de « ${sale.itemName} » (${euro(sale.total)}) ? La quantité revient en stock.`
-      )
-    )
-      return;
+    if (!window.confirm(t('acc.confirmCancel'))) return;
     await apiFetch(`/sales/${sale.id}`, { method: 'DELETE' }).catch(() => null);
     load();
   };
@@ -166,10 +155,10 @@ export default function AccountingPage() {
         summary && sales.length > 0 ? (
           <>
             <button onClick={exportSalesCSV} className="btn-secondary text-xs">
-              <Download className="h-4 w-4" /> Ventes CSV
+              <Download className="h-4 w-4" /> {t('acc.salesCsv')}
             </button>
             <button onClick={exportMonthlyCSV} className="btn-secondary text-xs">
-              <Download className="h-4 w-4" /> Bilan CSV
+              <Download className="h-4 w-4" /> {t('acc.balanceCsv')}
             </button>
           </>
         ) : undefined
@@ -177,7 +166,7 @@ export default function AccountingPage() {
     >
       <div className="space-y-6">
         {error && <ErrorBanner message={error} />}
-        {loading && <LoadingBlock label="Chargement des comptes..." />}
+        {loading && <LoadingBlock label={t('acc.loading')} />}
 
         {summary && (
           <>
@@ -190,7 +179,7 @@ export default function AccountingPage() {
               />
               <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_1.5fr] lg:items-center">
                 <div>
-                  <p className="section-title">Bénéfice net · total</p>
+                  <p className="section-title">{t('acc.netProfitTotal')}</p>
                   <p
                     className={`numeric mt-1 text-4xl font-bold tracking-tight ${summary.profitNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}
                   >
@@ -199,7 +188,7 @@ export default function AccountingPage() {
                   </p>
                   <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
                     <span>
-                      <span className="block text-xs text-slate-500">Chiffre d&apos;affaires</span>
+                      <span className="block text-xs text-slate-500">{t('acc.revenue')}</span>
                       <span className="numeric font-semibold text-slate-100">{euro(summary.revenueGross)}</span>
                     </span>
                     <span>
@@ -209,19 +198,19 @@ export default function AccountingPage() {
                       </span>
                     </span>
                     <span>
-                      <span className="block text-xs text-slate-500">Rotation</span>
+                      <span className="block text-xs text-slate-500">{t('acc.rotation')}</span>
                       <span className="numeric font-semibold text-slate-100">
                         {summary.avgDaysToSell != null ? `${summary.avgDaysToSell} j` : '—'}
                       </span>
                     </span>
                     <span>
-                      <span className="block text-xs text-slate-500">Ventes</span>
+                      <span className="block text-xs text-slate-500">{t('acc.sales')}</span>
                       <span className="numeric font-semibold text-slate-100">{summary.salesCount}</span>
                     </span>
                   </div>
                 </div>
                 <div>
-                  <p className="section-title mb-2">Bénéfice net par mois</p>
+                  <p className="section-title mb-2">{t('acc.netProfitPerMonth')}</p>
                   {summary.monthly.length >= 2 ? (
                     <BarChart
                       values={[...summary.monthly].reverse().map((m) => m.profitNet)}
@@ -232,7 +221,7 @@ export default function AccountingPage() {
                     />
                   ) : (
                     <p className="py-10 text-center text-sm text-slate-500">
-                      La tendance apparaîtra dès deux mois d&apos;activité.
+                      {t('acc.trendHint')}
                     </p>
                   )}
                 </div>
@@ -240,40 +229,40 @@ export default function AccountingPage() {
             </section>
 
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-              <StatCard label="Investi (total achats)" value={euro(summary.investedTotal)} />
+              <StatCard label={t('acc.invested')} value={euro(summary.investedTotal)} />
               <StatCard
-                label="Revenus de vente"
+                label={t('acc.saleRevenue')}
                 value={euro(summary.revenueGross)}
-                sub={`dont frais ${euro(summary.feesTotal)}`}
+                sub={`${t('acc.ofWhichFees')} ${euro(summary.feesTotal)}`}
                 tone="accent"
               />
               <StatCard
-                label="Bénéfice net"
+                label={t('acc.netProfit')}
                 value={`${summary.profitNet >= 0 ? '+' : ''}${euro(summary.profitNet)}`}
-                sub={`${summary.salesCount} vente(s) · ${euro(summary.expensesTotal)} de dépenses`}
+                sub={`${summary.salesCount} ${t('acc.salesUnit')} · ${euro(summary.expensesTotal)} ${t('acc.ofExpenses')}`}
                 tone={summary.profitNet >= 0 ? 'positive' : 'negative'}
               />
               <StatCard
-                label="Stock restant"
+                label={t('acc.stockRemaining')}
                 value={euro(summary.stockValue)}
-                sub={`${summary.itemsInStock} exemplaire(s)${summary.stockPotentialNet > 0 ? ` · potentiel ~${euro(summary.stockPotentialNet)}` : ''}`}
+                sub={`${summary.itemsInStock} ${t('acc.unitsWord')}${summary.stockPotentialNet > 0 ? ` · ${t('acc.potential')} ~${euro(summary.stockPotentialNet)}` : ''}`}
               />
             </div>
 
             {(summary.roiPct != null || summary.topProducts.length > 0) && (
               <div className="grid gap-3 sm:grid-cols-3">
                 <StatCard
-                  label="ROI (marge sur coût vendu)"
+                  label={t('acc.roiMargin')}
                   value={summary.roiPct != null ? `${summary.roiPct} %` : '—'}
                   tone="accent"
                 />
                 <StatCard
-                  label="Rotation moyenne"
+                  label={t('acc.avgRotation')}
                   value={summary.avgDaysToSell != null ? `${summary.avgDaysToSell} j` : '—'}
-                  sub="entre achat et vente"
+                  sub={t('acc.betweenBuySell')}
                 />
                 <div className="card-pad">
-                  <p className="mb-2 text-xs text-slate-500">Top produits (bénéfice)</p>
+                  <p className="mb-2 text-xs text-slate-500">{t('acc.topProducts')}</p>
                   {summary.topProducts.length === 0 ? (
                     <p className="text-sm text-slate-500">—</p>
                   ) : (
@@ -338,16 +327,16 @@ export default function AccountingPage() {
 
             {summary.byCategory.filter((c) => c.salesCount > 0 || c.stockValue > 0).length > 0 && (
               <div className="card-pad">
-                <h2 className="section-title mb-3">ROI par catégorie</h2>
+                <h2 className="section-title mb-3">{t('acc.roiByCategory')}</h2>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-xs text-slate-500">
-                        <th className="py-1 text-left font-medium">Catégorie</th>
-                        <th className="py-1 text-right font-medium">Ventes</th>
-                        <th className="py-1 text-right font-medium">Bénéfice</th>
+                        <th className="py-1 text-left font-medium">{t('acc.category')}</th>
+                        <th className="py-1 text-right font-medium">{t('acc.sales')}</th>
+                        <th className="py-1 text-right font-medium">{t('acc.profit')}</th>
                         <th className="py-1 text-right font-medium">ROI</th>
-                        <th className="py-1 text-right font-medium">Stock</th>
+                        <th className="py-1 text-right font-medium">{t('acc.stock')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -378,19 +367,19 @@ export default function AccountingPage() {
             {summary.monthly.length > 0 && (
               <div className="card-pad">
                 <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Détail mensuel
+                  {t('acc.monthlyDetail')}
                 </h2>
                 <div className="overflow-x-auto">
                   <table className="table-base">
                     <thead>
                       <tr>
-                        <th>Mois</th>
-                        <th>Ventes</th>
-                        <th>Chiffre d&apos;affaires</th>
-                        <th>Frais</th>
-                        <th>Coût d&apos;achat</th>
-                        <th>Dépenses</th>
-                        <th>Bénéfice net</th>
+                        <th>{t('acc.month')}</th>
+                        <th>{t('acc.sales')}</th>
+                        <th>{t('acc.revenue')}</th>
+                        <th>{t('acc.fees')}</th>
+                        <th>{t('acc.purchaseCost')}</th>
+                        <th>{t('acc.expenses')}</th>
+                        <th>{t('acc.netProfit')}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -418,13 +407,13 @@ export default function AccountingPage() {
 
             <div className="card-pad">
               <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Dépenses annexes
+                {t('acc.miscExpenses')}
               </h2>
               <form onSubmit={addExpense} className="mb-3 grid gap-2 sm:grid-cols-[1fr_140px_160px_auto]">
                 <input
                   value={expenseLabel}
                   onChange={(e) => setExpenseLabel(e.target.value)}
-                  placeholder="Libellé (ex : cartons, essence...)"
+                  placeholder={t('acc.expLabel')}
                   className="input"
                   required
                   maxLength={300}
@@ -433,7 +422,7 @@ export default function AccountingPage() {
                   type="number"
                   value={expenseAmount}
                   onChange={(e) => setExpenseAmount(e.target.value)}
-                  placeholder="Montant (€)"
+                  placeholder={t('acc.expAmount')}
                   className="input"
                   min="0.01"
                   step="0.01"
@@ -444,18 +433,18 @@ export default function AccountingPage() {
                   onChange={(e) => setExpenseCategory(e.target.value)}
                   className="input"
                 >
-                  <option value="emballage">Emballage</option>
-                  <option value="transport">Transport</option>
-                  <option value="abonnement">Abonnement</option>
-                  <option value="autre">Autre</option>
+                  <option value="emballage">{t('acc.expPackaging')}</option>
+                  <option value="transport">{t('acc.expTransport')}</option>
+                  <option value="abonnement">{t('acc.expSubscription')}</option>
+                  <option value="autre">{t('acc.expOther')}</option>
                 </select>
                 <button type="submit" className="btn-primary">
-                  <Plus className="h-4 w-4" /> Ajouter
+                  <Plus className="h-4 w-4" /> {t('common.add')}
                 </button>
               </form>
               {expenses.length === 0 ? (
                 <p className="px-1 text-sm text-slate-500">
-                  Aucune dépense enregistrée — elles sont déduites du bénéfice net.
+                  {t('acc.noExpenses')}
                 </p>
               ) : (
                 <div className="space-y-0.5">
@@ -477,7 +466,7 @@ export default function AccountingPage() {
                         <button
                           onClick={() => removeExpense(exp)}
                           className="btn-ghost !p-1.5 hover:!text-rose-300"
-                          title="Supprimer"
+                          title={t('stock.delete')}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -491,10 +480,10 @@ export default function AccountingPage() {
             <div className="card-pad">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <h2 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Historique des ventes
+                  {t('acc.salesHistory')}
                   {summary.returnedCount > 0 && summary.returnRate != null && (
                     <span className="badge bg-amber-500/15 text-amber-300 normal-case">
-                      <RotateCcw className="h-3 w-3" /> {summary.returnedCount} retour(s) · {summary.returnRate} %
+                      <RotateCcw className="h-3 w-3" /> {summary.returnedCount} {t('acc.returns')} · {summary.returnRate} %
                     </span>
                   )}
                 </h2>
@@ -503,18 +492,18 @@ export default function AccountingPage() {
                     <input
                       value={salesQuery}
                       onChange={(e) => setSalesQuery(e.target.value)}
-                      placeholder="Rechercher une vente…"
+                      placeholder={t('acc.searchSale')}
                       className="input !w-44 !py-1 !text-xs"
-                      aria-label="Rechercher dans les ventes"
+                      aria-label={t('acc.searchSale')}
                     />
                     {salePlatforms.length > 1 && (
                       <select
                         value={salesPlatform}
                         onChange={(e) => setSalesPlatform(e.target.value)}
                         className="input !w-auto !py-1 !text-xs"
-                        aria-label="Filtrer par plateforme"
+                        aria-label={t('acc.allPlatforms')}
                       >
-                        <option value="all">Toutes les plateformes</option>
+                        <option value="all">{t('acc.allPlatforms')}</option>
                         {salePlatforms.map((p) => (
                           <option key={p} value={p}>
                             {p}
@@ -523,7 +512,7 @@ export default function AccountingPage() {
                       </select>
                     )}
                     <span className="whitespace-nowrap text-slate-500">
-                      {filteredSales.length} vente(s) ·{' '}
+                      {filteredSales.length} {t('acc.salesUnit')} ·{' '}
                       <span className="font-semibold text-accent">{euro(filteredTotal)}</span>
                     </span>
                   </div>
@@ -532,16 +521,16 @@ export default function AccountingPage() {
               {sales.length === 0 ? (
                 <EmptyState
                   icon={<Wallet className="h-6 w-6" />}
-                  title="Aucune vente enregistrée"
-                  description="Vendez un objet depuis votre stock pour voir vos bénéfices ici."
+                  title={t('acc.emptyTitle')}
+                  description={t('acc.emptyDesc')}
                   action={
                     <Link href="/stock" className="btn-secondary text-sm">
-                      <Package className="h-4 w-4" /> Aller au stock
+                      <Package className="h-4 w-4" /> {t('acc.goToStock')}
                     </Link>
                   }
                 />
               ) : filteredSales.length === 0 ? (
-                <p className="px-1 text-sm text-slate-500">Aucune vente pour cette plateforme.</p>
+                <p className="px-1 text-sm text-slate-500">{t('acc.noSalesPlatform')}</p>
               ) : (
                 <div className="space-y-0.5">
                   {filteredSales.map((s) => (
@@ -552,11 +541,11 @@ export default function AccountingPage() {
                       <div className="min-w-0">
                         <p className={`truncate text-sm ${s.returned ? 'text-slate-500 line-through' : 'text-slate-200'}`}>
                           {s.itemName}
-                          {s.returned && <span className="ml-2 badge-muted no-underline">Retournée</span>}
+                          {s.returned && <span className="ml-2 badge-muted no-underline">{t('acc.returned')}</span>}
                         </p>
                         <p className="text-xs text-slate-500">
                           {dateFr(s.saleDate)} &middot; {s.quantity} × {euro(s.unitPrice)}
-                          {s.fees > 0 && <> &middot; frais {euro(s.fees)}</>}
+                          {s.fees > 0 && <> &middot; {t('acc.feesLower')} {euro(s.fees)}</>}
                           {s.platform && <> &middot; {s.platform}</>}
                         </p>
                       </div>
@@ -567,7 +556,7 @@ export default function AccountingPage() {
                         <button
                           onClick={() => printSaleInvoice(s)}
                           className="btn-ghost"
-                          title="Bon de vente / facture (PDF)"
+                          title={t('acc.invoiceTitle')}
                         >
                           <FileText className="h-4 w-4" />
                         </button>
@@ -575,7 +564,7 @@ export default function AccountingPage() {
                           <button
                             onClick={() => returnSale(s)}
                             className="btn-ghost hover:!text-amber-300"
-                            title="Marquer comme retournée (exclue de la compta)"
+                            title={t('acc.markReturned')}
                           >
                             <RotateCcw className="h-4 w-4" />
                           </button>
@@ -583,7 +572,7 @@ export default function AccountingPage() {
                         <button
                           onClick={() => cancelSale(s)}
                           className="btn-ghost hover:!text-rose-300"
-                          title="Annuler cette vente (supprime l'enregistrement)"
+                          title={t('acc.cancelSaleTitle')}
                         >
                           <Undo2 className="h-4 w-4" />
                         </button>

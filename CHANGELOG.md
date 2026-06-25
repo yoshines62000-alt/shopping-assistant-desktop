@@ -6,6 +6,12 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.30.0] — 2026-06-24
+### Amélioré
+- **Page Comptes traduite** : résumé, statistiques, tableaux (ROI par catégorie,
+  détail mensuel), dépenses et historique des ventes suivent la langue. La section
+  fiscale (micro-entrepreneur / URSSAF / TVA), propre à la France, reste en français.
+
 ## [0.29.0] — 2026-06-24
 ### Amélioré
 - **Page Stock entièrement traduite** : formulaire, filtres, statuts, statistiques,
