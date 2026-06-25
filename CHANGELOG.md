@@ -6,6 +6,11 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.29.0] — 2026-06-24
+### Amélioré
+- **Page Stock entièrement traduite** : formulaire, filtres, statuts, statistiques,
+  cartes d'objets (vente, annonce, photos) et messages suivent la langue choisie.
+
 ## [0.28.0] — 2026-06-24
 ### Amélioré
 - **Pages Recherche et Affaires entièrement traduites** : formulaire de recherche

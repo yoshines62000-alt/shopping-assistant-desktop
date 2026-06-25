@@ -20,6 +20,7 @@ import ContextMenu, { type ContextMenuItem } from '@/components/ui/ContextMenu';
 import { printStockLabel } from '@/lib/label';
 import { ageDays, isDormant, computeReprice } from '@/lib/resale';
 import { euro, dateFr } from '@/lib/format';
+import { useI18n } from '@/lib/i18n';
 
 export const STATUS_LABELS: Record<StockStatus, string> = {
   in_stock: 'En stock',
@@ -92,27 +93,30 @@ export default function StockItemCard({
   onRemove,
   onReload,
 }: StockItemCardProps) {
+  const { t } = useI18n();
+  const statusLabel = (s: StockStatus) =>
+    t(s === 'in_stock' ? 'stock.statusInStock' : s === 'listed' ? 'stock.statusListed' : 'stock.statusSold');
   const unitNet = item.estimatedResale ? item.estimatedResale * (1 - feeRate) : null;
   const unitProfit = unitNet !== null ? unitNet - item.purchasePrice : null;
   const hint = repriceHint(item);
 
   const menuItems: ContextMenuItem[] = [
     ...(item.remaining > 0
-      ? [{ label: 'Vendre', icon: <TrendingUp className="h-4 w-4" />, onClick: () => setSellingId(item.id) } as ContextMenuItem]
+      ? [{ label: t('stock.sell'), icon: <TrendingUp className="h-4 w-4" />, onClick: () => setSellingId(item.id) } as ContextMenuItem]
       : []),
     ...(item.remaining > 0 && item.status === 'in_stock'
-      ? [{ label: 'Marquer en vente', icon: <Tag className="h-4 w-4" />, onClick: () => onSetStatus(item, 'listed') } as ContextMenuItem]
+      ? [{ label: t('stock.markListed'), icon: <Tag className="h-4 w-4" />, onClick: () => onSetStatus(item, 'listed') } as ContextMenuItem]
       : []),
     ...(item.status === 'listed'
-      ? [{ label: 'Remettre en stock', icon: <Tag className="h-4 w-4" />, onClick: () => onSetStatus(item, 'in_stock') } as ContextMenuItem]
+      ? [{ label: t('stock.backToStock'), icon: <Tag className="h-4 w-4" />, onClick: () => onSetStatus(item, 'in_stock') } as ContextMenuItem]
       : []),
-    { label: 'Ré-estimer la revente', icon: <RefreshCw className="h-4 w-4" />, onClick: () => onReestimate(item) },
-    { label: 'Générer une annonce', icon: <Megaphone className="h-4 w-4" />, onClick: () => setListingId(item.id) },
-    { label: 'Gérer les photos', icon: <ImageIcon className="h-4 w-4" />, onClick: () => setPhotosId(item.id) },
+    { label: t('stock.reestimate'), icon: <RefreshCw className="h-4 w-4" />, onClick: () => onReestimate(item) },
+    { label: t('stock.genListing'), icon: <Megaphone className="h-4 w-4" />, onClick: () => setListingId(item.id) },
+    { label: t('stock.managePhotos'), icon: <ImageIcon className="h-4 w-4" />, onClick: () => setPhotosId(item.id) },
     ...(item.sourceUrl
-      ? [{ label: "Ouvrir l'annonce d'achat", icon: <ExternalLink className="h-4 w-4" />, onClick: () => window.open(item.sourceUrl, '_blank', 'noopener'), separatorBefore: true } as ContextMenuItem]
+      ? [{ label: t('stock.openPurchase'), icon: <ExternalLink className="h-4 w-4" />, onClick: () => window.open(item.sourceUrl, '_blank', 'noopener'), separatorBefore: true } as ContextMenuItem]
       : []),
-    { label: 'Supprimer', icon: <Trash2 className="h-4 w-4" />, onClick: () => onRemove(item), danger: true, separatorBefore: !item.sourceUrl },
+    { label: t('stock.delete'), icon: <Trash2 className="h-4 w-4" />, onClick: () => onRemove(item), danger: true, separatorBefore: !item.sourceUrl },
   ];
 
   return (
@@ -132,14 +136,14 @@ export default function StockItemCard({
                   {item.sku}
                 </span>
               )}
-              <span className={STATUS_BADGES[item.status]}>{STATUS_LABELS[item.status]}</span>
+              <span className={STATUS_BADGES[item.status]}>{statusLabel(item.status)}</span>
               {item.category && <span className="badge-muted">{item.category}</span>}
               {isDormant(item) && (
                 <span
                   className="badge bg-amber-500/15 text-amber-300"
                   title={`En stock depuis ${ageDays(item.purchaseDate)} jours`}
                 >
-                  <Clock className="h-3 w-3" /> Dormant · {ageDays(item.purchaseDate)} j
+                  <Clock className="h-3 w-3" /> {t('stock.dormantBadge')} · {ageDays(item.purchaseDate)} {t('stock.days')}
                 </span>
               )}
               {hint && (
@@ -149,18 +153,18 @@ export default function StockItemCard({
               )}
             </div>
             <p className="text-sm text-slate-400">
-              Achat {euro(item.purchasePrice)}
+              {t('stock.purchase')} {euro(item.purchasePrice)}
               {item.quantity > 1 && (
                 <>
                   {' '}
-                  &middot; reste {item.remaining}/{item.quantity}
+                  &middot; {t('stock.remaining')} {item.remaining}/{item.quantity}
                 </>
               )}{' '}
               &middot; {dateFr(item.purchaseDate)}
             </p>
             {item.estimatedResale != null && (
               <p className="mt-1 text-sm">
-                <span className="text-accent">Revente estimée {euro(item.estimatedResale)}</span>
+                <span className="text-accent">{t('stock.estResaleLabel')} {euro(item.estimatedResale)}</span>
                 {item.previousEstimate != null && item.previousEstimate !== item.estimatedResale && (
                   <span
                     className={item.estimatedResale > item.previousEstimate ? 'text-emerald-400' : 'text-rose-400'}
@@ -174,11 +178,11 @@ export default function StockItemCard({
                   <span className={unitProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}>
                     {' '}
                     &middot; {unitProfit >= 0 ? '+' : ''}
-                    {euro(unitProfit)} net/unité
+                    {euro(unitProfit)} {t('stock.netPerUnit')}
                   </span>
                 )}
                 {item.estimatedAt && (
-                  <span className="text-xs text-slate-500"> &middot; estimé le {dateFr(item.estimatedAt)}</span>
+                  <span className="text-xs text-slate-500"> &middot; {t('stock.estimatedOn')} {dateFr(item.estimatedAt)}</span>
                 )}
               </p>
             )}
@@ -222,17 +226,17 @@ export default function StockItemCard({
                 }}
                 className="btn-primary !px-3 !py-1.5 text-xs"
               >
-                <TrendingUp className="h-4 w-4" /> Vendre
+                <TrendingUp className="h-4 w-4" /> {t('stock.sell')}
               </button>
             )}
             {item.status === 'in_stock' && (
               <button onClick={() => onSetStatus(item, 'listed')} className="btn-secondary !px-3 !py-1.5 text-xs">
-                <Tag className="h-4 w-4" /> Marquer en vente
+                <Tag className="h-4 w-4" /> {t('stock.markListed')}
               </button>
             )}
             {item.status === 'listed' && (
               <button onClick={() => onSetStatus(item, 'in_stock')} className="btn-secondary !px-3 !py-1.5 text-xs">
-                Remettre en stock
+                {t('stock.backToStock')}
               </button>
             )}
             <button
@@ -240,7 +244,7 @@ export default function StockItemCard({
               className="btn-secondary !px-3 !py-1.5 text-xs"
               title="Générer un brouillon d'annonce eBay / Vinted / Leboncoin"
             >
-              <Megaphone className="h-4 w-4" /> Annonce
+              <Megaphone className="h-4 w-4" /> {t('stock.listing')}
             </button>
             <button
               onClick={() => setPhotosId(photosId === item.id ? null : item.id)}
@@ -248,7 +252,7 @@ export default function StockItemCard({
               title="Photos de l'objet"
             >
               <ImageIcon className="h-4 w-4" />
-              {item.photos && item.photos.length > 0 ? ` ${item.photos.length}` : ' Photos'}
+              {item.photos && item.photos.length > 0 ? ` ${item.photos.length}` : ` ${t('stock.photos')}`}
             </button>
           </div>
         )}
@@ -278,7 +282,7 @@ export default function StockItemCard({
               value={sellForm.unitPrice}
               onChange={(e) => setSellForm({ ...sellForm, unitPrice: e.target.value })}
               className="input"
-              placeholder="Prix unitaire (€)"
+              placeholder={t('stock.fUnitPriceSell')}
               min="0"
               step="0.01"
               required
@@ -288,7 +292,7 @@ export default function StockItemCard({
               value={sellForm.fees}
               onChange={(e) => setSellForm({ ...sellForm, fees: e.target.value })}
               className="input"
-              placeholder="Frais (€)"
+              placeholder={t('stock.fFees')}
               min="0"
               step="0.01"
             />
@@ -296,7 +300,7 @@ export default function StockItemCard({
               value={sellForm.platform}
               onChange={(e) => setSellForm({ ...sellForm, platform: e.target.value })}
               className="input"
-              placeholder="Plateforme"
+              placeholder={t('stock.fPlatform')}
             />
             <div className="flex gap-1">
               <button type="submit" className="btn-primary flex-1 !px-3 !py-1.5 text-xs">

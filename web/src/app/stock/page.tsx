@@ -66,11 +66,11 @@ export default function StockPage() {
       setItems(data.items ?? []);
       setError(null);
     } catch {
-      setError('Impossible de charger le stock. Vérifiez que le service est démarré.');
+      setError(t('stock.errLoad'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     loadSettings();
@@ -104,9 +104,9 @@ export default function StockPage() {
       setNotes('');
       setShowForm(false);
       load();
-      toast.success('Objet ajouté au stock');
+      toast.success(t('stock.added'));
     } catch {
-      setError("Impossible d'ajouter l'objet.");
+      setError(t('stock.errAdd'));
     }
   };
 
@@ -124,9 +124,9 @@ export default function StockPage() {
       });
       setSellingId(null);
       load();
-      toast.success('Vente enregistrée');
+      toast.success(t('stock.saleRecorded'));
     } catch {
-      setError('Vente impossible (quantité supérieure au stock restant ?).');
+      setError(t('stock.errSale'));
     }
   };
 
@@ -150,14 +150,14 @@ export default function StockPage() {
         load();
       }
     } catch {
-      setError("L'estimation a échoué.");
+      setError(t('stock.errEstimate'));
     } finally {
       setEstimatingId(null);
     }
   };
 
   const remove = async (item: StockItem) => {
-    if (!window.confirm(`Supprimer « ${item.name} » et ses ventes associées ?`)) return;
+    if (!window.confirm(t('stock.confirmDelete'))) return;
     await apiFetch(`/stock/${item.id}`, { method: 'DELETE' }).catch(() => null);
     load();
   };
@@ -198,10 +198,10 @@ export default function StockPage() {
           },
         }).then(() => ok++).catch(() => null);
       }
-      toast.success(`${ok} objet(s) importé(s)`);
+      toast.success(`${ok} ${t('stock.imported')}`);
       load();
     } catch {
-      setError('Import CSV impossible (fichier invalide ?).');
+      setError(t('stock.errImport'));
     } finally {
       if (csvInput.current) csvInput.current.value = '';
     }
@@ -233,22 +233,22 @@ export default function StockPage() {
     <PageShell
       title={t('page.stock.title', 'Mon stock')}
       icon={<Package className="h-6 w-6" />}
-      subtitle={`${totalRemaining} exemplaire(s) · valeur d'achat ${euro(stockValue)}${potentialNet > 0 ? ` · potentiel net ~${euro(potentialNet)}` : ''}`}
+      subtitle={`${totalRemaining} ${t('stock.statUnits')} · ${t('stock.statPurchaseValue')} ${euro(stockValue)}${potentialNet > 0 ? ` · ${t('stock.statPotentialNet')} ~${euro(potentialNet)}` : ''}`}
       actions={
         <button onClick={() => setShowForm(!showForm)} className="btn-primary text-sm">
-          <Plus className="h-4 w-4" /> Ajouter un objet
+          <Plus className="h-4 w-4" /> {t('stock.addItem')}
         </button>
       }
     >
       <div className="space-y-4">
         {showForm && (
           <form onSubmit={addItem} className="card-pad space-y-3">
-            <h2 className="text-sm font-semibold text-slate-100">Nouvel objet</h2>
+            <h2 className="text-sm font-semibold text-slate-100">{t('stock.newItem')}</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Nom de l'objet *"
+                placeholder={t('stock.fName')}
                 className="input sm:col-span-2"
                 required
                 maxLength={300}
@@ -257,7 +257,7 @@ export default function StockPage() {
                 type="number"
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                placeholder="Prix d'achat unitaire (€) *"
+                placeholder={t('stock.fUnitPrice')}
                 className="input"
                 min="0"
                 step="0.01"
@@ -267,7 +267,7 @@ export default function StockPage() {
                 type="number"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
-                placeholder="Quantité"
+                placeholder={t('stock.fQuantity')}
                 className="input"
                 min="1"
                 step="1"
@@ -276,7 +276,7 @@ export default function StockPage() {
                 type="number"
                 value={estimated}
                 onChange={(e) => setEstimated(e.target.value)}
-                placeholder="Estimation revente unitaire (€)"
+                placeholder={t('stock.fEstResale')}
                 className="input"
                 min="0"
                 step="0.01"
@@ -284,7 +284,7 @@ export default function StockPage() {
               <input
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                placeholder="Catégorie (ex : Sneakers, Lego, Tech...)"
+                placeholder={t('stock.fCategory')}
                 className="input"
                 maxLength={100}
                 list="stock-categories"
@@ -297,24 +297,24 @@ export default function StockPage() {
               <input
                 value={sourceUrl}
                 onChange={(e) => setSourceUrl(e.target.value)}
-                placeholder="URL de l'annonce d'achat"
+                placeholder={t('stock.fPurchaseUrl')}
                 className="input"
                 type="url"
               />
               <input
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Notes (état, taille...)"
+                placeholder={t('stock.fNotes')}
                 className="input sm:col-span-2"
                 maxLength={2000}
               />
             </div>
             <div className="flex gap-2">
               <button type="submit" className="btn-primary">
-                Enregistrer
+                {t('common.save')}
               </button>
               <button type="button" onClick={() => setShowForm(false)} className="btn-secondary">
-                Annuler
+                {t('common.cancel')}
               </button>
             </div>
           </form>
@@ -328,8 +328,8 @@ export default function StockPage() {
               className={`${filter === f ? 'btn-primary' : 'btn-secondary'} !px-3 !py-1 text-xs`}
             >
               {f === 'all'
-                ? `Tous (${items.length})`
-                : `${STATUS_LABELS[f]} (${items.filter((i) => i.status === f).length})`}
+                ? `${t('stock.all')} (${items.length})`
+                : `${t(f === 'in_stock' ? 'stock.statusInStock' : f === 'listed' ? 'stock.statusListed' : 'stock.statusSold')} (${items.filter((i) => i.status === f).length})`}
             </button>
           ))}
           <span className="mx-1 hidden h-4 w-px bg-line sm:inline-block" />
@@ -337,16 +337,16 @@ export default function StockPage() {
             onClick={exportCSV}
             disabled={items.length === 0}
             className="btn-secondary !px-3 !py-1 text-xs"
-            title="Exporter le stock en CSV"
+            title={t('stock.exportTitle')}
           >
             <Download className="h-3.5 w-3.5" /> CSV
           </button>
           <button
             onClick={() => csvInput.current?.click()}
             className="btn-secondary !px-3 !py-1 text-xs"
-            title="Importer des objets depuis un CSV"
+            title={t('stock.importTitle')}
           >
-            <Upload className="h-3.5 w-3.5" /> Importer
+            <Upload className="h-3.5 w-3.5" /> {t('stock.import')}
           </button>
           <input
             ref={csvInput}
@@ -367,7 +367,7 @@ export default function StockPage() {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Rechercher un objet (nom, SKU)…"
+                placeholder={t('stock.searchPlaceholder')}
                 className="input !pl-9"
               />
             </div>
@@ -375,29 +375,29 @@ export default function StockPage() {
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
               className="input !w-auto"
-              title="Trier"
+              title={t('stock.sort')}
             >
-              <option value="recent">Plus récents</option>
-              <option value="value">Valeur (achat)</option>
-              <option value="dormant">Plus anciens</option>
-              <option value="name">Nom (A→Z)</option>
+              <option value="recent">{t('stock.sortRecent')}</option>
+              <option value="value">{t('stock.sortValue')}</option>
+              <option value="dormant">{t('stock.sortOldest')}</option>
+              <option value="name">{t('stock.sortName')}</option>
             </select>
           </div>
         )}
 
         {!loading && items.length > 0 && (
           <div className="animate-fade-in grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatCard label="Exemplaires" value={String(totalRemaining)} />
-            <StatCard label="Valeur d'achat" value={euro(stockValue)} />
+            <StatCard label={t('stock.statUnits')} value={String(totalRemaining)} />
+            <StatCard label={t('stock.statPurchaseValue')} value={euro(stockValue)} />
             <StatCard
-              label="Potentiel net"
+              label={t('stock.statPotentialNet')}
               value={potentialNet > 0 ? `~${euro(potentialNet)}` : '—'}
               tone="accent"
             />
             <StatCard
-              label="Dormants"
+              label={t('stock.statDormant')}
               value={String(dormantItems.length)}
-              sub={dormantValue > 0 ? `${euro(dormantValue)} immobilisé(s)` : 'aucun'}
+              sub={dormantValue > 0 ? `${euro(dormantValue)} ${t('stock.immobilized')}` : t('stock.none')}
               tone={dormantItems.length > 0 ? 'negative' : 'default'}
             />
           </div>
@@ -407,28 +407,24 @@ export default function StockPage() {
           <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
             <Clock className="h-4 w-4 shrink-0" />
             <span>
-              {dormantItems.length} objet(s) dormant(s) (&gt; {DORMANT_DAYS} j en stock) ·{' '}
-              {euro(dormantValue)} immobilisé(s) — pense à les solder.
+              {dormantItems.length} {t('stock.dormantWord')} (&gt; {DORMANT_DAYS} {t('stock.days')}) ·{' '}
+              {euro(dormantValue)} {t('stock.immobilized')} — {t('stock.sellThem')}.
             </span>
           </div>
         )}
 
         {error && <ErrorBanner message={error} />}
-        {loading && <LoadingBlock label="Chargement du stock..." />}
+        {loading && <LoadingBlock label={t('stock.loading')} />}
 
         {!loading && filtered.length === 0 && !error && (
           <EmptyState
             icon={<Package className="h-6 w-6" />}
-            title={items.length === 0 ? 'Aucun objet en stock' : 'Aucun objet pour ce filtre'}
-            description={
-              items.length === 0
-                ? 'Ajoutez vos achats pour suivre vos reventes et vos bénéfices.'
-                : undefined
-            }
+            title={items.length === 0 ? t('stock.emptyAll') : t('stock.emptyFilter')}
+            description={items.length === 0 ? t('stock.emptyDesc') : undefined}
             action={
               items.length === 0 ? (
                 <Link href="/estimate" className="btn-secondary text-sm">
-                  <Coins className="h-4 w-4" /> Estimer un objet avant achat
+                  <Coins className="h-4 w-4" /> {t('stock.estimateBeforeBuy')}
                 </Link>
               ) : undefined
             }
