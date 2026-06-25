@@ -6,6 +6,12 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.28.0] — 2026-06-24
+### Amélioré
+- **Pages Recherche et Affaires entièrement traduites** : formulaire de recherche
+  (placeholder, filtres, priorité…), tri, pagination, états vides et messages
+  suivent la langue choisie.
+
 ## [0.27.0] — 2026-06-24
 ### Amélioré
 - **Résultats de recherche traduits** : le tri, le menu clic-droit, les libellés

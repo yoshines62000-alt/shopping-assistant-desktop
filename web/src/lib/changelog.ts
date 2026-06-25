@@ -11,6 +11,13 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '0.28.0',
+    date: '2026-06-24',
+    improved: [
+      'Pages Recherche et Affaires entièrement traduites : formulaire, filtres, tri, pagination, états vides et messages suivent la langue.',
+    ],
+  },
+  {
     version: '0.27.0',
     date: '2026-06-24',
     improved: [

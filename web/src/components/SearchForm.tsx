@@ -7,6 +7,7 @@ import type { IntentParams } from '@shopping-assistant/types';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { useAppStore } from '@/lib/store';
+import { useI18n } from '@/lib/i18n';
 
 // SpeechRecognition types for TypeScript
 interface SpeechRecognitionEvent {
@@ -68,6 +69,7 @@ const POPULAR_SUGGESTIONS = [
 ];
 
 export default function SearchForm({ onSearch, initialQuery = '', initialFilters }: SearchFormProps) {
+  const { t } = useI18n();
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState(initialQuery);
   const [showFilters, setShowFilters] = useState(false);
@@ -123,23 +125,23 @@ export default function SearchForm({ onSearch, initialQuery = '', initialFilters
     const minRatingValue = parseOptionalNumber(minRating);
 
     if (minPriceEur !== null && minPriceEur < 0) {
-      toast.error('Le prix minimum doit être positif');
+      toast.error(t('toast.priceMinPositive'));
       return null;
     }
     if (maxPriceEur !== null && maxPriceEur < 0) {
-      toast.error('Le prix maximum doit être positif');
+      toast.error(t('toast.priceMaxPositive'));
       return null;
     }
     if (minPriceEur !== null && maxPriceEur !== null && minPriceEur > maxPriceEur) {
-      toast.error('Le prix minimum ne peut pas dépasser le prix maximum');
+      toast.error(t('toast.priceMinMax'));
       return null;
     }
     if (maxDeliveryDays !== null && maxDeliveryDays < 1) {
-      toast.error('Le délai maximum doit être supérieur à 0');
+      toast.error(t('toast.delivPositive'));
       return null;
     }
     if (minRatingValue !== null && (minRatingValue < 0 || minRatingValue > 5)) {
-      toast.error('La note minimale doit être comprise entre 0 et 5');
+      toast.error(t('toast.ratingRange'));
       return null;
     }
 
@@ -149,7 +151,7 @@ export default function SearchForm({ onSearch, initialQuery = '', initialFilters
       maxDeliveryDays,
       minRating: minRatingValue,
     };
-  }, [maxDays, maxPrice, minPrice, minRating]);
+  }, [maxDays, maxPrice, minPrice, minRating, t]);
 
   const handleSubmit = async (e?: FormEvent<HTMLFormElement>, overrideQuery?: string) => {
     if (e) e.preventDefault();
@@ -230,7 +232,7 @@ export default function SearchForm({ onSearch, initialQuery = '', initialFilters
   const startVoiceRecognition = () => {
     const SR = (window as unknown as Record<string, unknown>).SpeechRecognition || (window as unknown as Record<string, unknown>).webkitSpeechRecognition;
     if (!SR) {
-      toast.error('Reconnaissance vocale non supportée par ce navigateur');
+      toast.error(t('toast.voiceUnsupported'));
       return;
     }
     const recognition = new (SR as new () => SpeechRecognition)();
@@ -265,7 +267,7 @@ export default function SearchForm({ onSearch, initialQuery = '', initialFilters
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={() => query.length > 0 && setShowSuggestions(true)}
           onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-          placeholder="Ex : casque bluetooth, lego 75192, airpods pro 2... (utilisez -mot pour exclure)"
+          placeholder={t('form.placeholder')}
           className="input pl-9 pr-28"
           required
           aria-label="Rechercher des produits"
@@ -277,8 +279,8 @@ export default function SearchForm({ onSearch, initialQuery = '', initialFilters
           type="button"
           onClick={startVoiceRecognition}
           className={`absolute right-3 top-1/2 -translate-y-1/2 ${listening ? 'text-accent' : ''}`}
-          aria-label="Recherche vocale"
-          title="Recherche vocale"
+          aria-label={t('form.voice')}
+          title={t('form.voice')}
         >
           <Mic className="h-4 w-4" />
         </button>
@@ -308,12 +310,12 @@ export default function SearchForm({ onSearch, initialQuery = '', initialFilters
         type="button"
         onClick={() => setShowFilters(!showFilters)}
         className={`btn-secondary relative whitespace-nowrap ${hasActiveFilters ? 'ring-2 ring-accent' : ''}`}
-        aria-label="Filtres avancés"
+        aria-label={t('form.filtersAdvanced')}
       >
         <Filter className="h-4 w-4" />
-        Filtres
+        {t('form.filters')}
         {hasActiveFilters && (
-          <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-accent text-[10px]" title="Filtres actifs">
+          <span className="absolute -top-1 -right-1 flex h-3 w-3 items-center justify-center rounded-full bg-accent text-[10px]" title={t('form.filtersActive')}>
             •
           </span>
         )}
@@ -323,12 +325,12 @@ export default function SearchForm({ onSearch, initialQuery = '', initialFilters
         {loading ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            Analyse...
+            {t('form.analyzing')}
           </>
         ) : (
           <>
             <Search className="h-4 w-4" />
-            Rechercher
+            {t('form.search')}
           </>
         )}
       </button>
@@ -341,23 +343,23 @@ export default function SearchForm({ onSearch, initialQuery = '', initialFilters
               value={site}
               onChange={(e) => setSite(e.target.value)}
               className="input w-full"
-              aria-label="Site marchand"
+              aria-label={t('form.merchantSite')}
             >
               {SITE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.label}
+                  {opt.value === 'all' ? t('form.allSites') : opt.label}
                 </option>
               ))}
             </select>
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-500">Prix min</label>
+            <label className="text-xs text-slate-500">{t('form.priceMin')}</label>
             <input
               type="number"
               value={minPrice}
               onChange={(e) => setMinPrice(e.target.value)}
-              placeholder="Min (€)"
+              placeholder={t('form.minEur')}
               className="input w-full"
               min="0"
               step="0.01"
@@ -365,12 +367,12 @@ export default function SearchForm({ onSearch, initialQuery = '', initialFilters
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-500">Prix max</label>
+            <label className="text-xs text-slate-500">{t('form.priceMax')}</label>
             <input
               type="number"
               value={maxPrice}
               onChange={(e) => setMaxPrice(e.target.value)}
-              placeholder="Max (€)"
+              placeholder={t('form.maxEur')}
               className="input w-full"
               min="0"
               step="0.01"
@@ -383,7 +385,7 @@ export default function SearchForm({ onSearch, initialQuery = '', initialFilters
               type="number"
               value={maxDays}
               onChange={(e) => setMaxDays(e.target.value)}
-              placeholder="Délai max (jours)"
+              placeholder={t('form.maxDelivery')}
               className="input w-full"
               min="1"
               step="1"
@@ -391,12 +393,12 @@ export default function SearchForm({ onSearch, initialQuery = '', initialFilters
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-500">Note min</label>
+            <label className="text-xs text-slate-500">{t('form.ratingMin')}</label>
             <input
               type="number"
               value={minRating}
               onChange={(e) => setMinRating(e.target.value)}
-              placeholder="Min (sur 5)"
+              placeholder={t('form.minOf5')}
               className="input w-full"
               min="0"
               max="5"
@@ -405,17 +407,17 @@ export default function SearchForm({ onSearch, initialQuery = '', initialFilters
           </div>
 
           <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-500">Priorité</label>
+            <label className="text-xs text-slate-500">{t('form.priority')}</label>
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value as typeof priority)}
               className="input w-full"
-              aria-label="Priorité de tri"
+              aria-label={t('form.priority')}
             >
-              <option value="balanced">Équilibré</option>
-              <option value="price">Prix</option>
-              <option value="quality">Qualité</option>
-              <option value="speed">Rapidité</option>
+              <option value="balanced">{t('form.prioBalanced')}</option>
+              <option value="price">{t('form.prioPrice')}</option>
+              <option value="quality">{t('form.prioQuality')}</option>
+              <option value="speed">{t('form.prioSpeed')}</option>
             </select>
           </div>
 
@@ -426,7 +428,7 @@ export default function SearchForm({ onSearch, initialQuery = '', initialFilters
               className="btn-ghost col-span-full justify-self-start !px-2 !py-1 text-xs"
             >
               <X className="h-3 w-3" />
-              Tout effacer
+              {t('form.clearAll')}
             </button>
           )}
         </div>

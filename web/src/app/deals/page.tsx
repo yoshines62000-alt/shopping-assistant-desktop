@@ -192,7 +192,7 @@ export default function DealsPage() {
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Ex : lego star wars, casque sony, console rétro..."
+          placeholder={t('deals.placeholder')}
           className="input"
           required
           maxLength={200}
@@ -201,32 +201,32 @@ export default function DealsPage() {
           value={analyze}
           onChange={(e) => setAnalyze(e.target.value)}
           className="input"
-          title="Nombre d'offres à analyser (plus = plus long)"
+          title={t('deals.analyzeTitle')}
         >
-          <option value="3">3 offres</option>
-          <option value="5">5 offres</option>
+          <option value="3">3 {t('deals.offersUnit')}</option>
+          <option value="5">5 {t('deals.offersUnit')}</option>
         </select>
         <select
           value={platform}
           onChange={(e) => setPlatform(e.target.value)}
           className="input"
-          title="Plateforme de revente visée (frais appliqués)"
+          title={t('deals.platformTitle')}
         >
           {PLATFORMS.map((p) => (
             <option key={p.id} value={p.id}>
-              Revente : {p.label}
+              {t('deals.resalePrefix')} : {p.label}
             </option>
           ))}
         </select>
         <button type="submit" disabled={loading} className="btn-primary whitespace-nowrap">
-          <Sparkles className="h-4 w-4" /> Chasser
+          <Sparkles className="h-4 w-4" /> {t('deals.hunt')}
         </button>
       </form>
 
       {loading && (
         <div className="card flex items-center justify-center gap-3 px-6 py-12 text-center text-sm text-slate-400">
           <Loader2 className="h-4 w-4 animate-spin text-accent" />
-          Recherche des offres et analyse de leur revente sur eBay… (~30 s)
+          {t('deals.loading')}
         </div>
       )}
 
@@ -235,23 +235,21 @@ export default function DealsPage() {
       {!loading && result && result.deals.length === 0 && (
         <EmptyState
           icon={<SearchX className="h-6 w-6" />}
-          title="Aucune offre trouvée"
-          description={`Pas d'offre exploitable pour « ${result.query} ». Essaie un libellé plus générique.`}
+          title={t('deals.noOffers')}
+          description={t('deals.noOffersDesc')}
         />
       )}
 
       {!loading && result && result.deals.length > 0 && (
         <div className="space-y-4">
           <p className="text-sm text-slate-400">
-            {result.deals.length} offre{result.deals.length > 1 ? 's' : ''} analysée
-            {result.deals.length > 1 ? 's' : ''} · classées par marge nette de revente
+            {result.deals.length} {t('deals.analyzed')}
           </p>
           {result.deals.map((d, i) => (
             <DealCard key={d.id} deal={d} index={i} />
           ))}
           <p className="text-center text-xs text-slate-600">
-            Marge = revente nette estimée (médiane des ventes eBay réussies, frais déduits) − prix
-            d&apos;achat de l&apos;offre.
+            {t('deals.marginNote')}
           </p>
         </div>
       )}

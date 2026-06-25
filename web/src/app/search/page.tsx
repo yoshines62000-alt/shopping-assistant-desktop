@@ -52,6 +52,7 @@ function parseIntentFromParams(sp: URLSearchParams): IntentParams | null {
 }
 
 function SearchContent() {
+  const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -87,12 +88,12 @@ function SearchContent() {
       setResults(data.results ?? []);
     } catch (err) {
       if ((err as Error)?.name === 'AbortError') return; // remplacee par une recherche plus recente
-      setError('Erreur lors de la recherche. Vérifiez que le service est démarré.');
+      setError(t('search.error'));
       setResults([]);
     } finally {
       if (abortRef.current === controller) setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     const q = searchParams.get('q') || '';
@@ -163,27 +164,27 @@ function SearchContent() {
         <>
           <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs">
-              <span className="text-slate-500">Trier par :</span>
+              <span className="text-slate-500">{t('search.sortBy')}</span>
               <button
                 type="button"
                 onClick={() => setSortKey('score')}
                 className={`btn-ghost !px-2 !py-1 text-xs ${sortKey === 'score' ? 'text-accent' : ''}`}
               >
-                Score
+                {t('results.score')}
               </button>
               <button
                 type="button"
                 onClick={() => setSortKey('price')}
                 className={`btn-ghost !px-2 !py-1 text-xs ${sortKey === 'price' ? 'text-accent' : ''}`}
               >
-                Prix
+                {t('form.prioPrice')}
               </button>
               <button
                 type="button"
                 onClick={() => setSortKey('delivery')}
                 className={`btn-ghost !px-2 !py-1 text-xs ${sortKey === 'delivery' ? 'text-accent' : ''}`}
               >
-                Délai
+                {t('search.sortDelay')}
               </button>
             </div>
             <div className="flex items-center gap-2">
@@ -191,10 +192,10 @@ function SearchContent() {
                 type="button"
                 onClick={handleExport}
                 className="btn-secondary !px-2 !py-1 text-xs"
-                title="Exporter les résultats en CSV"
+                title={t('search.exportTitle')}
               >
                 <Download className="h-3 w-3" />
-                Export CSV
+                {t('search.exportCsv')}
               </button>
               <ExportReport products={sorted} query={query} />
               <PushNotify />
@@ -213,15 +214,15 @@ function SearchContent() {
                 disabled={page <= 1}
                 className="btn-secondary !px-3 !py-1.5 text-xs disabled:opacity-50"
               >
-                ← Précédent
+                ← {t('search.prev')}
               </button>
-              <span className="flex items-center px-3 text-xs text-slate-400">Page {page}</span>
+              <span className="flex items-center px-3 text-xs text-slate-400">{t('search.page')} {page}</span>
               <button
                 type="button"
                 onClick={() => doSearch(query, lastIntent.current, page + 1)}
                 className="btn-secondary !px-3 !py-1.5 text-xs"
               >
-                Suivant →
+                {t('search.next')} →
               </button>
             </div>
           )}
@@ -231,8 +232,8 @@ function SearchContent() {
       {!loading && !error && results.length === 0 && query && (
         <EmptyState
           icon={<SearchX className="h-6 w-6" />}
-          title="Aucun résultat"
-          description="Essayez une autre requête ou ajustez les filtres."
+          title={t('search.noResults')}
+          description={t('search.noResultsDesc')}
         />
       )}
     </>
