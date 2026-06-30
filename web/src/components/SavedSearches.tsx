@@ -6,6 +6,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { apiFetch } from '@/lib/api';
 import { toast } from '@/lib/toast';
 import { euro } from '@/lib/format';
+import { useI18n } from '@/lib/i18n';
 
 interface SavedSearch {
   id: number;
@@ -40,12 +41,8 @@ interface DealHit {
   foundAt: string;
 }
 
-function whenFr(iso: string | null): string {
-  if (!iso) return 'jamais vérifiée';
-  return `vérifiée le ${new Date(iso).toLocaleString('fr-FR')}`;
-}
-
 export default function SavedSearches() {
+  const { t, locale } = useI18n();
   const [searches, setSearches] = useState<SavedSearch[]>([]);
   const [deals, setDeals] = useState<DealHit[]>([]);
   const [query, setQuery] = useState('');
@@ -69,7 +66,7 @@ export default function SavedSearches() {
   const add = async (e: FormEvent) => {
     e.preventDefault();
     if (!query.trim() || Number(target) <= 0) {
-      toast.error('Indiquez une requête et un prix cible valides');
+      toast.error(t('sav.errInvalid'));
       return;
     }
     try {
@@ -82,14 +79,14 @@ export default function SavedSearches() {
           intervalMinutes: Number(interval) || 0,
         },
       });
-      toast.success('Recherche surveillée — re-scannée en fond');
+      toast.success(t('sav.added'));
       setQuery('');
       setTarget('');
       setSite('');
       setIntervalMin('0');
       load();
     } catch {
-      toast.error('Impossible d’ajouter la surveillance');
+      toast.error(t('sav.errAdd'));
     }
   };
 
@@ -102,7 +99,7 @@ export default function SavedSearches() {
   };
 
   const remove = async (s: SavedSearch) => {
-    if (!window.confirm(`Supprimer la surveillance « ${s.query} » et ses bons plans ?`)) return;
+    if (!window.confirm(t('sav.confirmDel'))) return;
     await apiFetch(`/watch/searches/${s.id}`, { method: 'DELETE' }).catch(() => null);
     load();
   };
@@ -113,17 +110,14 @@ export default function SavedSearches() {
     <div className="space-y-4">
       <div className="card-pad">
         <h2 className="mb-1 flex items-center gap-2 text-sm font-semibold text-slate-100">
-          <Radar className="h-4 w-4 text-accent" /> Surveiller une recherche
+          <Radar className="h-4 w-4 text-accent" /> {t('sav.watchSearch')}
         </h2>
-        <p className="mb-3 text-xs text-slate-500">
-          Re-scannée automatiquement en fond — notification (Discord + Windows) dès qu’une offre
-          passe sous ton prix cible.
-        </p>
+        <p className="mb-3 text-xs text-slate-500">{t('sav.help')}</p>
         <form onSubmit={add} className="grid gap-3 sm:grid-cols-[1fr_auto_auto_auto_auto]">
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Ex : iPhone 13 128 Go"
+            placeholder={t('sav.placeholderQuery')}
             className="input"
             maxLength={300}
             required
@@ -132,14 +126,14 @@ export default function SavedSearches() {
             type="number"
             value={target}
             onChange={(e) => setTarget(e.target.value)}
-            placeholder="≤ Prix (€)"
+            placeholder={t('sav.placeholderPrice')}
             className="input sm:w-32"
             min="0"
             step="0.01"
             required
           />
           <select value={site} onChange={(e) => setSite(e.target.value)} className="input sm:w-32">
-            <option value="">Tous les sites</option>
+            <option value="">{t('form.allSites')}</option>
             <option value="amazon">Amazon</option>
             <option value="ebay">eBay</option>
             <option value="vinted">Vinted</option>
@@ -149,29 +143,29 @@ export default function SavedSearches() {
             value={interval}
             onChange={(e) => setIntervalMin(e.target.value)}
             className="input sm:w-28"
-            title="Fréquence minimale de re-scan"
+            title={t('sav.minFreq')}
           >
             {INTERVAL_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
-                {o.label}
+                {o.value === 0 ? t('sav.frequent') : o.label}
               </option>
             ))}
           </select>
           <button type="submit" className="btn-primary">
-            <Radar className="h-4 w-4" /> Surveiller
+            <Radar className="h-4 w-4" /> {t('sav.watch')}
           </button>
         </form>
       </div>
 
       <div className="card-pad">
         <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Recherches surveillées ({searches.length})
+          {t('sav.watchedTitle')} ({searches.length})
         </h2>
         {searches.length === 0 ? (
           <EmptyState
             icon={<Radar className="h-6 w-6" />}
-            title="Aucune surveillance"
-            description="Ajoute une recherche ci-dessus : on guette les bons plans pour toi en continu."
+            title={t('sav.noWatch')}
+            description={t('sav.noWatchDesc')}
           />
         ) : (
           <div className="space-y-2">
@@ -190,9 +184,9 @@ export default function SavedSearches() {
                           </span>
                         )}
                         {s.active ? (
-                          <span className="badge-success">active</span>
+                          <span className="badge-success">{t('sav.active')}</span>
                         ) : (
-                          <span className="badge-muted">en pause</span>
+                          <span className="badge-muted">{t('sav.paused')}</span>
                         )}
                         {s.intervalMinutes > 0 && (
                           <span className="badge-muted">{intervalLabel(s.intervalMinutes)}</span>
@@ -200,31 +194,35 @@ export default function SavedSearches() {
                         {!s.seeded && (
                           <span
                             className="badge bg-sky-500/15 text-sky-300"
-                            title="Premier scan : on enregistre les annonces déjà en ligne sans notifier, puis on n’alerte que les nouveautés."
+                            title={t('sav.baselineTitle')}
                           >
-                            baseline…
+                            {t('sav.baseline')}
                           </span>
                         )}
                         {s.dealCount > 0 && (
                           <span className="badge bg-amber-500/15 text-amber-300">
-                            {s.dealCount} bon(s) plan(s)
+                            {s.dealCount} {t('sav.deals')}
                           </span>
                         )}
                       </div>
-                      <p className="mt-0.5 text-xs text-slate-500">{whenFr(s.lastChecked)}</p>
+                      <p className="mt-0.5 text-xs text-slate-500">
+                        {s.lastChecked
+                          ? `${t('sav.checkedOn')} ${new Date(s.lastChecked).toLocaleString(locale)}`
+                          : t('sav.neverChecked')}
+                      </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
                       <button
                         onClick={() => toggle(s)}
                         className="btn-ghost !p-1.5"
-                        title={s.active ? 'Mettre en pause' : 'Réactiver'}
+                        title={s.active ? t('sav.pause') : t('sav.resume')}
                       >
                         {s.active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                       </button>
                       <button
                         onClick={() => remove(s)}
                         className="btn-ghost !p-1.5 hover:!text-rose-300"
-                        title="Supprimer"
+                        title={t('stock.delete')}
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>

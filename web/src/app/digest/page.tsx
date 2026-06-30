@@ -71,7 +71,7 @@ export default function DigestPage() {
           disabled={refetching}
         >
           <RefreshCw className={`h-3 w-3 ${refetching ? 'animate-spin' : ''}`} />
-          Actualiser
+          {t('dig.refresh')}
         </button>
         <button
           type="button"
@@ -80,17 +80,17 @@ export default function DigestPage() {
           disabled={checking}
         >
           <Bell className="h-3 w-3" />
-          Vérifier les prix
+          {t('dig.checkPrices')}
         </button>
       </div>
 
       {loading ? (
-        <LoadingBlock label="Chargement du digest..." />
+        <LoadingBlock label={t('dig.loading')} />
       ) : drops.length === 0 ? (
         <EmptyState
           icon={<TrendingDown className="h-6 w-6" />}
-          title="Aucune baisse récente"
-          description="Lance « Vérifier les prix » pour re-scanner tes produits surveillés."
+          title={t('dig.noDrops')}
+          description={t('dig.noDropsDesc')}
         />
       ) : (
         <div className="space-y-3">

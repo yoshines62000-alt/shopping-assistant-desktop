@@ -6,6 +6,15 @@ Versions notables de l'application desktop. Format inspiré de
 
 ## [Non publié]
 
+## [0.32.0] — 2026-06-25
+### Amélioré
+- **Pages Alertes, Digest et recherches surveillées traduites** (5 langues), ainsi
+  que le pied de page. La traduction couvre désormais l'essentiel de l'application.
+### Modifié
+- **Projet recentré sur l'application Windows.** Le code source (interface + moteur)
+  vit désormais **directement dans ce dépôt** (plus de dépôt « source » séparé ni de
+  synchronisation). Les variantes web et Android ont été abandonnées.
+
 ## [0.31.0] — 2026-06-25
 ### Amélioré
 - **Pages Estimation et Arbitrage traduites** (formulaires, résultats, états vides).
